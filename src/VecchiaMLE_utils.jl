@@ -284,3 +284,10 @@ function SparsityPattern_CSC(data, k::Int)
     return rows, cols, colptr
 end
 
+function sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
+    @assert iVecchiaMLE.n >= 0
+    @assert iVecchiaMLE.k <= n
+    @assert size(iVecchiaMLE.samples, 1) > 0
+    @assert size(iVecchiaMLE.samples, 2) == iVecchiaMLE.n
+    @assert iVecchiaMLE.mode isa COMPUTE_MODE 
+end

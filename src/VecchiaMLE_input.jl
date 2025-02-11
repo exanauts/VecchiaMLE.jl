@@ -1,5 +1,7 @@
 function VecchiaMLE_Run(iVecchiaMLE::VecchiaMLEInput)
 
+    sanitize_input!(iVecchiaMLE)
+
     pres_chol = Matrix{eltype(iVecchiaMLE.samples)}(undef, iVecchiaMLE.n^2, iVecchiaMLEn^2)
     fill!(pres_chol, zero(eltype(iVecchiaMLE.samples)))
     diagnostics = Diagnostics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0)

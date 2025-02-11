@@ -59,8 +59,8 @@ if !@isdefined(VecchiaMLEInput)
     mutable struct VecchiaMLEInput
         n::Integer
         k::Integer
-        samples_given::String = ""
         samples::Matrix{Float64}
+        Number_of_Samples::Integer
         mode::COMPUTE_MODE
     end
 end
