@@ -23,7 +23,7 @@ Before you start, make sure you have the following:
 Other dependencies will be needed, but at this point I don't know which ones are seriously needed. TO BE REWRITTEN. 
 
 ## Configuration
-The struct VecchiaMLEInput needs to be properly filled out in order for the analysis to be run. The components of said structure is as follows:
+The struct `VecchiaMLEInput` needs to be properly filled out in order for the analysis to be run. The components of said structure is as follows:
 
 n::Integer                           # Size of the problem (e.g., dimension of the covariance matrix)
 k::Integer                           # Number of neighbors to maintain sparsity/banded structure
@@ -33,8 +33,7 @@ mode::Integer                        # Operation mode. Expects an int [1: "CPU",
 MadNLP_Print_level::Integer          # Print level of MadNLP. Saves to Output_MadNLP.txt. Expects ints in range 1 to 5 with levels [TRACE, DEBUG, INFO, WARN, ERROR].
 
 ## Usage
-Once the `config.toml` file is written appropriately, all that is needed is to include the VecchiaMLE.jl file in julia, then run VecchiaMLE(). If you supply a different config file, pass it to VecchiaMLE, otherwise it takes `config.toml` by default. The function VecchiaMLE then returns a structure with diagnostics, then the resulting `L`. 
-
+Once `VecchiaMLEInput` has been filled appropriately, pass it to VecchiaMLE_Run() for the analysis to start. Note that some arguments have default values, such as mode (CPU), and MadNLP_Print_level (5). After the analysis has been completed, the function outputs diagnostics - that would be difficult other wise to acquire - and the resulting Lm factor in sparse, LowerTriangular format.
 
 ## Contribution
 Although the bulk of the project has been written, there are sure to be problems that arise from errors in logic. As such, please feel free to open an issue;
