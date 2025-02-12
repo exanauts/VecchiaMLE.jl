@@ -150,7 +150,7 @@ function NLPModels.hess_structure!(nlp::VecchiaModel, hrows::AbstractVector, hco
 end
 
 # Fills out Hessian non zeros.
-function NLPModels.hess_coord!(nlp, x, y, hvals; obj_weight=1.0)
+function NLPModels.hess_coord!(nlp::VecchiaModel, x::AbstractVector, y::AbstractVector, hvals::AbstractVector; obj_weight::Real=1.0)
     @lencheck nlp.meta.nnzh hvals
     increment!(nlp, :neval_hess)
     hvals_obj = view(hvals, 1:nlp.cache.nnzh_tri_obj)
@@ -165,7 +165,7 @@ end
 # Hessian - vector product
 # Not needed in current iteration of optimization, 
 # but might be useful in the future.
-function NLPModels.hprod!(nlp, x, y, v, Hv; obj_weight=1.0)
+function NLPModels.hprod!(nlp::VecchiaModel, x::AbstractVector, y::AbstractVector, v::AbstractVector, Hv::AbstractVector; obj_weight::Real=1.0)
     @lencheck nlp.meta.nvar v 
     @lencheck nlp.meta.nvar Hv
     increment!(nlp, :neval_hprod)
