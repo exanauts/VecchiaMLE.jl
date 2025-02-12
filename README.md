@@ -25,12 +25,14 @@ Other dependencies will be needed, but at this point I don't know which ones are
 ## Configuration
 The struct `VecchiaMLEInput` needs to be properly filled out in order for the analysis to be run. The components of said structure is as follows:
 
-n::Integer                           # Size of the problem (e.g., dimension of the covariance matrix)
-k::Integer                           # Number of neighbors to maintain sparsity/banded structure
-samples::Matrix{Float64}             # Matrix of samples (each row is a sample). Defaults to an undefined 100 x n^2 matrix.
-Number_of_Samples::Integer           # Number of samples to generate (if samples_given=false). Defaults to 100.
-mode::Integer                        # Operation mode. Expects an int [1: "CPU", 2: "GPU"]
-MadNLP_Print_level::Integer          # Print level of MadNLP. Saves to Output_MadNLP.txt. Expects ints in range 1 to 5 with levels [TRACE, DEBUG, INFO, WARN, ERROR].
+```
+n::Integer                           # Square root of the size of the problem (e.g., sqrt dimension of the covariance matrix). 
+k::Integer                           # Number of conditioning points per point for the Vecchia Approximation.
+samples::Matrix{Float64}             # Matrix of samples (each row is a sample).
+Number_of_Samples::Integer           # Number of samples to generate (if samples_given=false).
+mode::Integer                        # Operation mode. Expects an int [1: CPU, 2: GPU].
+MadNLP_Print_level::Integer          # Print level of MadNLP. Expects an int with the corresponding flag [1: TRACE, 2: DEBUG, 3: INFO, 4: WARN, 5: ERROR].
+```
 
 ## Usage
 Once `VecchiaMLEInput` has been filled appropriately, pass it to VecchiaMLE_Run() for the analysis to start. Note that some arguments have default values, such as mode (CPU), and MadNLP_Print_level (5). After the analysis has been completed, the function outputs diagnostics - that would be difficult other wise to acquire - and the resulting Lm factor in sparse, LowerTriangular format.
