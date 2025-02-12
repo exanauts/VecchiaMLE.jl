@@ -48,7 +48,7 @@ function Int_to_Mode(n::Int)::COMPUTE_MODE
 end
 
 function Uni_Error(TCov::AbstractMatrix, L::AbstractMatrix)    
-    mu_val = clamp.([eigmin(L*L'*TCov), eigmax(L*L'*TCov)])
+    mu_val = clamp.([eigmin(L*L'*TCov), eigmax(L*L'*TCov)], 1e-9, Inf)
     return maximum([0.5*(log(mu) + 1.0 / mu - 1.0) for mu in mu_val])
 end
 
@@ -285,9 +285,11 @@ function SparsityPattern_CSC(data, k::Int)
 end
 
 function sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
-    @assert iVecchiaMLE.n >= 0 "The dimension n must be strictky positive!"
+    @assert iVecchiaMLE.n >= 0 "The dimension n must be strictly positive!"
     @assert iVecchiaMLE.k <= iVecchiaMLE.n^2 "The number of conditioning neighbors must be less than n^2 !"
     @assert size(iVecchiaMLE.samples, 1) > 0 "Samples must be nonempty!"
+    @assert (iVecchiaMLE.MadNLP_print_level in 1:5) "MadNLP Print Level not in 1:5!"
     @assert size(iVecchiaMLE.samples, 2) == iVecchiaMLE.n^2 "samples must be of size Number_of_Samples x n^2!"
+    @assert size(iVecchiaMLE.samples, 1) == iVecchiaMLE.Number_of_Samples "samples must be of size Number_of_Samples x n^2!"
     @assert iVecchiaMLE.mode in [1, 2] "Operation mode not valid! must be in [1, 2]." 
 end
