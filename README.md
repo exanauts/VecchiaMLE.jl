@@ -1,5 +1,10 @@
 # VecchiaMLE
 
+[![docs-dev][docs-dev-img]][docs-dev-url]
+
+[docs-dev-img]: https://img.shields.io/badge/docs-dev-purple.svg
+[docs-dev-url]: https://exanauts.github.io/VecchiaMLE.jl/dev
+
 ## Overview
 
 This project computes an approximation of the precision matrix's Cholesky factor for a covariance matrix using a Maximum Likelihood Estimation (MLE) formulation. The computed Cholesky factor, `L`, is generated via the Vecchia Approximation, which has the advantage of being **sparse** and **approximately banded**, making it efficient for large-scale problems. 

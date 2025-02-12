@@ -1,0 +1,6 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+VecchiaMLE = "499233a1-c46f-47cc-ab67-5a37788e9870"
+
+[compat]
+Documenter = "1.0"
