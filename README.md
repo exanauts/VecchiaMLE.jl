@@ -61,4 +61,4 @@ Although the bulk of the project has been written, there are sure to be problems
 we would appreciate it!
 
 
-[![Build Status](https://github.com/CalebDerrickson/VecchiaMLE.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/CalebDerrickson/VecchiaMLE.jl/actions/workflows/CI.yml?query=branch%3Amaster)
+[![CI](https://github.com/exanauts/VecchiaMLE.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/exanauts/VecchiaMLE.jl/actions/workflows/CI.yml)
