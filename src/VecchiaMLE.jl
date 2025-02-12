@@ -6,6 +6,8 @@ using AdaptiveKDTrees, AdaptiveKDTrees.KNN
 using MadNLP, MadNLPGPU
 using SparseArrays 
 using CUDA
+using BesselK, SpecialFunctions
+using Distributions, Statistics
 
 # Includes
 include("VecchiaMLE_defines.jl")

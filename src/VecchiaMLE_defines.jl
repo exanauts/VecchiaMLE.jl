@@ -40,7 +40,8 @@ if !@isdefined(Diagnostics)
         objective_value::Float64            # Optimal Objective value. 
         normed_constraint_value::Float64    # Optimal norm of constraint vector.
         normed_grad_value::Float64          # Optimal norm of gradient vector.
-        MadNLP_iterations::Int              # Iterations for MadNLP to reach optimal.
+        MadNLP_iterations::Integer          # Iterations for MadNLP to reach optimal.
+        mode::Integer                       # Operation mode: CPU or GPU
     end
 end
 

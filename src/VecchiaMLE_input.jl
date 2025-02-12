@@ -4,7 +4,7 @@ function VecchiaMLE_Run(iVecchiaMLE::VecchiaMLEInput)
 
     pres_chol = Matrix{eltype(iVecchiaMLE.samples)}(undef, iVecchiaMLE.n^2, iVecchiaMLE.n^2)
     fill!(pres_chol, zero(eltype(iVecchiaMLE.samples)))
-    diagnostics = Diagnostics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0)
+    diagnostics = Diagnostics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0)
     VecchiaMLE_Run_Analysis!(iVecchiaMLE, pres_chol, diagnostics)
     
     return diagnostics, pres_chol
@@ -14,8 +14,9 @@ function VecchiaMLE_Run_Analysis!(iVecchiaMLE::VecchiaMLEInput, pres_chol::Abstr
     model, output = ExecuteModel!(iVecchiaMLE, pres_chol, diagnostics)
 
     # TODO: NEEDS TO BE IMPLEMENTED
-    diagnostics.LinAlg_solve_time = 0.0
-    diagnostics.MadNLP_iterations = 0
+    diagnostics.LinAlg_solve_time = output.counters.linear_solver_time
+    diagnostics.MadNLP_iterations = output.iter
+    diagnostics.mode = iVecchiaMLE.mode
 
     # Getting some values for error checking
     diagnostics.objective_value = NLPModels.obj(model, output.solution)
@@ -51,7 +52,8 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, pres_chol::AbstractMatrix, 
     diags.solve_model_time = @elapsed begin
         output = madnlp(model, print_level=MadNLP_Print_Level(iVecchiaMLE.MadNLP_print_level))
     end
-
+    
+    
     # Casting to CPU matrices
     valsL = Vector{Float64}(output.solution[1:model.cache.nnzL])
     rowsL = Vector{Int}(model.cache.rowsL)
