@@ -47,15 +47,15 @@ function Int_to_Mode(n::Int)::COMPUTE_MODE
     end
 end
 
-function Uni_Error(TCov::AbstractMatric, L::AbstractMatrix)    
+function Uni_Error(TCov::AbstractMatrix, L::AbstractMatrix)    
     mu_val = clamp.([eigmin(L*L'*TCov), eigmax(L*L'*TCov)])
     return maximum([0.5*(log(mu) + 1.0 / mu - 1.0) for mu in mu_val])
 end
 
-"""
-    Determines reordering of given observation locations.
-    Included are Random indexing and maxmin
-"""
+#
+#    Determines reordering of given observation locations.
+#    Included are Random indexing and maxmin
+#
 function IndexReorder(Cond_set::AbstractVector, data::AbstractVector, mean_mu::AbstractVector, method::String="random", reverse_ordering::Bool=true)::AbstractVector
     
     if method == "random"
@@ -174,11 +174,11 @@ function dist_from_set(data_pt, set_idx, data)
 end
 
 
-"""
-    Just gives a random reordering pattern. 
-    Conditioning set will just be assumed empty.
-    Also returning nothing for the distance array (useless?)
-"""
+#
+#    Just gives a random reordering pattern. 
+#    Conditioning set will just be assumed empty.
+#    Also returning nothing for the distance array (useless?)
+#
 function IndexRandom(Cond_set::AbstractVector, data::AbstractVector, reverse_ordering::Bool)
     
     n = size(data, 1)
@@ -188,12 +188,12 @@ function IndexRandom(Cond_set::AbstractVector, data::AbstractVector, reverse_ord
 end
 
 
-"""
-    KLDivergence for the true covariance, TCov, and the 
-    cholesky factor for the approximate precision matrix, AL.
-    This is most applicable to the analysis at hand.
-    ASSUMED ZERO MEAN.
-"""
+#
+#    KLDivergence for the true covariance, TCov, and the 
+#    cholesky factor for the approximate precision matrix, AL.
+#    This is most applicable to the analysis at hand.
+#    ASSUMED ZERO MEAN.
+#
 function KLDivergence(TCov::Symmetric{Float64}, AL)
     terms = zeros(4)
     terms[1] = tr(AL'*TCov*AL)
@@ -203,11 +203,11 @@ function KLDivergence(TCov::Symmetric{Float64}, AL)
     return 0.5*sum(terms)
 end
 
-"""
-    Abstraction to get Sparsity pattern of Vecchia Approximation.
-    Will usually only be called for the SparsityPattern_CSC function
-    Options are Block or CSC.
-"""
+#
+#    Abstraction to get Sparsity pattern of Vecchia Approximation.
+#    Will usually only be called for the SparsityPattern_CSC function
+#    Options are Block or CSC.
+#
 
 
 function SparsityPattern(data, k::Int, format="")
@@ -221,11 +221,11 @@ function SparsityPattern(data, k::Int, format="")
     end
 end
 
-"""
-    Will return the sparsity pattern in
-    row, [column] format. 
-    Bad name, but don't know what else to call it. 
-"""
+#
+#    Will return the sparsity pattern in
+#    row, [column] format. 
+#    Bad name, but don't know what else to call it. 
+#
 function SparsityPattern_Block(data, k::Int)
     n = size(data, 1)
     Sparsity = Vector{Vector{Int}}(undef, n)  
@@ -241,9 +241,9 @@ function SparsityPattern_Block(data, k::Int)
     return Sparsity
 end
 
-"""
-    Returns the sparsity pattern for the given data in COO, CSC format.
-"""
+#
+#    Returns the sparsity pattern for the given data in COO, CSC format.
+#
 function SparsityPattern_CSC(data, k::Int)
     n = size(data, 1)
     rows = zeros(Int, Int(0.5 * k * (2*n - k + 1)))
@@ -285,9 +285,9 @@ function SparsityPattern_CSC(data, k::Int)
 end
 
 function sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
-    @assert iVecchiaMLE.n >= 0
-    @assert iVecchiaMLE.k <= n
-    @assert size(iVecchiaMLE.samples, 1) > 0
-    @assert size(iVecchiaMLE.samples, 2) == iVecchiaMLE.n
-    @assert iVecchiaMLE.mode isa COMPUTE_MODE 
+    @assert iVecchiaMLE.n >= 0 "The dimension n must be strictky positive!"
+    @assert iVecchiaMLE.k <= iVecchiaMLE.n^2 "The number of conditioning neighbors must be less than n^2 !"
+    @assert size(iVecchiaMLE.samples, 1) > 0 "Samples must be nonempty!"
+    @assert size(iVecchiaMLE.samples, 2) == iVecchiaMLE.n^2 "samples must be of size Number_of_Samples x n^2!"
+    @assert iVecchiaMLE.mode in [1, 2] "Operation mode not valid! must be in [1, 2]." 
 end

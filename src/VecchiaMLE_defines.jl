@@ -44,9 +44,8 @@ if !@isdefined(Diagnostics)
     end
 end
 
-"""
-    Vecchia Model for NLPModels package.
-"""
+
+# Vecchia Model for NLPModels package.
 if !@isdefined(VecchiaModel)
     mutable struct VecchiaModel{T, S} <: AbstractNLPModel{T, S}
         meta::NLPModelMeta{T, S}
@@ -61,6 +60,10 @@ if !@isdefined(VecchiaMLEInput)
         k::Integer
         samples::Matrix{Float64}
         Number_of_Samples::Integer
-        mode::COMPUTE_MODE
+        MadNLP_print_level::Integer
+        mode::Integer
+        function VecchiaMLEInput(n::Integer, k::Integer, samples::Matrix{Float64}, Number_of_Samples::Integer, MadNLP_print_Level::Integer=5, mode::Integer=1)
+            return new(n, k, samples, Number_of_Samples, MadNLP_print_Level, mode)
+        end
     end
 end
