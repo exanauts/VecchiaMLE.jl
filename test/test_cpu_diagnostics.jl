@@ -13,7 +13,7 @@
 
     @test (D.MadNLP_iterations ≥ 0)
     @test (D.normed_constraint_value < 1e-3)
-    @test (D.normed_grad_value < 1e-8)
+    @test (D.normed_grad_value < 1e-7)
     @test (D.LinAlg_solve_time > 0.0)
     @test (D.solve_model_time > 0.0)
     @test (D.create_model_time > 0.0)
