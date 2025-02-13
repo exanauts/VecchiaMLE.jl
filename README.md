@@ -1,6 +1,6 @@
 # VecchiaMLE
 
-[![docs-dev][docs-dev-img]][docs-dev-url] [![CI][ci-url][ci-img]
+[![docs-dev][docs-dev-img]][docs-dev-url] [![CI][ci-url]][ci-img]
 
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-purple.svg
 [docs-dev-url]: https://exanauts.github.io/VecchiaMLE.jl/dev
