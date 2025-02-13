@@ -1,11 +1,11 @@
 # VecchiaMLE
 
-[![docs-dev][docs-dev-img]][docs-dev-url] [![CI][ci-img]][ci-url]
+[![docs-dev][docs-dev-img]][docs-dev-url] [![ci][ci-img]][ci-url]
 
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-purple.svg
 [docs-dev-url]: https://exanauts.github.io/VecchiaMLE.jl/dev
-[ci-img]: [https://img.shields.io/badge/docs-dev-purple.svg](https://github.com/exanauts/VecchiaMLE.jl/actions/workflows/CI.yml)
-[ci-url]: [https://exanauts.github.io/VecchiaMLE.jl/dev](https://github.com/exanauts/VecchiaMLE.jl/actions/workflows/CI.yml/badge.svg)
+[ci-img]: https://github.com/exanauts/VecchiaMLE.jl/actions/workflows/CI.yml/badge.svg
+[ci-url]: https://github.com/exanauts/VecchiaMLE.jl/actions/workflows/CI.yml
 
 ## Overview
 
