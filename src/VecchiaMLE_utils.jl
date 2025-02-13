@@ -4,12 +4,26 @@ function covariance2D(xyGrid::AbstractVector, params::AbstractVector)::AbstractM
     return Symmetric([matern(x, y, params) for x in xyGrid, y in xyGrid])
 end
 
-function generate_Samples(MatCov::AbstractMatrix, n::Integer, Number_of_Samples::Integer)::Matrix{Float64}
-    mean_mu = zeros(n^2)
-    foo = MvNormal(mean_mu, MatCov)
+#function generate_Samples(MatCov::AbstractMatrix, n::Integer, Number_of_Samples::Integer)::Matrix{Float64}
+#    mean_mu = zeros(n^2)
+#    foo = MvNormal(mean_mu, MatCov)
+#
+#    # rand gives each samples as a column vector
+#    return reshape(rand(foo, Number_of_Samples), (Number_of_Samples, n^2))
+#end
 
-    # rand gives each samples as a column vector
-    return reshape(rand(foo, Number_of_Samples), (Number_of_Samples, n^2))
+# Added new generate_Samples to use GPU when there is one detected. Faster? Only problem is communitcation b/w GPU and CPU
+
+function generate_Samples(MatCov::AbstractMatrix, n::Integer, Number_of_Samples::Integer)::Matrix{Float64}
+    if CUDA.has_cuda()
+        V = CUDA.rand(Number_of_Samples, n^2)
+        S = CuArray{Float64}(MatCov)
+    else 
+        V = randn(Number_of_Samples, n^2)
+    end
+    LinearAlgebra.LAPACK.potrf!('L', S)
+    LinearAlgebra.rmul!(V, LowerTriangular(S))
+    return Matrix{Float64}(V)
 end
 
 function generate_MatCov(n::Integer, params::AbstractArray, ptGrid::AbstractVector)::Symmetric{Float64}
