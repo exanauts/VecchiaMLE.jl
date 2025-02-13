@@ -1,9 +1,11 @@
 # VecchiaMLE
 
-[![docs-dev][docs-dev-img]][docs-dev-url]
+[![docs-dev][docs-dev-img]][docs-dev-url] [![CI][ci-url][ci-img]
 
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-purple.svg
 [docs-dev-url]: https://exanauts.github.io/VecchiaMLE.jl/dev
+[ci-img]: [https://img.shields.io/badge/docs-dev-purple.svg](https://github.com/exanauts/VecchiaMLE.jl/actions/workflows/CI.yml)
+[ci-url]: [https://exanauts.github.io/VecchiaMLE.jl/dev](https://github.com/exanauts/VecchiaMLE.jl/actions/workflows/CI.yml/badge.svg)
 
 ## Overview
 
@@ -64,6 +66,3 @@ The matern function (provided by BesselK, credit to Chris Geoga) generates the e
 ## Contribution
 Although the bulk of the project has been written, there are sure to be problems that arise from errors in logic. As such, please feel free to open an issue;
 we would appreciate it!
-
-
-[![CI](https://github.com/exanauts/VecchiaMLE.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/exanauts/VecchiaMLE.jl/actions/workflows/CI.yml)
