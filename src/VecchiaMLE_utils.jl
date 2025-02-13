@@ -20,7 +20,7 @@ function generate_Samples(MatCov::AbstractMatrix, n::Integer, Number_of_Samples:
         S = CuArray{Float64}(MatCov)
     else 
         V = randn(Number_of_Samples, n^2)
-        S = copy(MatCov)
+        S = Matrix{Float64}(MatCov)
     end
     LinearAlgebra.LAPACK.potrf!('L', S)
     LinearAlgebra.rmul!(V, LowerTriangular(S))
