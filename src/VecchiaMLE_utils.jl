@@ -16,14 +16,14 @@ end
 
 function generate_Samples(MatCov::AbstractMatrix, n::Integer, Number_of_Samples::Integer)::Matrix{Float64}
     if CUDA.has_cuda()
-        V = CUDA.rand(Float64, Number_of_Samples, n^2)
+        V = CUDA.randn(Float64, Number_of_Samples, n^2)
         S = CuArray{Float64}(MatCov)
     else 
-        V = rand(Number_of_Samples, n^2)
+        V = randn(Number_of_Samples, n^2)
         S = Matrix{Float64}(MatCov)
     end
-    LinearAlgebra.LAPACK.potrf!('L', S)
-    LinearAlgebra.rmul!(V, LowerTriangular(S))
+    LinearAlgebra.LAPACK.potrf!('U', S)
+    LinearAlgebra.rmul!(V, UpperTriangular(S))
     return Matrix{Float64}(V)
 end
 
