@@ -13,7 +13,6 @@ end
 function VecchiaMLE_Run_Analysis!(iVecchiaMLE::VecchiaMLEInput, pres_chol::AbstractMatrix, diagnostics::Diagnostics)
     model, output = ExecuteModel!(iVecchiaMLE, pres_chol, diagnostics)
 
-    # TODO: NEEDS TO BE IMPLEMENTED
     diagnostics.LinAlg_solve_time = output.counters.linear_solver_time
     diagnostics.MadNLP_iterations = output.iter
     diagnostics.mode = iVecchiaMLE.mode
