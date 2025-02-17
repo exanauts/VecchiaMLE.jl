@@ -1,7 +1,7 @@
 export generate_Samples, generate_MatCov, generate_xyGrid
 
 function covariance2D(xyGrid::AbstractVector, params::AbstractVector)::AbstractMatrix
-    return Symmetric([matern(x, y, params) for x in xyGrid, y in xyGrid])
+    return Symmetric([BesselK.matern(x, y, params) for x in xyGrid, y in xyGrid])
 end
 
 #function generate_Samples(MatCov::AbstractMatrix, n::Integer, Number_of_Samples::Integer)::Matrix{Float64}
