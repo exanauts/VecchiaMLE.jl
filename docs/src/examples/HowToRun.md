@@ -7,7 +7,7 @@ some necessary parameters the user needs to input, which are the following:
 using VecchiaMLE
 
 # Things for model
-n = 10
+n = 20
 k = 10
 Number_of_Samples = 100
 ```
@@ -48,7 +48,15 @@ All that's left is to run the analysis. This is done in one line:
 d, o = VecchiaMLE_Run(input)
 ```
 
-The function `VecchiaMLE_Run` returns some diagnostics that would be difficult otherwise to
+We can see the structure of the output of the program has an approximately banded structure. 
+This is due to the generation of the sparsity pattern depends on the euclidean distance between
+any given point and previously considered points in the grid.
+
+```@example HowToRun
+display(sparse(o))
+```  
+
+The function `VecchiaMLE_Run` also returns some diagnostics that would be difficult otherwise to
 retrieve, and the result of the analysis. This is the cholesky factor to the approximate precision
 matrix. You can check the KL Divergence of this approximation, with a function inside VecchiaMLE, 
 though this is not recommended for larger dimensions (n >= 30). This obviously requires the true
