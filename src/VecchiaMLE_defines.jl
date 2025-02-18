@@ -10,7 +10,7 @@ Print level of the program.
 Not implemented yet, but will be given by the user to
 determine the print level of both VecchiaMLE and MadNLP.
 """
-@enum PRINT_LEVEL VTRACE=1 VDEBUG=2 VINFO=3 VWARN=4 Error=5 VFATAL=6 end
+@enum PRINT_LEVEL VTRACE=1 VDEBUG=2 VINFO=3 VWARN=4 Error=5 VFATAL=6
 
 
 """
