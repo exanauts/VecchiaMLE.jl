@@ -69,7 +69,6 @@ mutable struct Diagnostics
     mode::Integer                       # Operation mode: CPU or GPU
 end
 
-
 """
 Struct needed for NLPModels. 
 There is no need for the user to mess with this!
