@@ -54,7 +54,7 @@ This is due to the generation of the sparsity pattern depends on the euclidean d
 any given point and previously considered points in the grid.
 
 ```@example HowToRun
-display(sparse(o))
+sparse(o)
 ```  
 
 The function `VecchiaMLE_Run` also returns some diagnostics that would be difficult otherwise to
