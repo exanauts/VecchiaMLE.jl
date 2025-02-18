@@ -8,8 +8,10 @@ makedocs(
                            prettyurls = get(ENV, "CI", nothing) == "true",
                            collapselevel = 1),
   sitename = "VecchiaMLE.jl",
-  pages = ["Home"        => "index.md"]
+  pages = ["Home" => "index.md",
+  "API" => "api.md"]
 )
+
 
 deploydocs(
   repo = "github.com/exanauts/VecchiaMLE.jl.git",

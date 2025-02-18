@@ -1,0 +1,40 @@
+
+## VecchiaMLE Defines
+```@docs
+VecchiaMLE.COMPUTE_MODE
+VecchiaMLE.PRINT_LEVEL
+VecchiaMLE.ConfigManager
+VecchiaMLE.VecchiaCache
+VecchiaMLE.Diagnostics
+VecchiaMLE.VecchiaModel
+VecchiaMLE.VecchiaMLEInput
+```
+
+## VecchiaMLE input
+
+```@docs
+VecchiaMLE.VecchiaMLE_Run
+VecchiaMLE.VecchiaMLE_Run_Analysis!
+VecchiaMLE.ExecuteModel!
+```
+
+## VecchiaMLE utils
+```@docs
+VecchiaMLE.covariance2D
+VecchiaMLE.generate_Samples
+VecchiaMLE.generate_MatCov
+VecchiaMLE.generate_xyGrid
+VecchiaMLE.generate_safe_xyGrid
+VecchiaMLE.MadNLP_Print_Level
+VecchiaMLE.Int_to_Mode
+VecchiaMLE.Uni_Error
+VecchiaMLE.IndexReorder
+VecchiaMLE.IndexMaxMin
+VecchiaMLE.dist_from_set
+VecchiaMLE.IndexRandom
+VecchiaMLE.KLDivergence
+VecchiaMLE.SparsityPattern
+VecchiaMLE.SparsityPattern_Block
+VecchiaMLE.SparsityPattern_CSC
+VecchiaMLE.sanitize_input!
+```
