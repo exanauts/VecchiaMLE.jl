@@ -95,6 +95,8 @@ function create_vecchia_cache(samples::AbstractMatrix, k::Int, xyGrid, ::Type{S}
     )
 end
 
+# Can split this up into nlp::VecchiaModel{T, <: Vector}, x::Vector, 
+# and                    nlp::VecchiaModel{T, <: CuVector}, x::CuVector
 # The objective of the optimization problem.
 function NLPModels.obj(nlp::VecchiaModel, x::AbstractVector)
     @lencheck nlp.meta.nvar x
@@ -105,6 +107,8 @@ function NLPModels.obj(nlp::VecchiaModel, x::AbstractVector)
 
     b = nlp.cache.buffer
     pos = 0
+
+    # cublasGemmGroupedBatchedEx() https://docs.nvidia.com/cuda/cublas/#cublasgemmgroupedbatchedex
     for j = 1:nlp.cache.n
         Bj = nlp.cache.B[j]
         xj = view(x, pos+1:pos+nlp.cache.m[j])
