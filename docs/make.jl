@@ -9,7 +9,8 @@ makedocs(
                            collapselevel = 1),
   sitename = "VecchiaMLE.jl",
   pages = ["Home" => "index.md",
-  "API" => "api.md"]
+    "API" => "api.md",
+    "Tutorials" => "examples/HowToRun.md"]
 )
 
 
