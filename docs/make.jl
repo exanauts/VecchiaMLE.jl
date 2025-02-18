@@ -11,8 +11,8 @@ makedocs(
   pages = ["Home" => "index.md",
     "API" => "api.md",
     "Tutorials" => "examples/HowToRun.md"]
-
 )
+
 
 deploydocs(
   repo = "github.com/exanauts/VecchiaMLE.jl.git",

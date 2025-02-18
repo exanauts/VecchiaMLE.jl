@@ -1,22 +1,29 @@
 
+"""
+Computation mode for which the analysis to run.
+Generally, we should see better performance at higher n values for the GPU.
+"""
+@enum COMPUTE_MODE CPU=1 GPU=2
 
-if !@isdefined(COMPUTE_MODE) @enum COMPUTE_MODE CPU=1 GPU=2 end 
-if !@isdefined(PRINT_LEVEL) @enum PRINT_LEVEL VTRACE=1 VDEBUG=2 VINFO=3 VWARN=4 Error=5 VFATAL=6 end
+"""
+Print level of the program.
+Not implemented yet, but will be given by the user to
+determine the print level of both VecchiaMLE and MadNLP.
+"""
+@enum PRINT_LEVEL VTRACE=1 VDEBUG=2 VINFO=3 VWARN=4 Error=5 VFATAL=6
 
 
 """
 At the moment, not used!
 """
-if !@isdefined(ConfigManager)
-    struct ConfigManager
-        n::Int                              # Size of the problem
-        k::Int                              # Length of conditioning points in Vecchia Approximation
-        mode::COMPUTE_MODE                  # Operation Mode: GPU or CPU
-        Number_of_Samples::Int              # Number of Samples from MvNormal
-        MadNLP_Print_Level::Int             # Print level for MadNLP
-        samples::Matrix{Float64}            # Holds samples
-    end
-end    
+struct ConfigManager
+    n::Int                              # Size of the problem
+    k::Int                              # Length of conditioning points in Vecchia Approximation
+    mode::COMPUTE_MODE                  # Operation Mode: GPU or CPU
+    Number_of_Samples::Int              # Number of Samples from MvNormal
+    MadNLP_Print_Level::Int             # Print level for MadNLP
+    samples::Matrix{Float64}            # Holds samples
+end
 
 """
 Internal struct from which to fetch persisting objects in the optimization function.
@@ -61,7 +68,6 @@ mutable struct Diagnostics
     MadNLP_iterations::Integer          # Iterations for MadNLP to reach optimal.
     mode::Integer                       # Operation mode: CPU or GPU
 end
-
 
 """
 Struct needed for NLPModels. 
