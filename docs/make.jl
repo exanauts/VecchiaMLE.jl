@@ -8,7 +8,10 @@ makedocs(
                            prettyurls = get(ENV, "CI", nothing) == "true",
                            collapselevel = 1),
   sitename = "VecchiaMLE.jl",
-  pages = ["Home"        => "index.md"]
+  pages = ["Home" => "index.md",
+    "API" => "api.md",
+    "Tutorials" => "examples/HowToRun.md"]
+
 )
 
 deploydocs(
