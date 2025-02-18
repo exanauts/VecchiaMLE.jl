@@ -22,7 +22,7 @@ for (i, n) in enumerate(ns)
     diagnostics_cpu, L_cpu = VecchiaMLE_Run(input)
     timings_model[1, i] = diagnostics_cpu.create_model_time
     timings_solve[1, i] = diagnostics_cpu.solve_model_time
-    timings_solve[1, i] = diagnostics_cpu.LinAlg_solve_time
+    timings_linalg[1, i] = diagnostics_cpu.LinAlg_solve_time
 
     # GPU
     if CUDA.has_cuda()
@@ -30,6 +30,6 @@ for (i, n) in enumerate(ns)
         diagnostics_gpu, L_gpu = VecchiaMLE_Run(input)
         timings_model[2, i] = diagnostics_gpu.create_model_time
         timings_solve[2, i] = diagnostics_gpu.solve_model_time
-        timings_solve[2, i] = diagnostics_gpu.LinAlg_solve_time
+        timings_linalg[2, i] = diagnostics_gpu.LinAlg_solve_time
     end
 end
