@@ -5,6 +5,7 @@ some necessary parameters the user needs to input, which are the following:
 
 ```@example HowToRun
 using VecchiaMLE
+using SparseArrays # To show matrix at the end 
 
 # Things for model
 n = 20
