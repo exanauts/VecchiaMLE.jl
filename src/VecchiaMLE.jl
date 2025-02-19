@@ -13,6 +13,7 @@ using Distributions, Statistics
 include("VecchiaMLE_defines.jl")
 include("VecchiaMLE_utils.jl")
 include("VecchiaMLE_input.jl")
+#include("models/kkt/VecchiaKKT.jl") # uncommenting to pass tests
 include("models/VecchiaMLE_NLPModel.jl")
 
 # Exports
