@@ -1,4 +1,5 @@
 **/Manifest.toml
+main.jl
 *.pdf
 *.png
 *.csv
