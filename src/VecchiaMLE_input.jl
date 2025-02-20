@@ -57,13 +57,7 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, pres_chol::AbstractMatrix, 
     xyGrid = generate_xyGrid(iVecchiaMLE.n)
 
     diags.create_model_time = @elapsed begin
-        if COMPUTE_MODE(iVecchiaMLE.mode) == CPU
-            model = VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE.k, xyGrid)
-        elseif COMPUTE_MODE(iVecchiaMLE.mode) == GPU
-            model = VecchiaModelGPU(iVecchiaMLE.samples, iVecchiaMLE.k, xyGrid)
-        else
-            @warn "Model Not Made!"     
-        end
+        model = get_vecchia_model(iVecchiaMLE)
     end
     
     diags.solve_model_time = @elapsed begin

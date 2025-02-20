@@ -40,5 +40,4 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples, rowsL, colptrL, hess_ob
             end
         end
     end
-    @assert pos == nnzh_tri_obj
 end

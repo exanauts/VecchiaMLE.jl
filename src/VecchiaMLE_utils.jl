@@ -117,6 +117,26 @@ function generate_safe_xyGrid(n::Integer)::AbstractVector
 end
 
 """
+    model = get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)
+
+    creates and returns a vecchia model based on the VecchiaMLEInput. 
+## Input arguments
+
+* `iVecchiaMLE`: The filled out VecchiaMLEInput struct
+## Output arguments
+
+* `model`: The Vecchia model based on the VecchiaMLEInput  
+"""
+function get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)::VecchiaModel
+
+    if COMPUTE_MODE(iVecchiaMLE.mode) == GPU
+       return VecchiaModelGPU(iVecchiaMLE.samples, iVecchiaMLE.k, xyGrid)
+    else 
+       return VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE.k, xyGrid)
+    end
+end
+
+"""
     log_level = MadNLP_Print_Level(pLEvel::Integer)
 
     A helper function to convert an integer to a MadNLP LogLevel.
