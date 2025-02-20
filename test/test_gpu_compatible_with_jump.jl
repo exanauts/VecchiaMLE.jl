@@ -5,7 +5,7 @@
     Number_of_Samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
     MatCov = VecchiaMLE.generate_MatCov(n, params)
-    samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples)
+    samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples; mode=COMPUTE_MODE_CPU)
     xyGrid = VecchiaMLE.generate_xyGrid(n)
     Sparsity = VecchiaMLE.SparsityPattern(xyGrid, k, "CSC")
 
@@ -27,6 +27,7 @@
     L_jump = LowerTriangular(L_jump)
 
     # Get result from VecchiaMLE
+    samples = CuMatrix{Float64}(samples)
     input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 2)
     d, L_mle = VecchiaMLE_Run(input)
 
@@ -36,5 +37,4 @@
     for i in eachindex(errors_mle)
         @test (abs(errors_jump[i] - errors_mle[i]) < 0.01)
     end
-
 end

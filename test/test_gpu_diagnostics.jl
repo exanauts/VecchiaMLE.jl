@@ -5,7 +5,7 @@
     Number_of_Samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
     MatCov = VecchiaMLE.generate_MatCov(n, params)
-    samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples)
+    samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples; mode=COMPUTE_MODE_GPU)
     
     # Get result from VecchiaMLE GPU
     input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 2)
@@ -17,5 +17,4 @@
     @test (D.LinAlg_solve_time > 0.0)
     @test (D.solve_model_time > 0.0)
     @test (D.create_model_time > 0.0)
-    
 end

@@ -16,13 +16,13 @@ determine the print level of both VecchiaMLE and MadNLP.
 """
 At the moment, not used!
 """
-struct ConfigManager
+struct ConfigManager{M}
     n::Int                              # Size of the problem
     k::Int                              # Length of conditioning points in Vecchia Approximation
     mode::COMPUTE_MODE                  # Operation Mode: GPU or CPU
     Number_of_Samples::Int              # Number of Samples from MvNormal
     MadNLP_Print_Level::Int             # Print level for MadNLP
-    samples::Matrix{Float64}            # Holds samples
+    samples::M                          # Holds samples
 end
 
 """
@@ -91,15 +91,15 @@ The fields to the struct are as follows:\n
 * `mode`: The opertaing mode to the analysis(GPU or CPU). The mapping is [1: 'CPU', 2: 'GPU'].
 
 """
-mutable struct VecchiaMLEInput
+mutable struct VecchiaMLEInput{M}
     n::Int
     k::Int
-    samples::Matrix{Float64}
+    samples::M
     Number_of_Samples::Int
     MadNLP_print_level::Int
     mode::Int
 end
 
-function VecchiaMLEInput(n::Integer, k::Integer, samples::Matrix{Float64}, Number_of_Samples::Integer, MadNLP_print_Level::Integer=5, mode::Integer=1)
-    return new(n, k, samples, Number_of_Samples, MadNLP_print_Level, mode)
+function VecchiaMLEInput(n::Integer, k::Integer, samples::M, Number_of_Samples::Integer, MadNLP_print_Level::Integer=5, mode::Integer=1) where {M<:AbstractMatrix}
+    return new{M}(n, k, samples, Number_of_Samples, MadNLP_print_Level, mode)
 end
