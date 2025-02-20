@@ -241,7 +241,8 @@ function generate_hessian_tri_structure!(nnzh::Int, n::Int, colptr_diff::Vector{
     for i in 1:n
         m = colptr_diff[i]
             for j in 1:m
-                copyto!(hrows, carry, (idx + j - 1):(idx + m - 1), 1, m - j + 1)
+                view(hrows, (1:(m-j+1)).+carry) .= (j:m).+(idx-1)
+                # copyto!(hrows, carry, (idx + j - 1):(idx + m - 1), 1, m - j + 1)
                 fill!(view(hcols, carry:carry+m-j), idx + j - 1)
                 carry += m - j + 1
             end
