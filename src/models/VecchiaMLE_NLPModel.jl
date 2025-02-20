@@ -276,41 +276,25 @@ function NLPModels.jtprod!(nlp::VecchiaModel, x::AbstractVector, v::AbstractVect
 end
 
 # function to generate the hessian structure in CSC format. 
-# Needs to be abstracted since need to hold it in NLPModel and cache, thus two calls.
 function generate_hessian_tri_structure!(nnzh::Int, n::Int, colptr_diff::Vector{Int}, hrows::AbstractVector, hcols::AbstractArray)
     carry = 1
     idx = 1
-    filtered_rows_entire = zeros(length(hrows))
-    filtered_cols_entire = zeros(length(hcols))
     for i in 1:n
-        block_side_length = colptr_diff[i]
-        block_range = idx:(idx+block_side_length-1)
-    
-        B_i_rows = repeat(block_range, outer=block_side_length)
-        B_i_cols = repeat(block_range, inner=block_side_length)
-    
-        lower_tri_mask = B_i_rows .>= B_i_cols
-        filtered_rows = view(B_i_rows, lower_tri_mask)
-        filtered_cols = view(B_i_cols, lower_tri_mask)
-
-        # NOTE: Fine since on CPU
-        @views filtered_rows_entire[(0:length(filtered_rows)-1).+carry] .= filtered_rows
-        @views filtered_cols_entire[(0:length(filtered_cols)-1).+carry] .= filtered_cols
-            
-        carry += length(filtered_rows)
-        idx += block_side_length
+        m = colptr_diff[i]
+            for j in 1:m
+                copyto!(hrows, carry, (idx + j - 1):(idx + m - 1), 1, m - j + 1)
+                fill!(view(hcols, carry:carry+m-j), idx + j - 1)
+                carry += m - j + 1
+            end
+        idx += m
     end
 
     #Then need the diagonal tail
     idx_to = idx + nnzh - carry
 
-    # CPU copy
-    @views filtered_rows_entire[end-n+1:end] .= idx:idx_to
-    @views filtered_cols_entire[end-n+1:end] .= filtered_rows_entire[end-n+1:end]
-
     # One set of copies to GPU. More efficient
-    copyto!(hrows, 1, filtered_rows_entire, 1, nnzh)
-    copyto!(hcols, 1, filtered_cols_entire, 1, nnzh)
+    copyto!(hrows, carry, idx:idx_to, 1, nnzh-carry+1)
+    copyto!(hcols, carry, idx:idx_to, 1, nnzh-carry+1)
 
     return hrows, hcols
 end
