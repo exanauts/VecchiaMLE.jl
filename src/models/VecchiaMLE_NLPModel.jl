@@ -57,24 +57,7 @@ function create_vecchia_cache(samples::AbstractMatrix, k::Int, xyGrid, ::Type{S}
 
     B = [Matrix{T}(undef, m[j], m[j]) for j = 1:n]
     hess_obj_vals = Vector{T}(undef, nnzh_tri_obj)
-
-    pos = 0
-    for j in 1:n
-        for s in 1:m[j]
-            for t in 1:m[j]
-                vt = view(samples, :, rowsL[colptrL[j] + t - 1])
-                vs = view(samples, :, rowsL[colptrL[j] + s - 1])
-                B[j][t, s] = dot(vt, vs)
-
-                # Lower triangular part of the block Bⱼ
-                if s ≤ t
-                    pos = pos + 1
-                    hess_obj_vals[pos] = B[j][t, s]
-                end
-            end
-        end
-    end
-    @assert pos == nnzh_tri_obj
+    vecchia_build_B!(B, samples, rowsL, colptrL, hess_obj_vals, n, m)
 
     if S != Vector{Float64}
         B = [CuMatrix{T}(B[j]) for j = 1:n]
@@ -120,7 +103,6 @@ function NLPModels.grad!(nlp::VecchiaModel, x::AbstractVector, gx::AbstractVecto
     # n is the number of blocks Bj in B
     # m is a vector of length n that gives the dimensions of each block Bj
     vecchia_mul!(gx, nlp.cache.B, x, nlp.cache.n, nlp.cache.m)
-
     gx_z = view(gx, nlp.cache.nnzL+1:nlp.meta.nvar)
     fill!(gx_z, -nlp.cache.M)
 
@@ -170,15 +152,9 @@ function NLPModels.hprod!(nlp::VecchiaModel, x::AbstractVector, y::AbstractVecto
     @lencheck nlp.meta.nvar Hv
     increment!(nlp, :neval_hprod)
     
-    pos = 0
-    for j = 1:nlp.cache.n
-        Bj = nlp.cache.B[j]
-        vj = view(v, pos+1:pos+nlp.cache.m[j])
-        Hvj = view(Hv, pos+1:pos+nlp.cache.m[j])
-        mul!(Hvj, Bj, vj)
-        pos = pos + nlp.cache.m[j]
-    end
-
+    # n is the number of blocks Bj in B
+    # m is a vector of length n that gives the dimensions of each block Bj
+    vecchia_mul!(Hv, nlp.cache.B, v, nlp.cache.n, nlp.cache.m)
     view(Hv, nlp.cache.nnzL+1:nlp.meta.nvar) .-= nlp.cache.M .* y
     return Hv
 end
