@@ -177,9 +177,12 @@ function NLPModels.jac_structure!(nlp::VecchiaModel, jrows::AbstractVector, jcol
     @lencheck 2*nlp.cache.n jcols
 
     copyto!(view(jcols, 1:nlp.cache.n), view(nlp.cache.colptrL, 1:nlp.cache.n))
-    copyto!(view(jcols, (1:nlp.cache.n).+nlp.cache.n), (1:nlp.cache.n).+nlp.cache.nnzL)
-    copyto!(view(jrows, 1:nlp.cache.n), 1:nlp.cache.n)
-    copyto!(view(jrows, (1:nlp.cache.n).+nlp.cache.n), 1:nlp.cache.n)
+    view(jcols, (1:nlp.cache.n).+nlp.cache.n) .= (1:nlp.cache.n).+nlp.cache.nnzL
+    view(jrows, 1:nlp.cache.n) .= 1:nlp.cache.n
+    view(jrows, (1:nlp.cache.n).+nlp.cache.n) .= 1:nlp.cache.n
+    # copyto!(view(jcols, (1:nlp.cache.n).+nlp.cache.n), (1:nlp.cache.n).+nlp.cache.nnzL)
+    # copyto!(view(jrows, 1:nlp.cache.n), 1:nlp.cache.n)
+    # copyto!(view(jrows, (1:nlp.cache.n).+nlp.cache.n), 1:nlp.cache.n)
     return jrows, jcols
 end
 
@@ -249,8 +252,10 @@ function generate_hessian_tri_structure!(nnzh::Int, n::Int, colptr_diff::Vector{
     idx_to = idx + nnzh - carry
 
     # One set of copies to GPU. More efficient
-    copyto!(hrows, carry, idx:idx_to, 1, nnzh-carry+1)
-    copyto!(hcols, carry, idx:idx_to, 1, nnzh-carry+1)
+    view(hrows, carry:nnzh) .= idx:idx_to
+    view(hcols, carry:nnzh) .= idx:idx_to
+    # copyto!(hrows, carry, idx:idx_to, 1, nnzh-carry+1)
+    # copyto!(hcols, carry, idx:idx_to, 1, nnzh-carry+1)
 
     return hrows, hcols
 end
