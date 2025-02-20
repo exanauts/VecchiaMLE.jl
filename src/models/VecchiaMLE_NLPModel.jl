@@ -86,7 +86,7 @@ function create_vecchia_cache(samples::AbstractMatrix, k::Int, xyGrid, ::Type{S}
     diagL = colptrL[1:n]
     buffer = S(undef, nnzL)
 
-    return VecchiaCache{eltype(S), S, typeof(rowsL), typeof(B)}(
+    return VecchiaCache{eltype(S), S, typeof(rowsL), typeof(B[1])}(
         n, M, nnzL, 
         colptrL, rowsL, colsL, diagL,
         m, B, nnzh_tri_obj,
@@ -154,6 +154,17 @@ function NLPModels.hess_structure!(nlp::VecchiaModel, hrows::AbstractVector, hco
 end
 
 # Fills out Hessian non zeros.
+function NLPModels.hess_coord!(nlp::VecchiaModel, x::AbstractVector, hvals::AbstractVector; obj_weight::Real=1.0)
+    @lencheck nlp.meta.nnzh hvals
+    increment!(nlp, :neval_hess)
+    hvals_obj = view(hvals, 1:nlp.cache.nnzh_tri_obj)
+    hvals_obj .= nlp.cache.hess_obj_vals .* obj_weight
+
+    hvals_con = view(hvals, nlp.cache.nnzh_tri_obj+1:nlp.cache.nnzh_tri_lag)
+    fill!(hvals_con, 0.0)
+    return hvals
+end
+
 function NLPModels.hess_coord!(nlp::VecchiaModel, x::AbstractVector, y::AbstractVector, hvals::AbstractVector; obj_weight::Real=1.0)
     @lencheck nlp.meta.nnzh hvals
     increment!(nlp, :neval_hess)
