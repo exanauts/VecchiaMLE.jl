@@ -252,7 +252,7 @@ function NLPModels.jprod!(nlp::VecchiaModel, x::AbstractVector, v::AbstractVecto
     z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
     copyto!(
         Jv, 1,
-        -view(v, 1:nlp.cache.colptrL[1:end-1]) + exp.(z) .* view(v, (1:nlp.cache.n).+nlp.cache.nnzL),
+        -view(v, view(nlp.cache.colptrL, 1:nlp.cache.n)) .+ exp.(z) .* view(v, (1:nlp.cache.n).+nlp.cache.nnzL),
         1, nlp.cache.n
     )
     return Jv
