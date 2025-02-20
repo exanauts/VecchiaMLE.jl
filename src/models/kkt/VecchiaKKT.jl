@@ -59,15 +59,18 @@ function MadNLP.create_kkt_system(
     # Get S, need potrf_batch and potrs_batch.
     # How do I do this?
     B_cpy = copy(nlp.cache.B)
-    S = [CuVector{T}(m[j]) for j in eachindex(m)]
+    S = [CuVector{T}([T(i == j) for i in 1:(m[j+1] - m[j] + 1)]) for j in eachindex(m)]
     CUDA.CUSOLVER.potrfBatched!('U', B_cpy)
     CUDA.CUSOLVER.potrsBatched!('U', B_cpy, S)
-
+    
     # Next need NBNT, D, Λ, buffer. I don't know how to get these!
+    # These probably wont work, but it's in the spirit of what I want. 
     NBNT = [S[j][j] for j in eachindex(m)]
-    D = [(nlp.values)[m[i]] for i in eachindex(m)]
+    D = [exp((nlp.values)[m[j]]) for j in eachindex(m)]
     Λ = nlp.lagrange_multipliers
-    buffer = zeros(p+n)
+
+    # Setting the buffer avoids edge cases for small k values 
+    buffer = zeros(T, max(p+n, 3*n))
 
     return VecchiaKKTSystem(
         NBNT, 
@@ -146,7 +149,7 @@ function MadNLP.solve!(kkt::VecchiaKKT, w::MadNLP.AbstractKKTVector)
     # view onto diagonal to add Δλ entries
     buffer_diag_y = view(buffer_dy_ptr, kkt.m)
     buffer_diag_y .= Δλ         # Note negative (of the Nᵀ) cancels out with the other negative 
-    # That SHOULD for the RHS of Δy
+    # That SHOULD be the RHS of Δy
 
     
     # The S_j's are the nonzero elements of B⁻¹. 
