@@ -176,10 +176,10 @@ function NLPModels.jac_structure!(nlp::VecchiaModel, jrows::AbstractVector, jcol
     @lencheck 2*nlp.cache.n jrows
     @lencheck 2*nlp.cache.n jcols
 
-    copyto!(jcols, 1, view(nlp.cache.colptrL, 1:nlp.cache.n), 1, nlp.cache.n)
-    copyto!(jcols, 1+nlp.cache.n, (1:nlp.cache.n).+nlp.cache.nnzL, 1, nlp.cache.n)
-    copyto!(jrows, 1, 1:nlp.cache.n, 1, nlp.cache.n)
-    copyto!(jrows, nlp.cache.n+1, 1:nlp.cache.n, 1, nlp.cache.n)
+    copyto!(view(jcols, 1:nlp.cache.n), view(nlp.cache.colptrL, 1:nlp.cache.n))
+    copyto!(view(jcols, (1:nlp.cache.n).+nlp.cache.n), (1:nlp.cache.n).+nlp.cache.nnzL)
+    copyto!(view(jrows, 1:nlp.cache.n), 1:nlp.cache.n)
+    copyto!(view(jrows, (1:nlp.cache.n).+nlp.cache.n), 1:nlp.cache.n)
     return jrows, jcols
 end
 
