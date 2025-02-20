@@ -21,7 +21,6 @@ VecchiaMLE.ExecuteModel!
 ## VecchiaMLE utils
 ```@docs
 VecchiaMLE.covariance2D
-VecchiaMLE.get_vecchia_model 
 VecchiaMLE.generate_Samples
 VecchiaMLE.generate_MatCov
 VecchiaMLE.generate_xyGrid
