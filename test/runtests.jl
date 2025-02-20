@@ -8,7 +8,7 @@ using LinearAlgebra
 using CUDA
 
 using .VecchiaMLE
-using VecchiaMLE: COMPUTE_MODE_CPU, COMPUTE_MODE_GPU
+using VecchiaMLE: CPU, GPU
 
 include("models/JumpModel.jl")
 include("models/VecchiaMLE_models.jl")
