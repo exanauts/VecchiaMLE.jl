@@ -20,5 +20,4 @@ if CUDA.has_cuda()
     include("test_cpu_compatible_with_gpu.jl")
 end
 
-
 include("test_model_inputs.jl")
