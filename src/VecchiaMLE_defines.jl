@@ -98,8 +98,8 @@ mutable struct VecchiaMLEInput{M}
     Number_of_Samples::Int
     MadNLP_print_level::Int
     mode::Int
-end
 
-function VecchiaMLEInput(n::Integer, k::Integer, samples::M, Number_of_Samples::Integer, MadNLP_print_Level::Integer=5, mode::Integer=1) where {M<:AbstractMatrix}
-    return new{M}(n, k, samples, Number_of_Samples, MadNLP_print_Level, mode)
+    function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, MadNLP_print_Level::Int=5, mode::Int=1) where {M<:AbstractMatrix}
+        return new{M}(n, k, samples, Number_of_Samples, MadNLP_print_Level, mode)
+    end
 end
