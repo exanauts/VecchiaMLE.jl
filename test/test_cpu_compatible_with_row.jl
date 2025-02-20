@@ -5,7 +5,7 @@
     Number_of_Samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
     MatCov = VecchiaMLE.generate_MatCov(n, params)
-    samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples)
+    samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples; mode=CPU)
     xyGrid = VecchiaMLE.generate_xyGrid(n)
     Sparsity = VecchiaMLE.SparsityPattern(xyGrid, k, "")
 
@@ -24,5 +24,4 @@
     for i in eachindex(errors_mle)
         @test (abs(errors_mle[i] - errors_row[i]) < 1.0)
     end
-
 end

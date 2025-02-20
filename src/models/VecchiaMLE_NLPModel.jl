@@ -3,8 +3,6 @@
 function VecchiaModel(::Type{S}, samples::AbstractMatrix, k::Int, xyGrid) where {S<:AbstractArray}
     T = eltype(S)
 
-    
-    # NOTE: samples are on CPU. Need to port to GPU if in that mode. 
     cache = create_vecchia_cache(samples, k, xyGrid, S)
     nvar_ = length(cache.rowsL) + length(cache.colptrL) - 1
     
@@ -44,7 +42,7 @@ VecchiaModelGPU(samples::AbstractMatrix, k::Int, xyGrid) = VecchiaModel(CuArray{
 
 # Constructing the vecchia cache used everywhere in the code below.
 function create_vecchia_cache(samples::AbstractMatrix, k::Int, xyGrid, ::Type{S}) where {S <: AbstractVector}
-    M = size(samples, 1)
+    Msamples = size(samples, 1)
     n = size(samples, 2)
     T = eltype(S)
 
@@ -73,7 +71,7 @@ function create_vecchia_cache(samples::AbstractMatrix, k::Int, xyGrid, ::Type{S}
     buffer = S(undef, nnzL)
 
     return VecchiaCache{eltype(S), S, typeof(rowsL), typeof(B[1])}(
-        n, M, nnzL, 
+        n, Msamples, nnzL,
         colptrL, rowsL, colsL, diagL,
         m, B, nnzh_tri_obj,
         nnzh_tri_lag, hess_obj_vals,
