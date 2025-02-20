@@ -57,7 +57,7 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, pres_chol::AbstractMatrix, 
     xyGrid = generate_xyGrid(iVecchiaMLE.n)
 
     diags.create_model_time = @elapsed begin
-        model = get_vecchia_model(iVecchiaMLE)
+        model = get_vecchia_model(iVecchiaMLE, xyGrid)
     end
     
     diags.solve_model_time = @elapsed begin
