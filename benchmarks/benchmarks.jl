@@ -1,7 +1,8 @@
-using VecchiaMLE, CUDA
+using VecchiaMLE, CUDA, DelimitedFiles
 
 # Parameters
-ns = 10:10:200
+# ns = 10:10:200
+ns = 10:5:100
 k = 10
 Number_of_Samples = 100
 params = [5.0, 0.2, 2.25, 0.25]
@@ -32,4 +33,16 @@ for (i, n) in enumerate(ns)
         timings_solve[2, i] = diagnostics_gpu.solve_model_time
         timings_linalg[2, i] = diagnostics_gpu.LinAlg_solve_time
     end
+end
+
+open("timings_linalg.txt", "w") do io
+    writedlm(io, timings_linalg)
+end
+
+open("timings_model.txt", "w") do io
+    writedlm(io, timings_model)
+end
+
+open("timings_solve.txt", "w") do io
+    writedlm(io, timings_solve)
 end
