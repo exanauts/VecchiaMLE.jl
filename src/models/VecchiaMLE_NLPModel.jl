@@ -95,8 +95,6 @@ function create_vecchia_cache(samples::AbstractMatrix, k::Int, xyGrid, ::Type{S}
     )
 end
 
-# Can split this up into nlp::VecchiaModel{T, <: Vector}, x::Vector, 
-# and                    nlp::VecchiaModel{T, <: CuVector}, x::CuVector
 # The objective of the optimization problem.
 function NLPModels.obj(nlp::VecchiaModel, x::AbstractVector)
     @lencheck nlp.meta.nvar x
@@ -105,19 +103,11 @@ function NLPModels.obj(nlp::VecchiaModel, x::AbstractVector)
     z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
     t1 = -nlp.cache.M * sum(z)
 
-    b = nlp.cache.buffer
-    pos = 0
-
-    # cublasGemmGroupedBatchedEx() https://docs.nvidia.com/cuda/cublas/#cublasgemmgroupedbatchedex
-    for j = 1:nlp.cache.n
-        Bj = nlp.cache.B[j]
-        xj = view(x, pos+1:pos+nlp.cache.m[j])
-        bj = view(b, pos+1:pos+nlp.cache.m[j])
-        mul!(bj, Bj, xj)
-        pos = pos + nlp.cache.m[j]
-    end
+    # n is the number of blocks Bj in B
+    # m is a vector of length n that gives the dimensions of each block Bj
+    vecchia_mul!(nlp.cache.buffer, nlp.cache.B, x, nlp.cache.n, nlp.cache.m)
     y = view(x, 1:nlp.cache.nnzL)
-    t2 = dot(b, y)
+    t2 = dot(nlp.cache.buffer, y)
 
     return t1 + 0.5 * t2
 end
@@ -127,14 +117,9 @@ function NLPModels.grad!(nlp::VecchiaModel, x::AbstractVector, gx::AbstractVecto
     @lencheck nlp.meta.nvar x gx
     increment!(nlp, :neval_grad)
     
-    pos = 0
-    for j = 1:nlp.cache.n
-        Bj = nlp.cache.B[j]
-        xj = view(x, pos+1:pos+nlp.cache.m[j])
-        gxj = view(gx, pos+1:pos+nlp.cache.m[j])
-        mul!(gxj, Bj, xj)
-        pos = pos + nlp.cache.m[j]
-    end
+    # n is the number of blocks Bj in B
+    # m is a vector of length n that gives the dimensions of each block Bj
+    vecchia_mul!(gx, nlp.cache.B, x, nlp.cache.n, nlp.cache.m)
 
     gx_z = view(gx, nlp.cache.nnzL+1:nlp.meta.nvar)
     fill!(gx_z, -nlp.cache.M)
