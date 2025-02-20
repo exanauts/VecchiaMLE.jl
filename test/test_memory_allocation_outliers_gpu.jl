@@ -12,7 +12,7 @@
     mems = test_allocs_nlpmodels(model_gpu)
 
     # Should only expect to see two values, one where we need two vectors and the other where we need one
-    mem_arr = sort(unique([mems[i] for i in mems if (!isnan(mems[i]) && mems[i] > 0.0)]))
+    mem_arr = sort(unique([x for x in values(mems) if (!isnan(x) && x > 0.0)]))
 
     @test (length(mem_arr) == 2)
     @test (mem_arr[2] / mem_arr[1] ≈ 2.0)
