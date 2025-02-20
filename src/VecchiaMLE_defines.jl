@@ -29,7 +29,7 @@ end
 Internal struct from which to fetch persisting objects in the optimization function.
 There is no need for the user to mess with this!
 """
-struct VecchiaCache{T, S, VI, SM}
+struct VecchiaCache{T, S, VI, M}
     n::Int                              # Size of the problem
     M::Int                              # Number of Samples
     nnzL::Int                           # Number of nonzeros in L
@@ -38,7 +38,7 @@ struct VecchiaCache{T, S, VI, SM}
     colsL::VI                           # Column index of nonzero entries in L
     diagL::VI                           # Position of the diagonal coefficient of L
     m::Vector{Int}                      # Number of nonzeros in each column of L
-    B::SM                               # Vector of Matrices Bⱼ, the constant blocks in the Hessian
+    B::Vector{M}                        # Vector of Matrices Bⱼ, the constant blocks in the Hessian
     nnzh_tri_obj::Int                   # Number of nonzeros in the lower triangular part of the Hessian of the objective
     nnzh_tri_lag::Int                   # Number of nonzeros in the lower triangular part of the Hessian of the Lagrangian
     hess_obj_vals::S                    # Nonzeros of the lower triangular part of the Hessian of the objective
@@ -65,18 +65,18 @@ mutable struct Diagnostics
     objective_value::Float64            # Optimal Objective value. 
     normed_constraint_value::Float64    # Optimal norm of constraint vector.
     normed_grad_value::Float64          # Optimal norm of gradient vector.
-    MadNLP_iterations::Integer          # Iterations for MadNLP to reach optimal.
-    mode::Integer                       # Operation mode: CPU or GPU
+    MadNLP_iterations::Int              # Iterations for MadNLP to reach optimal.
+    mode::Int                           # Operation mode: CPU or GPU
 end
 
 """
 Struct needed for NLPModels. 
 There is no need for the user to mess with this!
 """
-mutable struct VecchiaModel{T, S} <: AbstractNLPModel{T, S}
+mutable struct VecchiaModel{T, S, VI, M} <: AbstractNLPModel{T, S}
     meta::NLPModelMeta{T, S}
     counters::Counters
-    cache::VecchiaCache
+    cache::VecchiaCache{T, S, VI, M}
 end
 
 """
@@ -92,13 +92,14 @@ The fields to the struct are as follows:\n
 
 """
 mutable struct VecchiaMLEInput
-    n::Integer
-    k::Integer
+    n::Int
+    k::Int
     samples::Matrix{Float64}
-    Number_of_Samples::Integer
-    MadNLP_print_level::Integer
-    mode::Integer
-    function VecchiaMLEInput(n::Integer, k::Integer, samples::Matrix{Float64}, Number_of_Samples::Integer, MadNLP_print_Level::Integer=5, mode::Integer=1)
-        return new(n, k, samples, Number_of_Samples, MadNLP_print_Level, mode)
-    end
+    Number_of_Samples::Int
+    MadNLP_print_level::Int
+    mode::Int
+end
+
+function VecchiaMLEInput(n::Integer, k::Integer, samples::Matrix{Float64}, Number_of_Samples::Integer, MadNLP_print_Level::Integer=5, mode::Integer=1)
+    return new(n, k, samples, Number_of_Samples, MadNLP_print_Level, mode)
 end
