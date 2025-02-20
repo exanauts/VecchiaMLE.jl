@@ -117,22 +117,23 @@ function generate_safe_xyGrid(n::Integer)::AbstractVector
 end
 
 """
-    model = get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)
+    model = get_vecchia_model(iVecchiaMLE::VecchiaMLEInput, ptGrid::AbstractVector)
 
-    creates and returns a vecchia model based on the VecchiaMLEInput. 
+    creates and returns a vecchia model based on the VecchiaMLEInput and point grid. 
 ## Input arguments
 
 * `iVecchiaMLE`: The filled out VecchiaMLEInput struct
+* `ptGrid`: The grid of locations
 ## Output arguments
 
 * `model`: The Vecchia model based on the VecchiaMLEInput  
 """
-function get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)::VecchiaModel
+function get_vecchia_model(iVecchiaMLE::VecchiaMLEInput, ptGrid::AbstractVector)::VecchiaModel
 
     if COMPUTE_MODE(iVecchiaMLE.mode) == GPU
-       return VecchiaModelGPU(iVecchiaMLE.samples, iVecchiaMLE.k, xyGrid)
+       return VecchiaModelGPU(iVecchiaMLE.samples, iVecchiaMLE.k, ptGrid)
     else 
-       return VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE.k, xyGrid)
+       return VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE.k, ptGrid)
     end
 end
 
