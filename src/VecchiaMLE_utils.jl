@@ -25,7 +25,8 @@ end
 """
     Samples_Matrix = generate_Samples(MatCov::AbstractMatrix, 
                                       n::Integer,
-                                      Number_of_Samples::Integer)
+                                      Number_of_Samples::Int;
+                                      mode::VecchiaMLE.COMPUTE_MODE )
 
     Generate a number of samples according to the given Covariance Matrix MatCov.
     Note the samples are given as mean zero. 
@@ -38,21 +39,27 @@ end
 * `n`: The length of one side of the Covariance matrix;
 * `Number_of_Samples`: How many samples to return.
 
+## Keyword Arguments
+* `mode`: Either generate samples on GPU or CPU
+
 ## Output arguments
 
 * `Samples_Matrix` : A matrix of size (Number_of_Samples × n), where the rows are the i.i.d samples  
 """
-function generate_Samples(MatCov::AbstractMatrix, n::Integer, Number_of_Samples::Integer)::Matrix{Float64}
-    if CUDA.has_cuda()
+function generate_Samples(MatCov::AbstractMatrix, n::Integer, Number_of_Samples::Integer; mode::COMPUTE_MODE=CPU)::AbstractMatrix
+    if mode == GPU
         V = CUDA.randn(Float64, Number_of_Samples, n^2)
         S = CuArray{Float64}(MatCov)
-    else 
+    elseif mode == CPU 
         V = randn(Number_of_Samples, n^2)
         S = Matrix{Float64}(MatCov)
+    else
+        error("Unsupported compute mode!")
     end
+
     LinearAlgebra.LAPACK.potrf!('U', S)
     LinearAlgebra.rmul!(V, UpperTriangular(S))
-    return Matrix{Float64}(V)
+    return V
 end
 
 """
