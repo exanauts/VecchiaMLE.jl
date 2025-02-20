@@ -2,6 +2,9 @@
 
 function VecchiaModel(::Type{S}, samples::AbstractMatrix, k::Int, xyGrid) where {S<:AbstractArray}
     T = eltype(S)
+
+    
+    # NOTE: samples are on CPU. Need to port to GPU if in that mode. 
     cache = create_vecchia_cache(samples, k, xyGrid, S)
     nvar_ = length(cache.rowsL) + length(cache.colptrL) - 1
     
@@ -177,9 +180,9 @@ function NLPModels.jac_structure!(nlp::VecchiaModel, jrows::AbstractVector, jcol
     @lencheck 2*nlp.cache.n jcols
 
     copyto!(view(jcols, 1:nlp.cache.n), view(nlp.cache.colptrL, 1:nlp.cache.n))
-    copyto!(view(jcols, (1:nlp.cache.n).+nlp.cache.n), (1:nlp.cache.n).+nlp.cache.nnzL)
-    copyto!(view(jrows, 1:nlp.cache.n), 1:nlp.cache.n)
-    copyto!(view(jrows, (1:nlp.cache.n).+nlp.cache.n), 1:nlp.cache.n)
+    view(jcols, (1:nlp.cache.n).+nlp.cache.n) .= (1:nlp.cache.n).+nlp.cache.nnzL
+    view(jrows, 1:nlp.cache.n) .= 1:nlp.cache.n
+    view(jrows, (1:nlp.cache.n).+nlp.cache.n) .= 1:nlp.cache.n
     return jrows, jcols
 end
 
@@ -238,19 +241,21 @@ function generate_hessian_tri_structure!(nnzh::Int, n::Int, colptr_diff::Vector{
     for i in 1:n
         m = colptr_diff[i]
             for j in 1:m
-                copyto!(hrows, carry, (idx + j - 1):(idx + m - 1), 1, m - j + 1)
+                #copyto!(hrows, carry, (idx + j - 1):(idx + m - 1), 1, m - j + 1)
+                view(hrows, (0:(m-j+1)).+carry) .= (j:m).+(idx-1)
                 fill!(view(hcols, carry:carry+m-j), idx + j - 1)
                 carry += m - j + 1
             end
         idx += m
     end
+    #view(hrows, (idx + j - 1):(idx + m - 1)) .= view(carry, 1:(m - j + 1))
 
     #Then need the diagonal tail
     idx_to = idx + nnzh - carry
 
     # One set of copies to GPU. More efficient
-    copyto!(hrows, carry, idx:idx_to, 1, nnzh-carry+1)
-    copyto!(hcols, carry, idx:idx_to, 1, nnzh-carry+1)
+    view(hrows, carry:nnzh) .= idx:idx_to
+    view(hcols, carry:nnzh) .= idx:idx_to
 
     return hrows, hcols
 end
