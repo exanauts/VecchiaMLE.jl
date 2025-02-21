@@ -16,6 +16,15 @@
     if length(mem_arr) < 2
         return 
     end
+
+    @test mems[:obj] == 0.0
+    @test mems[:grad!] == 0.0
+    @test mems[:cons!] == 0.0
+    @test mems[:hess_structure!] == 0.0
+    @test mems[:jac_structure!] == 0.0
+    @test mems[:jac_coorc!] == 0.0
+    @test mems[:hess_coord!] == 0.0
+
     
     # iterative testing of memory ratios
     for i in eachindex(mem_arr)
