@@ -25,7 +25,7 @@ function vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, x::CuVector{T}, 
 
     # Launch the kernel
     backend = KA.get_backend(y)
-    vecchia_mul_kernel!(device)(y, B, x, m, n, offsets, ndrange=n)
+    vecchia_mul_kernel!(backend)(y, B, x, m, n, offsets, ndrange=n)
     KA.synchronize(backend)
     return y
 end
