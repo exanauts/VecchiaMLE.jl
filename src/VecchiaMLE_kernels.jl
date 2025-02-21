@@ -1,17 +1,21 @@
 @kernel inbounds=true function vecchia_mul_kernel!(y, @Const(hess_obj_vals), @Const(x), @Const(m), @Const(n), @Const(colptrL), @Const(offsets))
     index = @index(Global)
-    if index <= n
-        # Compute the starting position for the current block using the column pointer
-        pos = colptrL[index]
-        offset = offsets[index]
-        mj = m[index]
 
-        # Perform the matrix-vector multiplication for the current symmetric block
-        for j in 1:mj
-            idx1 = ((j - 1) * (2*mj - j + 2)) ÷ 2
-            for i in j:mj
-                idx2 = idx1 + (i - j + 1)
-                val = hess_obj_vals[pos-1+idx2]
+    pos = colptrL[index]
+    offset = offsets[index]
+    mj = m[index]
+
+    # Perform the matrix-vector multiplication for the current symmetric block
+    for j in 1:mj
+        idx1 = j * (j-1) ÷ 2
+        for i in j:mj
+            idx2 = idx1 + (i - j + 1)
+            val = hess_obj_vals[pos-1+idx2]
+
+            # Diagonal element contributes only once
+            if i == j
+                y[offset+i] += val * x[offset+j]
+            else
                 y[offset+i] += val * x[offset+j]
                 y[offset+j] += val * x[offset+i]  # due to symmetry A[i,j] = A[j,i]
             end
