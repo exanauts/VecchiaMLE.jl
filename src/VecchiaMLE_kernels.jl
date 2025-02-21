@@ -7,7 +7,7 @@
 
 #     # Perform the matrix-vector multiplication for the current symmetric block
 #     for j in 1:mj
-#         idx1 = j * (j-1) ÷ 2
+#         idx1 = (j - 1) * (mj + 1) - j * (j-1) ÷ 2
 #         for i in j:mj
 #             idx2 = idx1 + (i - j + 1)
 #             val = hess_obj_vals[pos-1+idx2]
@@ -84,7 +84,7 @@ end
 end
 
 function vecchia_build_B!(B::Vector{Matrix{T}}, samples::CuMatrix{T}, rowsL::Vector{Int}, colptrL::Vector{Int}, hess_obj_vals::CuVector{T}, n::Int, m::Vector{Int}) where T <: AbstractFloat
-    hess_obj_vals2 = copy(hess_obj_vals)
+    hess_obj_vals2 = Vector(hess_obj_vals)
 
     pos = 0
     for j in 1:n
@@ -109,7 +109,7 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::CuMatrix{T}, rowsL::Vec
     kernel = vecchia_build_B_kernel!(backend)
     kernel(hess_obj_vals, samples, CuVector(rowsL), CuVector(colptrL), CuVector(m), n, r, ndrange=n)
     println("BOB!")
-    bob = hess_obj_vals2 - hess_obj_vals
+    bob = hess_obj_vals2 - Vector(hess_obj_vals)
     println(norm(bob))
     for (i, v) in enumerate(bob)
         println("i: $i , val: $val")
