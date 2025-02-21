@@ -66,18 +66,20 @@ end
                                          @Const(m), @Const(n), @Const(r))
     index = @index(Global)
 
-    pos = colptrL[index]
-    mj = m[index]
+    if index <= n
+        pos = colptrL[index]
+        mj = m[index]
 
-    k = 0
-    for s in 1:mj
-        for t in s:mj
-            acc = 0.0
-            for i = 1:r
-                acc += samples[i, rowsL[pos + t - 1]] * samples[i, rowsL[pos + s - 1]]
+        k = 0
+        for s in 1:mj
+            for t in s:mj
+                acc = 0.0
+                for i = 1:r
+                    acc += samples[i, rowsL[pos+t-1]] * samples[i, rowsL[pos+s-1]]
+                end
+                hess_obj_vals[pos+k] = acc
+                k = k + 1
             end
-            hess_obj_vals[pos+k] = acc
-            k = k + 1
         end
     end
     nothing
