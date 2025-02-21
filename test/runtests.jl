@@ -6,7 +6,7 @@ using MadNLP, MadNLPGPU
 using SparseArrays
 using LinearAlgebra
 using CUDA
-using Statistics
+using NLPModelsTest
 
 using .VecchiaMLE
 
