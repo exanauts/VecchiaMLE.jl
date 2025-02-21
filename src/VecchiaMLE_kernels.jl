@@ -93,12 +93,12 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::CuMatrix{T}, rowsL::Vec
                 vt = view(samples, :, rowsL[colptrL[j] + t - 1])
                 vs = view(samples, :, rowsL[colptrL[j] + s - 1])
                 B[j][t, s] = dot(vt, vs)
-            end
 
-            # Lower triangular part of the block Bⱼ
-            if s ≤ t
-                pos = pos + 1
-                hess_obj_vals2[pos] = B[j][t, s]
+                # Lower triangular part of the block Bⱼ
+                if s ≤ t
+                    pos = pos + 1
+                    hess_obj_vals2[pos] = B[j][t, s]
+                end
             end
         end
     end
