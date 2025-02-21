@@ -8,8 +8,8 @@
 
         # Perform the matrix-vector multiplication for the current symmetric block
         for j in 1:mj
-            idx1 = ((j - 1) * (2*n - j + 2)) ÷ 2
-            for i in j:n
+            idx1 = ((j - 1) * (2*mj - j + 2)) ÷ 2
+            for i in j:mj
                 idx2 = idx1 + (i - j + 1)
                 val = hess_obj_vals[pos-1+idx2]
                 y[offset+i] += val * x[offset+j]
