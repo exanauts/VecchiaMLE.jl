@@ -50,24 +50,48 @@ function vecchia_mul!(y::Vector{T}, B::Vector{Matrix{T}}, hess_obj_vals::Vector{
     return y
 end
 
-# We want to replace this function by a kernel implemented with KernelAbstractions.jl
-function vecchia_build_B!(B::Vector{Matrix{T}}, samples::CuMatrix{T}, rowsL::Vector{Int}, colptrL::Vector{Int}, hess_obj_vals::Vector{T}, n::Int, m::Vector{Int}) where T <: AbstractFloat
-    pos = 0
+@kernel function vecchia_build_B_kernel!(hess_obj_vals, @Const(samples), @Const(rowsL), @Const(colptrL),
+                                         @Const(m), @Const(n), @Const(r), @Const(offsets))
+    index = @index(Global)
+
+    pos = colptrL[index]
+    offset = offsets[index]
+    mj = m[index]
+
+    T = eltype(samples)
+    k = 0
+    for t in 1:mj
+        for s in t:mj
+            acc = zero(T)
+            for i = 1:r
+                acc += samples[i, rowsL[pos + t - 1]] * samples[i, rowsL[pos + s - 1]]
+            end
+            hess_obj_vals[pos+k] = acc
+            k = k + 1
+        end
+    end
+end
+
+function vecchia_build_B!(B::Vector{Matrix{T}}, samples::CuMatrix{T}, rowsL::Vector{Int}, colptrL::Vector{Int}, hess_obj_vals::CuVector{T}, n::Int, m::Vector{Int}) where T <: AbstractFloat
+    # Precompute offsets for all blocks <-- should be in VecchiaCache
+    offsets = cumsum([0; m[1:end-1]]) |> CuVector{Int}
+
     for j in 1:n
         for s in 1:m[j]
             for t in 1:m[j]
                 vt = view(samples, :, rowsL[colptrL[j] + t - 1])
                 vs = view(samples, :, rowsL[colptrL[j] + s - 1])
                 B[j][t, s] = dot(vt, vs)
-
-                # Lower triangular part of the block Bⱼ
-                if s ≤ t
-                    pos = pos + 1
-                    hess_obj_vals[pos] = B[j][t, s]
-                end
             end
         end
     end
+
+    # Launch the kernel
+    backend = KA.get_backend(samples)
+    r = size(samples, 1)
+    vecchia_build_B_kernel!(backend)(hess_obj_vals, samples, CuVector(rowsL), CuVector(colptrL), CuVector(m), n, r, offsets, ndrange=n)
+    KA.synchronize(backend)
+    return y
 end
 
 function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vector{Int}, colptrL::Vector{Int}, hess_obj_vals::Vector{T}, n::Int, m::Vector{Int}) where T <: AbstractFloat

@@ -57,12 +57,11 @@ function create_vecchia_cache(samples::AbstractMatrix, k::Int, xyGrid, ::Type{S}
     nnzh_tri_lag = nnzh_tri_obj + n
 
     B = [Matrix{T}(undef, m[j], m[j]) for j = 1:n]
-    hess_obj_vals = Vector{T}(undef, nnzh_tri_obj)
+    hess_obj_vals = S(undef, nnzh_tri_obj)
     vecchia_build_B!(B, samples, rowsL, colptrL, hess_obj_vals, n, m)
 
     if S != Vector{Float64}
         B = [CuMatrix{T}(B[j]) for j = 1:n]
-        hess_obj_vals = S(hess_obj_vals)
         rowsL = CuVector{Int}(rowsL)
         colsL = CuVector{Int}(colsL)
         colptrL = CuVector{Int}(colptrL)
