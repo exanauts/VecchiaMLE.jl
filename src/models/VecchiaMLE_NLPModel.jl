@@ -89,7 +89,7 @@ function NLPModels.obj(nlp::VecchiaModel, x::AbstractVector)
 
     # n is the number of blocks Bj in B
     # m is a vector of length n that gives the dimensions of each block Bj
-    vecchia_mul!(nlp.cache.buffer, nlp.cache.B, x, nlp.cache.n, nlp.cache.m)
+    vecchia_mul!(nlp.cache.buffer, nlp.cache.B, nlp.cache.hess_obj_vals, x, nlp.cache.n, nlp.cache.m, nlp.cache.colptrL)
     y = view(x, 1:nlp.cache.nnzL)
     t2 = dot(nlp.cache.buffer, y)
 
@@ -103,7 +103,7 @@ function NLPModels.grad!(nlp::VecchiaModel, x::AbstractVector, gx::AbstractVecto
     
     # n is the number of blocks Bj in B
     # m is a vector of length n that gives the dimensions of each block Bj
-    vecchia_mul!(gx, nlp.cache.B, x, nlp.cache.n, nlp.cache.m)
+    vecchia_mul!(gx, nlp.cache.B, nlp.cache.hess_obj_vals, x, nlp.cache.n, nlp.cache.m, nlp.cache.colptrL)
     gx_z = view(gx, nlp.cache.nnzL+1:nlp.meta.nvar)
     fill!(gx_z, -nlp.cache.M)
 
@@ -155,7 +155,7 @@ function NLPModels.hprod!(nlp::VecchiaModel, x::AbstractVector, y::AbstractVecto
     
     # n is the number of blocks Bj in B
     # m is a vector of length n that gives the dimensions of each block Bj
-    vecchia_mul!(Hv, nlp.cache.B, v, nlp.cache.n, nlp.cache.m)
+    vecchia_mul!(Hv, nlp.cache.B, nlp.cache.hess_obj_vals, v, nlp.cache.n, nlp.cache.m, nlp.cache.colptrL)
     view(Hv, nlp.cache.nnzL+1:nlp.meta.nvar) .-= nlp.cache.M .* y
     return Hv
 end
