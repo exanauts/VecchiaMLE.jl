@@ -1,21 +1,22 @@
-@kernel function vecchia_mul_kernel!(y, @Const(hess_obj_vals), @Const(x), @Const(m), @Const(n), @Const(colptrL))
+@kernel inbounds=true function vecchia_mul_kernel!(y, @Const(hess_obj_vals), @Const(x), @Const(m), @Const(n), @Const(colptrL), @Const(offsets))
     index = @index(Global)
     if index <= n
         # Compute the starting position for the current block using the column pointer
         pos = colptrL[index]
+        offset = offsets[index]
         mj = m[index]
 
         # Perform the matrix-vector multiplication for the current symmetric block
         for i in 1:mj
             # Add the contribution of the diagonal element A[i,i]
             diag_index = (i * (i - 1)) ÷ 2 + i
-            y[pos-1+i] += hess_obj_vals[diag_index] * x[pos-1+i]
+            y[offset+i] += hess_obj_vals[pos+diag_index] * x[offset+i]
             # Loop over off-diagonal elements in row i (for j < i)
             for j in 1:i-1
                 idx = (i * (i - 1)) ÷ 2 + j  # Compute the index of A[i,j] in the compact vector
-                a = hess_obj_vals[idx]
-                y[pos-1+i] += a * x[pos-1+j]
-                y[pos-1+j] += a * x[pos-1+i]  # due to symmetry A[i,j] = A[j,i]
+                a = hess_obj_vals[pos+idx]
+                y[offset+i] += a * x[offset+j]
+                y[offset+j] += a * x[offset+i]  # due to symmetry A[i,j] = A[j,i]
             end
         end
     end
@@ -26,9 +27,12 @@ function vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_obj_vals::C
     # Reset the vector y
     fill!(y, zero(T))
 
+    # Precompute offsets for all blocks <-- should be in VecchiaCache
+    offsets = cumsum([0; m[1:end-1]]) |> CuVector{Int}
+
     # Launch the kernel
     backend = KA.get_backend(y)
-    vecchia_mul_kernel!(backend)(y, hess_obj_vals, x, CuVector(m), n, colptrL, ndrange=n)
+    vecchia_mul_kernel!(backend)(y, hess_obj_vals, x, CuVector(m), n, colptrL, offsets, ndrange=n)
     KA.synchronize(backend)
     return y
 end
