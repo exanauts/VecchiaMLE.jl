@@ -7,16 +7,13 @@
         mj = m[index]
 
         # Perform the matrix-vector multiplication for the current symmetric block
-        for i in 1:mj
-            # Add the contribution of the diagonal element A[i,i]
-            diag_index = (i * (i - 1)) ÷ 2 + i
-            y[offset+i] += hess_obj_vals[pos-1+diag_index] * x[offset+i]
-            # Loop over off-diagonal elements in row i (for j < i)
-            for j in 1:i-1
-                idx = (i * (i - 1)) ÷ 2 + j  # Compute the index of A[i,j] in the compact vector
-                a = hess_obj_vals[pos-1+idx]
-                y[offset+i] += a * x[offset+j]
-                y[offset+j] += a * x[offset+i]  # due to symmetry A[i,j] = A[j,i]
+        for j in 1:mj
+            idx1 = ((j - 1) * (2*n - j + 2)) ÷ 2
+            for i in j:n
+                idx2 = idx1 + (i - j + 1)
+                val = hess_obj_vals[pos-1+idx2]
+                y[offset+i] += val * x[offset+j]
+                y[offset+j] += val * x[offset+i]  # due to symmetry A[i,j] = A[j,i]
             end
         end
     end
