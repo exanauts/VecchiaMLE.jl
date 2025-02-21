@@ -2,6 +2,7 @@
 
 function VecchiaModel(::Type{S}, samples::AbstractMatrix, k::Int, xyGrid) where {S<:AbstractArray}
     T = eltype(S)
+
     cache = create_vecchia_cache(samples, k, xyGrid, S)
     nvar_ = length(cache.rowsL) + length(cache.colptrL) - 1
     
@@ -41,7 +42,7 @@ VecchiaModelGPU(samples::AbstractMatrix, k::Int, xyGrid) = VecchiaModel(CuArray{
 
 # Constructing the vecchia cache used everywhere in the code below.
 function create_vecchia_cache(samples::AbstractMatrix, k::Int, xyGrid, ::Type{S}) where {S <: AbstractVector}
-    M = size(samples, 1)
+    Msamples = size(samples, 1)
     n = size(samples, 2)
     T = eltype(S)
 
@@ -57,24 +58,7 @@ function create_vecchia_cache(samples::AbstractMatrix, k::Int, xyGrid, ::Type{S}
 
     B = [Matrix{T}(undef, m[j], m[j]) for j = 1:n]
     hess_obj_vals = Vector{T}(undef, nnzh_tri_obj)
-
-    pos = 0
-    for j in 1:n
-        for s in 1:m[j]
-            for t in 1:m[j]
-                vt = view(samples, :, rowsL[colptrL[j] + t - 1])
-                vs = view(samples, :, rowsL[colptrL[j] + s - 1])
-                B[j][t, s] = dot(vt, vs)
-
-                # Lower triangular part of the block Bⱼ
-                if s ≤ t
-                    pos = pos + 1
-                    hess_obj_vals[pos] = B[j][t, s]
-                end
-            end
-        end
-    end
-    @assert pos == nnzh_tri_obj
+    vecchia_build_B!(B, samples, rowsL, colptrL, hess_obj_vals, n, m)
 
     if S != Vector{Float64}
         B = [CuMatrix{T}(B[j]) for j = 1:n]
@@ -87,7 +71,7 @@ function create_vecchia_cache(samples::AbstractMatrix, k::Int, xyGrid, ::Type{S}
     buffer = S(undef, nnzL)
 
     return VecchiaCache{eltype(S), S, typeof(rowsL), typeof(B[1])}(
-        n, M, nnzL, 
+        n, Msamples, nnzL,
         colptrL, rowsL, colsL, diagL,
         m, B, nnzh_tri_obj,
         nnzh_tri_lag, hess_obj_vals,
@@ -120,7 +104,6 @@ function NLPModels.grad!(nlp::VecchiaModel, x::AbstractVector, gx::AbstractVecto
     # n is the number of blocks Bj in B
     # m is a vector of length n that gives the dimensions of each block Bj
     vecchia_mul!(gx, nlp.cache.B, x, nlp.cache.n, nlp.cache.m)
-
     gx_z = view(gx, nlp.cache.nnzL+1:nlp.meta.nvar)
     fill!(gx_z, -nlp.cache.M)
 
@@ -170,15 +153,9 @@ function NLPModels.hprod!(nlp::VecchiaModel, x::AbstractVector, y::AbstractVecto
     @lencheck nlp.meta.nvar Hv
     increment!(nlp, :neval_hprod)
     
-    pos = 0
-    for j = 1:nlp.cache.n
-        Bj = nlp.cache.B[j]
-        vj = view(v, pos+1:pos+nlp.cache.m[j])
-        Hvj = view(Hv, pos+1:pos+nlp.cache.m[j])
-        mul!(Hvj, Bj, vj)
-        pos = pos + nlp.cache.m[j]
-    end
-
+    # n is the number of blocks Bj in B
+    # m is a vector of length n that gives the dimensions of each block Bj
+    vecchia_mul!(Hv, nlp.cache.B, v, nlp.cache.n, nlp.cache.m)
     view(Hv, nlp.cache.nnzL+1:nlp.meta.nvar) .-= nlp.cache.M .* y
     return Hv
 end
@@ -200,10 +177,10 @@ function NLPModels.jac_structure!(nlp::VecchiaModel, jrows::AbstractVector, jcol
     @lencheck 2*nlp.cache.n jrows
     @lencheck 2*nlp.cache.n jcols
 
-    copyto!(jcols, 1, view(nlp.cache.colptrL, 1:nlp.cache.n), 1, nlp.cache.n)
-    copyto!(jcols, 1+nlp.cache.n, (1:nlp.cache.n).+nlp.cache.nnzL, 1, nlp.cache.n)
-    copyto!(jrows, 1, 1:nlp.cache.n, 1, nlp.cache.n)
-    copyto!(jrows, nlp.cache.n+1, 1:nlp.cache.n, 1, nlp.cache.n)
+    copyto!(view(jcols, 1:nlp.cache.n), view(nlp.cache.colptrL, 1:nlp.cache.n))
+    view(jcols, (1:nlp.cache.n).+nlp.cache.n) .= (1:nlp.cache.n).+nlp.cache.nnzL
+    view(jrows, 1:nlp.cache.n) .= 1:nlp.cache.n
+    view(jrows, (1:nlp.cache.n).+nlp.cache.n) .= 1:nlp.cache.n
     return jrows, jcols
 end
 
@@ -262,7 +239,7 @@ function generate_hessian_tri_structure!(nnzh::Int, n::Int, colptr_diff::Vector{
     for i in 1:n
         m = colptr_diff[i]
             for j in 1:m
-                copyto!(hrows, carry, (idx + j - 1):(idx + m - 1), 1, m - j + 1)
+                view(hrows, (0:(m-j)).+carry) .= (j:m).+(idx-1)
                 fill!(view(hcols, carry:carry+m-j), idx + j - 1)
                 carry += m - j + 1
             end
@@ -271,10 +248,8 @@ function generate_hessian_tri_structure!(nnzh::Int, n::Int, colptr_diff::Vector{
 
     #Then need the diagonal tail
     idx_to = idx + nnzh - carry
-
-    # One set of copies to GPU. More efficient
-    copyto!(hrows, carry, idx:idx_to, 1, nnzh-carry+1)
-    copyto!(hcols, carry, idx:idx_to, 1, nnzh-carry+1)
+    view(hrows, carry:nnzh) .= idx:idx_to
+    view(hcols, carry:nnzh) .= idx:idx_to
 
     return hrows, hcols
 end

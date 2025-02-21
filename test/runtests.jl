@@ -9,6 +9,7 @@ using CUDA
 using NLPModelsTest
 
 using .VecchiaMLE
+using VecchiaMLE: CPU, GPU
 
 include("models/JumpModel.jl")
 include("models/VecchiaMLE_models.jl")
@@ -22,6 +23,5 @@ if CUDA.has_cuda()
     include("test_cpu_compatible_with_gpu.jl")
     include("test_memory_allocation_outliers_gpu.jl")
 end
-
 
 include("test_model_inputs.jl")
