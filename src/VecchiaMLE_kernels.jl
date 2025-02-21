@@ -70,8 +70,8 @@ end
     mj = m[index]
 
     k = 0
-    for t in 1:mj
-        for s in t:mj
+    for s in 1:mj
+        for t in s:mj
             acc = 0.0
             for i = 1:r
                 acc += samples[i, rowsL[pos + t - 1]] * samples[i, rowsL[pos + s - 1]]
