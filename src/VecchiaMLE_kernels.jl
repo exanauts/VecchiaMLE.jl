@@ -70,6 +70,7 @@ end
             k = k + 1
         end
     end
+    nothing
 end
 
 function vecchia_build_B!(B::Vector{Matrix{T}}, samples::CuMatrix{T}, rowsL::Vector{Int}, colptrL::Vector{Int}, hess_obj_vals::CuVector{T}, n::Int, m::Vector{Int}) where T <: AbstractFloat
@@ -91,7 +92,7 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::CuMatrix{T}, rowsL::Vec
     r = size(samples, 1)
     vecchia_build_B_kernel!(backend)(hess_obj_vals, samples, CuVector(rowsL), CuVector(colptrL), CuVector(m), n, r, offsets, ndrange=n)
     KA.synchronize(backend)
-    return y
+    return nothing
 end
 
 function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vector{Int}, colptrL::Vector{Int}, hess_obj_vals::Vector{T}, n::Int, m::Vector{Int}) where T <: AbstractFloat
@@ -111,4 +112,5 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vecto
             end
         end
     end
+    return nothing
 end
