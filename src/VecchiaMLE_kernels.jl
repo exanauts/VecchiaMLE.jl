@@ -28,7 +28,7 @@ function vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_obj_vals::C
 
     # Launch the kernel
     backend = KA.get_backend(y)
-    vecchia_mul_kernel!(backend)(y, hess_obj_vals, x, m, n, colptrL, ndrange=n)
+    vecchia_mul_kernel!(backend)(y, hess_obj_vals, x, CuVector(m), n, colptrL, ndrange=n)
     KA.synchronize(backend)
     return y
 end
