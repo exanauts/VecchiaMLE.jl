@@ -22,7 +22,7 @@
     nothing
 end
 
-function vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_obj_vals::CuVector{T}, x::CuVector{T}, n::Int, m::Vector{Int}, colptrL::CuVector{T}) where T <: AbstractFloat
+function vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_obj_vals::CuVector{T}, x::CuVector{T}, n::Int, m::Vector{Int}, colptrL::CuVector{Int}) where T <: AbstractFloat
     # Reset the vector y
     fill!(y, zero(T))
 
@@ -33,7 +33,7 @@ function vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_obj_vals::C
     return y
 end
 
-function vecchia_mul!(y::Vector{T}, B::Vector{Matrix{T}}, hess_obj_vals::Vector{T}, x::Vector{T}, n::Int, m::Vector{Int}, colptrL::Vector{T}) where T <: AbstractFloat
+function vecchia_mul!(y::Vector{T}, B::Vector{Matrix{T}}, hess_obj_vals::Vector{T}, x::Vector{T}, n::Int, m::Vector{Int}, colptrL::Vector{Int}) where T <: AbstractFloat
     pos = 0
     for j = 1:n
         Bj = B[j]
