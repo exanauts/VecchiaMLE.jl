@@ -1,4 +1,4 @@
-@kernel function vecchia_mul_kernel!(y, @Const(hess_obj_vals), x, m, @Const(n), colptrL, offsets)
+@kernel function vecchia_mul_kernel!(y, @Const(hess_obj_vals), @Const(x), @Const(m), @Const(offsets))
     index = @index(Global)
     offset = offsets[index]
     mj = m[index]
@@ -36,7 +36,7 @@ function vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_obj_vals::C
     # Launch the kernel
     backend = KA.get_backend(y)
     kernel = vecchia_mul_kernel!(backend)
-    kernel(y, hess_obj_vals, x, CuVector{Int}(m), n, colptrL, offsets, ndrange=n)
+    kernel(y, hess_obj_vals, x, CuVector{Int}(m), offsets, ndrange=n)
     KA.synchronize(backend)
     return y
 end
@@ -53,7 +53,7 @@ function vecchia_mul!(y::Vector{T}, B::Vector{Matrix{T}}, hess_obj_vals::Vector{
     return y
 end
 
-@kernel function vecchia_build_B_kernel!(hess_obj_vals, @Const(samples), rowsL, colptrL, m, @Const(n), @Const(r))
+@kernel function vecchia_build_B_kernel!(hess_obj_vals, @Const(samples), @Const(rowsL), @Const(colptrL), @Const(m), @Const(r))
     index = @index(Global)
     pos = colptrL[index]
     mj = m[index]
@@ -69,7 +69,6 @@ end
             for i = 1:r
                 acc += samples[i, rowsL[pos+t-1]] * samples[i, rowsL[pos+s-1]]
             end
-            @print "Thread $index | hess_obj_vals[$(pos2+k)] = $acc\n"
             k = k + 1
             hess_obj_vals[pos2+k] = acc
         end
@@ -82,7 +81,7 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::CuMatrix{T}, rowsL::Vec
     backend = KA.get_backend(samples)
     r = size(samples, 1)
     kernel = vecchia_build_B_kernel!(backend)
-    kernel(hess_obj_vals, samples, CuVector{Int}(rowsL), CuVector{Int}(colptrL), CuVector{Int}(m), n, r, ndrange=n)
+    kernel(hess_obj_vals, samples, CuVector{Int}(rowsL), CuVector{Int}(colptrL), CuVector{Int}(m), r, ndrange=n)
     KA.synchronize(backend)
     return nothing
 end
@@ -100,7 +99,6 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vecto
                 if s ≤ t
                     pos = pos + 1
                     hess_obj_vals[pos] = B[j][t, s]
-                    println("hess_obj_vals[$(pos)] = ", hess_obj_vals[pos])
                 end
             end
         end
