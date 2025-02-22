@@ -26,7 +26,7 @@
     nothing
 end
 
-function vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_obj_vals::CuVector{T}, x::CuVector{T}, n::Int, m::Vector{Int}, colptrL::CuVector{Int}) where T <: AbstractFloat
+function vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_obj_vals::CuVector{T}, x::CuVector{T}, n::Int, m::CuVector{Int}, colptrL::CuVector{Int}) where T <: AbstractFloat
     # Reset the vector y
     fill!(y, zero(T))
 
@@ -36,7 +36,7 @@ function vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_obj_vals::C
     # Launch the kernel
     backend = KA.get_backend(y)
     kernel = vecchia_mul_kernel!(backend)
-    kernel(y, hess_obj_vals, x, CuVector{Int}(m), offsets, ndrange=n)
+    kernel(y, hess_obj_vals, x, m, offsets, ndrange=n)
     KA.synchronize(backend)
     return y
 end
@@ -76,12 +76,12 @@ end
     nothing
 end
 
-function vecchia_build_B!(B::Vector{Matrix{T}}, samples::CuMatrix{T}, rowsL::Vector{Int}, colptrL::Vector{Int}, hess_obj_vals::CuVector{T}, n::Int, m::Vector{Int}) where T <: AbstractFloat
+function vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix{T}, rowsL::CuVector{Int}, colptrL::CuVector{Int}, hess_obj_vals::CuVector{T}, n::Int, m::CuVector{Int}) where T <: AbstractFloat
     # Launch the kernel
     backend = KA.get_backend(samples)
     r = size(samples, 1)
     kernel = vecchia_build_B_kernel!(backend)
-    kernel(hess_obj_vals, samples, CuVector{Int}(rowsL), CuVector{Int}(colptrL), CuVector{Int}(m), r, ndrange=n)
+    kernel(hess_obj_vals, samples, rowsL, colptrL, m, r, ndrange=n)
     KA.synchronize(backend)
     return nothing
 end
