@@ -3,7 +3,7 @@
     offset = offsets[index]
     mj = m[index]
     pos2 = 0
-    for i = 1:index
+    for i = 1:index-1
         pos2 += m[i] * (m[i] + 1) ÷ 2
     end
 
@@ -58,7 +58,7 @@ end
     pos = colptrL[index]
     mj = m[index]
     pos2 = 0
-    for i = 1:index
+    for i = 1:index-1
         pos2 += m[i] * (m[i] + 1) ÷ 2
     end
 
