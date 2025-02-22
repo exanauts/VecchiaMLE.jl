@@ -57,12 +57,15 @@ function create_vecchia_cache(samples::AbstractMatrix, k::Int, xyGrid, ::Type{S}
     nnzh_tri_lag = nnzh_tri_obj + n
 
     if S != Vector{Float64}
-        B = CuMatrix{T}[]
+
+        offsets = cumsum([0; m[1:end-1]]) |> CuVector{Int}
+        B = [CuMatrix{T}(undef, 0, 0)]
         rowsL = CuVector{Int}(rowsL)
         colsL = CuVector{Int}(colsL)
         colptrL = CuVector{Int}(colptrL)
         m = CuVector{Int}(m)
     else
+        offsets = Int[]
         B = [Matrix{T}(undef, m[j], m[j]) for j = 1:n]
     end
     hess_obj_vals = S(undef, nnzh_tri_obj)
@@ -74,7 +77,7 @@ function create_vecchia_cache(samples::AbstractMatrix, k::Int, xyGrid, ::Type{S}
     return VecchiaCache{eltype(S), S, typeof(rowsL), typeof(B[1])}(
         n, Msamples, nnzL,
         colptrL, rowsL, colsL, diagL,
-        m, B, nnzh_tri_obj,
+        m, offsets, B, nnzh_tri_obj,
         nnzh_tri_lag, hess_obj_vals,
         buffer,
     )
@@ -90,7 +93,7 @@ function NLPModels.obj(nlp::VecchiaModel, x::AbstractVector)
 
     # n is the number of blocks Bj in B
     # m is a vector of length n that gives the dimensions of each block Bj
-    vecchia_mul!(nlp.cache.buffer, nlp.cache.B, nlp.cache.hess_obj_vals, x, nlp.cache.n, nlp.cache.m, nlp.cache.colptrL)
+    vecchia_mul!(nlp.cache.buffer, nlp.cache.B, nlp.cache.hess_obj_vals, x, nlp.cache.n, nlp.cache.m, nlp.cache.offsets)
     y = view(x, 1:nlp.cache.nnzL)
     t2 = dot(nlp.cache.buffer, y)
 
@@ -104,7 +107,7 @@ function NLPModels.grad!(nlp::VecchiaModel, x::AbstractVector, gx::AbstractVecto
     
     # n is the number of blocks Bj in B
     # m is a vector of length n that gives the dimensions of each block Bj
-    vecchia_mul!(gx, nlp.cache.B, nlp.cache.hess_obj_vals, x, nlp.cache.n, nlp.cache.m, nlp.cache.colptrL)
+    vecchia_mul!(gx, nlp.cache.B, nlp.cache.hess_obj_vals, x, nlp.cache.n, nlp.cache.m, nlp.cache.offsets)
     gx_z = view(gx, nlp.cache.nnzL+1:nlp.meta.nvar)
     fill!(gx_z, -nlp.cache.M)
 
@@ -156,7 +159,7 @@ function NLPModels.hprod!(nlp::VecchiaModel, x::AbstractVector, y::AbstractVecto
     
     # n is the number of blocks Bj in B
     # m is a vector of length n that gives the dimensions of each block Bj
-    vecchia_mul!(Hv, nlp.cache.B, nlp.cache.hess_obj_vals, v, nlp.cache.n, nlp.cache.m, nlp.cache.colptrL)
+    vecchia_mul!(Hv, nlp.cache.B, nlp.cache.hess_obj_vals, v, nlp.cache.n, nlp.cache.m, nlp.cache.offsets)
     view(Hv, nlp.cache.nnzL+1:nlp.meta.nvar) .-= nlp.cache.M .* y
     return Hv
 end
