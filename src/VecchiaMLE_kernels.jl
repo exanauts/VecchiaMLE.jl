@@ -1,9 +1,11 @@
 @kernel function vecchia_mul_kernel!(y, @Const(hess_obj_vals), x, m, @Const(n), colptrL, offsets)
     index = @index(Global)
-
-    pos2 = sum(m[j] * (m[j] + 1) for j in 1:index) ÷ 2
     offset = offsets[index]
     mj = m[index]
+    pos2 = 0
+    for i = 1:index
+        pos2 += m[j] * (m[j] + 1) ÷ 2
+    end
 
     # Perform the matrix-vector multiplication for the current symmetric block
     for j in 1:mj
@@ -54,8 +56,11 @@ end
 @kernel function vecchia_build_B_kernel!(hess_obj_vals, @Const(samples), rowsL, colptrL, m, @Const(n), @Const(r))
     index = @index(Global)
     pos = colptrL[index]
-    pos2 = sum(m[j] * (m[j] + 1) for j in 1:index) ÷ 2
     mj = m[index]
+    pos2 = 0
+    for i = 1:index
+        pos2 += m[j] * (m[j] + 1) ÷ 2
+    end
 
     k = 0
     for s in 1:mj
