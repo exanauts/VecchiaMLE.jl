@@ -1,4 +1,4 @@
-@kernel function vecchia_mul_kernel!(y, @Const(hess_obj_vals), @Const(x), @Const(m), @Const(n), @Const(colptrL), @Const(offsets))
+@kernel function vecchia_mul_kernel!(y, @Const(hess_obj_vals), x, m, @Const(n), colptrL, offsets)
     index = @index(Global)
 
     pos = colptrL[index]
@@ -51,8 +51,7 @@ function vecchia_mul!(y::Vector{T}, B::Vector{Matrix{T}}, hess_obj_vals::Vector{
     return y
 end
 
-@kernel function vecchia_build_B_kernel!(hess_obj_vals, @Const(samples), @Const(rowsL), @Const(colptrL),
-                                         @Const(m), @Const(n), @Const(r))
+@kernel function vecchia_build_B_kernel!(hess_obj_vals, @Const(samples), rowsL, colptrL, m, @Const(n), @Const(r))
     index = @index(Global)
     pos = colptrL[index]
     mj = m[index]
