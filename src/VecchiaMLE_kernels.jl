@@ -1,7 +1,7 @@
 @kernel function vecchia_mul_kernel!(y, @Const(hess_obj_vals), x, m, @Const(n), colptrL, offsets)
     index = @index(Global)
 
-    pos = colptrL[index]
+    pos2 = sum(m[j] * (m[j] + 1) for j in 1:index) ÷ 2
     offset = offsets[index]
     mj = m[index]
 
@@ -10,7 +10,7 @@
         idx1 = (j - 1) * (mj + 1) - j * (j-1) ÷ 2
         for i in j:mj
             idx2 = idx1 + (i - j + 1)
-            val = hess_obj_vals[pos-1+idx2]
+            val = hess_obj_vals[pos2+idx2]
 
             # Diagonal element contributes only once
             if i == j
@@ -54,6 +54,7 @@ end
 @kernel function vecchia_build_B_kernel!(hess_obj_vals, @Const(samples), rowsL, colptrL, m, @Const(n), @Const(r))
     index = @index(Global)
     pos = colptrL[index]
+    pos2 = sum(m[j] * (m[j] + 1) for j in 1:index) ÷ 2
     mj = m[index]
 
     k = 0
@@ -64,8 +65,8 @@ end
                 acc += samples[i, rowsL[pos+t-1]] * samples[i, rowsL[pos+s-1]]
             end
             @print "Thread $index | hess_obj_vals[$(pos+k)] = $acc\n"
-            hess_obj_vals[pos+k] = acc
             k = k + 1
+            hess_obj_vals[pos2+k] = acc
         end
     end
     nothing
