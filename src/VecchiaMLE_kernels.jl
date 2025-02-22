@@ -40,7 +40,7 @@ function vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_obj_vals::C
 end
 
 function vecchia_mul!(y::Vector{T}, B::Vector{Matrix{T}}, hess_obj_vals::Vector{T},
-                      x::Vector{T}, n::Int, m::Vector{Int}, offsets::CuVector{Int}) where T <: AbstractFloat
+                      x::Vector{T}, n::Int, m::Vector{Int}, offsets::Vector{Int}) where T <: AbstractFloat
     pos = 0
     for j = 1:n
         Bj = B[j]
@@ -75,7 +75,8 @@ end
     nothing
 end
 
-function vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix{T}, rowsL::CuVector{Int}, colptrL::CuVector{Int}, hess_obj_vals::CuVector{T}, n::Int, m::CuVector{Int}) where T <: AbstractFloat
+function vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix{T}, rowsL::CuVector{Int},
+                          colptrL::CuVector{Int}, hess_obj_vals::CuVector{T}, n::Int, m::CuVector{Int}) where T <: AbstractFloat
     # Launch the kernel
     backend = KA.get_backend(samples)
     r = size(samples, 1)
@@ -85,7 +86,8 @@ function vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix{T}, rowsL:
     return nothing
 end
 
-function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vector{Int}, colptrL::Vector{Int}, hess_obj_vals::Vector{T}, n::Int, m::Vector{Int}) where T <: AbstractFloat
+function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vector{Int},
+                          colptrL::Vector{Int}, hess_obj_vals::Vector{T}, n::Int, m::Vector{Int}) where T <: AbstractFloat
     pos = 0
     for j in 1:n
         for s in 1:m[j]
