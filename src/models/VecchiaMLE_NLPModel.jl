@@ -237,7 +237,10 @@ function NLPModels.jtprod!(nlp::VecchiaModel, x::AbstractVector, v::AbstractVect
 end
 
 # function to generate the hessian structure in CSC format. 
-function generate_hessian_tri_structure!(nnzh::Int, n::Int, colptr_diff::Vector{Int}, hrows::AbstractVector, hcols::AbstractArray)
+function generate_hessian_tri_structure!(nnzh::Int, n::Int, colptr_diff::AbstractVector{Int}, hrows::AbstractVector, hcols::AbstractArray)
+    # Do a kernel on GPU for this function!
+    colptr_diff = Vector{Int}(colptr_diff)
+
     carry = 1
     idx = 1
     for i in 1:n
