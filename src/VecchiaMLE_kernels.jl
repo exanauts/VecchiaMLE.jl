@@ -63,6 +63,7 @@ end
             for i = 1:r
                 acc += samples[i, rowsL[pos+t-1]] * samples[i, rowsL[pos+s-1]]
             end
+            @print "Thread $index | hess_obj_vals[$(pos+k)] = $acc\n"
             hess_obj_vals[pos+k] = acc
             k = k + 1
         end
@@ -93,6 +94,7 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vecto
                 if s ≤ t
                     pos = pos + 1
                     hess_obj_vals[pos] = B[j][t, s]
+                    println("hess_obj_vals[$(pos)] = ", hess_obj_vals[pos])
                 end
             end
         end
