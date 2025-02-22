@@ -56,24 +56,28 @@ function create_vecchia_cache(samples::AbstractMatrix, k::Int, xyGrid, ::Type{S}
     nnzh_tri_obj = sum(m[j] * (m[j] + 1) for j in 1:n) ÷ 2
     nnzh_tri_lag = nnzh_tri_obj + n
 
-    B = [Matrix{T}(undef, m[j], m[j]) for j = 1:n]
-    hess_obj_vals = Vector{T}(undef, nnzh_tri_obj)
-    vecchia_build_B!(B, samples, rowsL, colptrL, hess_obj_vals, n, m)
-
     if S != Vector{Float64}
-        B = [CuMatrix{T}(B[j]) for j = 1:n]
-        hess_obj_vals = S(hess_obj_vals)
+
+        offsets = cumsum([0; m[1:end-1]]) |> CuVector{Int}
+        B = [CuMatrix{T}(undef, 0, 0)]
         rowsL = CuVector{Int}(rowsL)
         colsL = CuVector{Int}(colsL)
         colptrL = CuVector{Int}(colptrL)
+        m = CuVector{Int}(m)
+    else
+        offsets = Int[]
+        B = [Matrix{T}(undef, m[j], m[j]) for j = 1:n]
     end
+    hess_obj_vals = S(undef, nnzh_tri_obj)
+    vecchia_build_B!(B, samples, rowsL, colptrL, hess_obj_vals, n, m)
+
     diagL = colptrL[1:n]
     buffer = S(undef, nnzL)
 
     return VecchiaCache{eltype(S), S, typeof(rowsL), typeof(B[1])}(
         n, Msamples, nnzL,
         colptrL, rowsL, colsL, diagL,
-        m, B, nnzh_tri_obj,
+        m, offsets, B, nnzh_tri_obj,
         nnzh_tri_lag, hess_obj_vals,
         buffer,
     )
@@ -89,7 +93,7 @@ function NLPModels.obj(nlp::VecchiaModel, x::AbstractVector)
 
     # n is the number of blocks Bj in B
     # m is a vector of length n that gives the dimensions of each block Bj
-    vecchia_mul!(nlp.cache.buffer, nlp.cache.B, x, nlp.cache.n, nlp.cache.m)
+    vecchia_mul!(nlp.cache.buffer, nlp.cache.B, nlp.cache.hess_obj_vals, x, nlp.cache.n, nlp.cache.m, nlp.cache.offsets)
     y = view(x, 1:nlp.cache.nnzL)
     t2 = dot(nlp.cache.buffer, y)
 
@@ -103,7 +107,7 @@ function NLPModels.grad!(nlp::VecchiaModel, x::AbstractVector, gx::AbstractVecto
     
     # n is the number of blocks Bj in B
     # m is a vector of length n that gives the dimensions of each block Bj
-    vecchia_mul!(gx, nlp.cache.B, x, nlp.cache.n, nlp.cache.m)
+    vecchia_mul!(gx, nlp.cache.B, nlp.cache.hess_obj_vals, x, nlp.cache.n, nlp.cache.m, nlp.cache.offsets)
     gx_z = view(gx, nlp.cache.nnzL+1:nlp.meta.nvar)
     fill!(gx_z, -nlp.cache.M)
 
@@ -155,7 +159,7 @@ function NLPModels.hprod!(nlp::VecchiaModel, x::AbstractVector, y::AbstractVecto
     
     # n is the number of blocks Bj in B
     # m is a vector of length n that gives the dimensions of each block Bj
-    vecchia_mul!(Hv, nlp.cache.B, v, nlp.cache.n, nlp.cache.m)
+    vecchia_mul!(Hv, nlp.cache.B, nlp.cache.hess_obj_vals, v, nlp.cache.n, nlp.cache.m, nlp.cache.offsets)
     view(Hv, nlp.cache.nnzL+1:nlp.meta.nvar) .-= nlp.cache.M .* y
     return Hv
 end
@@ -233,7 +237,12 @@ function NLPModels.jtprod!(nlp::VecchiaModel, x::AbstractVector, v::AbstractVect
 end
 
 # function to generate the hessian structure in CSC format. 
-function generate_hessian_tri_structure!(nnzh::Int, n::Int, colptr_diff::Vector{Int}, hrows::AbstractVector, hcols::AbstractArray)
+function generate_hessian_tri_structure!(nnzh::Int, n::Int, colptr_diff::VI, hrows::AbstractVector, hcols::AbstractArray) where VI
+    # Do a kernel on GPU for this function!
+    if VI != Vector{Int}
+        colptr_diff = Vector{Int}(colptr_diff)
+    end
+
     carry = 1
     idx = 1
     for i in 1:n

@@ -37,8 +37,9 @@ struct VecchiaCache{T, S, VI, M}
     rowsL::VI                           # Row index of nonzero entries in L
     colsL::VI                           # Column index of nonzero entries in L
     diagL::VI                           # Position of the diagonal coefficient of L
-    m::Vector{Int}                      # Number of nonzeros in each column of L
-    B::Vector{M}                        # Vector of Matrices Bⱼ, the constant blocks in the Hessian
+    m::VI                               # Number of nonzeros in each column of L
+    offsets::VI                         # Number of nonzeros in hess_obj_vals before the block Bⱼ
+    B::Vector{M}                        # Vector of matrices Bⱼ, the constant blocks in the Hessian
     nnzh_tri_obj::Int                   # Number of nonzeros in the lower triangular part of the Hessian of the objective
     nnzh_tri_lag::Int                   # Number of nonzeros in the lower triangular part of the Hessian of the Lagrangian
     hess_obj_vals::S                    # Nonzeros of the lower triangular part of the Hessian of the objective
