@@ -26,12 +26,13 @@ version = "1.5.0"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra", "Requires"]
-git-tree-sha1 = "50c3c56a52972d78e8be9fd135bfb91c9574c140"
+git-tree-sha1 = "cd8b948862abee8f3d3e9b73a102a9ca924debb0"
 uuid = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
-version = "4.1.1"
-weakdeps = ["StaticArrays"]
+version = "4.2.0"
+weakdeps = ["SparseArrays", "StaticArrays"]
 
     [deps.Adapt.extensions]
+    AdaptSparseArraysExt = "SparseArrays"
     AdaptStaticArraysExt = "StaticArrays"
 
 [[deps.AdaptiveKDTrees]]
@@ -315,9 +316,9 @@ uuid = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
 version = "0.3.27"
 
 [[deps.InlineStrings]]
-git-tree-sha1 = "45521d31238e87ee9f9732561bfee12d4eebd52d"
+git-tree-sha1 = "6a9fde685a7ac1eb3495f8e812c5a7c3711c2d5e"
 uuid = "842dd82b-1e85-43dc-bf29-5d0ee9dffc48"
-version = "1.4.2"
+version = "1.4.3"
 
     [deps.InlineStrings.extensions]
     ArrowTypesExt = "ArrowTypes"
@@ -570,10 +571,10 @@ uuid = "5da4648a-3479-48b8-97b9-01cb529c0a1f"
 version = "0.3.5"
 
 [[deps.NVTX_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "ce3269ed42816bf18d500c9f63418d4b0d9f5a3b"
+deps = ["Artifacts", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "2c7b791c1eba364e4a70aabdea4ddc1f5ca53911"
 uuid = "e98f9f5b-d649-5603-91fd-7774390e6439"
-version = "3.1.0+2"
+version = "3.1.1+0"
 
 [[deps.NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
@@ -857,9 +858,15 @@ version = "1.11.0"
 
 [[deps.TimerOutputs]]
 deps = ["ExprTools", "Printf"]
-git-tree-sha1 = "d7298ebdfa1654583468a487e8e83fae9d72dac3"
+git-tree-sha1 = "3832505b94c1868baea47764127e6d36b5c9f29e"
 uuid = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
-version = "0.5.26"
+version = "0.5.27"
+
+    [deps.TimerOutputs.extensions]
+    FlameGraphsExt = "FlameGraphs"
+
+    [deps.TimerOutputs.weakdeps]
+    FlameGraphs = "08572546-2f56-4bcf-ba4e-bab62c3a3f89"
 
 [[deps.UUIDs]]
 deps = ["Random", "SHA"]
@@ -880,7 +887,7 @@ weakdeps = ["LLVM"]
     UnsafeAtomicsLLVM = ["LLVM"]
 
 [[deps.VecchiaMLE]]
-deps = ["AdaptiveKDTrees", "BesselK", "CUDA", "Distributions", "LinearAlgebra", "MadNLP", "MadNLPGPU", "NLPModels", "SparseArrays", "SpecialFunctions", "Statistics"]
+deps = ["AdaptiveKDTrees", "BesselK", "CUDA", "Distributions", "KernelAbstractions", "LinearAlgebra", "MadNLP", "MadNLPGPU", "NLPModels", "SparseArrays", "SpecialFunctions", "Statistics"]
 path = ".."
 uuid = "499233a1-c46f-47cc-ab67-5a37788e9870"
 version = "0.1.0"
