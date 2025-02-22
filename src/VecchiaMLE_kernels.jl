@@ -69,7 +69,7 @@ end
             for i = 1:r
                 acc += samples[i, rowsL[pos+t-1]] * samples[i, rowsL[pos+s-1]]
             end
-            @print "Thread $index | hess_obj_vals[$(pos+k)] = $acc\n"
+            @print "Thread $index | hess_obj_vals[$(pos2+k)] = $acc\n"
             k = k + 1
             hess_obj_vals[pos2+k] = acc
         end
