@@ -4,7 +4,7 @@
     mj = m[index]
     pos2 = 0
     for i = 1:index
-        pos2 += m[j] * (m[j] + 1) ÷ 2
+        pos2 += m[i] * (m[i] + 1) ÷ 2
     end
 
     # Perform the matrix-vector multiplication for the current symmetric block
@@ -59,7 +59,7 @@ end
     mj = m[index]
     pos2 = 0
     for i = 1:index
-        pos2 += m[j] * (m[j] + 1) ÷ 2
+        pos2 += m[i] * (m[i] + 1) ÷ 2
     end
 
     k = 0
