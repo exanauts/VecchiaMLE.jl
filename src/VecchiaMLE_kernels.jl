@@ -140,8 +140,8 @@ function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::Cu
     hrows::CuVector{Int}, hcols::CuVector{Int})
 
     # reset hrows, hcols
-    fill!(hrows, zero(Int))
-    fill!(hcols, zero(Int))
+    fill!(hrows, one(Int))
+    fill!(hcols, one(Int))
 
     # launch the kernel
     backend = KA.get_backend(hrows)
@@ -149,13 +149,11 @@ function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::Cu
 
     f(x) = (x * (x+1)) ÷ 2
 
-    carry_offsets = CUDA.ones(Int, n)
-    view(carry_offsets, 2:n) .+= cumsum(f.(view(colptr_diff, 1:n-1)))
+    # NOTE: Might be a race condition here. Solution is to store them in the first indices of each thread. 
+    view(hrows, 2:n) .+= cumsum(f.(view(colptr_diff, 1:n-1)))
+    view(hcols, 2:n) .+= cumsum(view(colptr_diff, 1:n-1))
 
-    idx_offsets = CUDA.ones(Int, n)
-    view(idx_offsets, 2:n) .+= cumsum(view(colptr_diff, 1:n-1))
-
-    kernel(nnzh, n, colptr_diff, carry_offsets, idx_offsets, hrows, hcols, ndrange = n)
+    kernel(nnzh, n, colptr_diff, view(hrows, 1:n), view(hcols, 1:n), hrows, hcols, ndrange = n)
 
     KA.synchronize(backend)
 
@@ -171,6 +169,7 @@ end
     m = colptr_diff[thread_idx]
     carry = carry_offsets[thread_idx]
     idx = idx_offsets[thread_idx]
+    
 
     for j in 1:m
         for k in carry:m - j + carry
@@ -208,8 +207,5 @@ function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::Ve
     view(hrows, carry:nnzh) .= idx:idx_to
     view(hcols, carry:nnzh) .= idx:idx_to
 
-    println("CPU:\n")
-    println(hrows)
-    println(hcols)
     return hrows, hcols
 end
