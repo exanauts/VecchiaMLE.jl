@@ -143,6 +143,7 @@ function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::Cu
     fill!(hrows, one(Int))
     fill!(hcols, one(Int))
 
+
     # launch the kernel
     backend = KA.get_backend(hrows)
     kernel = vecchia_generate_hess_tri_structure_kernel!(backend)
@@ -169,7 +170,6 @@ end
     m = colptr_diff[thread_idx]
     carry = carry_offsets[thread_idx]
     idx = idx_offsets[thread_idx]
-    
 
     for j in 1:m
         for k in carry:m - j + carry
