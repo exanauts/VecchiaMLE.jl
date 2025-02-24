@@ -137,49 +137,59 @@ end
 
 # Front-end
 function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::CuVector{Int}, 
-    hrows::CuVector{T}, hcols::CuVector{T}) where T <: AbstractFloat
+    hrows::CuVector{Int}, hcols::CuVector{Int})
 
     # reset hrows, hcols
-    fill!(hrows, zero(T))
-    fill!(hcols, zero(T))
+    fill!(hrows, zero(Int))
+    fill!(hcols, zero(Int))
 
     # launch the kernel
     backend = KA.get_backend(hrows)
     kernel = vecchia_generate_hess_tri_structure_kernel!(backend)
-    # check ndrange 
-    kernel(nnzh, n, colptr_diff, hrows, hcols, ndrange = n)
+
+    f(x) = (x * (x+1)) ÷ 2
+
+    carry_offsets = CUDA.ones(Int, n)
+    view(carry_offsets, 2:n) .+= cumsum(f.(view(colptr_diff, 1:n-1)))
+
+    idx_offsets = CUDA.ones(Int, n)
+    view(idx_offsets, 2:n) .+= cumsum(view(colptr_diff, 1:n-1))
+
+    kernel(nnzh, n, colptr_diff, carry_offsets, idx_offsets, hrows, hcols, ndrange = n)
 
     KA.synchronize(backend)
+
     return nothing
 end
 
 # kernel
-@kernel function vecchia_generate_hess_tri_structure_kernel!(@Const(nnzh), @Const(n), @Const(colptr_diff), 
-    hrows, hcols)
-    
-    thread_idx = @index(Global)
+@kernel function vecchia_generate_hess_tri_structure_kernel!(
+    @Const(nnzh), @Const(n), @Const(colptr_diff), @Const(carry_offsets), @Const(idx_offsets),
+    hrows, hcols
+)
+    thread_idx = @index(Global) # in 1:n
     m = colptr_diff[thread_idx]
-    idx = thread_idx * m
-    carry = 1
+    carry = carry_offsets[thread_idx]
+    idx = idx_offsets[thread_idx]
 
     for j in 1:m
-        for k = 0:(m-j) .+ carry
-            hrows[k] = j + idx
-            hcols[k] = j + idx
+        for k in carry:m - j + carry
+            hrows[k] = (idx + j - 1) + (k - carry)
+            hcols[k] = idx + j - 1
         end
-        carry += m-j+1
+        carry += m - j + 1
     end
 
-    # Then need to fill the diagonal tail, split into n items so each thread needs to only fill in one spot 
-    idx_to_fill = thread_idx + carry
-    hrows[idx_to_fill] = idx + thread_idx
-    hcols[idx_to_fill] = idx + thread_idx
-
+    # fill one index of the tail for each thread
+    @inbounds hrows[nnzh-n + thread_idx] = hrows[nnzh-n] + thread_idx
+    @inbounds hcols[nnzh-n + thread_idx] = hrows[nnzh-n] + thread_idx
 end
+
+
 
 # CPU implementation
 function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::Vector{Int}, 
-    hrows::Vector{T}, hcols::Vector{T}) where T <: AbstractFloat
+    hrows::Vector{Int}, hcols::Vector{Int}) 
     
     carry = 1
     idx = 1
@@ -198,5 +208,8 @@ function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::Ve
     view(hrows, carry:nnzh) .= idx:idx_to
     view(hcols, carry:nnzh) .= idx:idx_to
 
+    println("CPU:\n")
+    println(hrows)
+    println(hcols)
     return hrows, hcols
 end
