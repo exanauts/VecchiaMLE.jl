@@ -156,6 +156,25 @@ end
 # kernel
 @kernel function vecchia_generate_hess_tri_structure_kernel!(@Const(nnzh), @Const(n), @Const(colptr_diff), 
     hrows, hcols)
+    
+    thread_idx = @index(Global)
+    m = colptr_diff[thread_idx]
+    idx = thread_idx * m
+    carry = 1
+
+    for j in 1:m
+        for k = 0:(m-j) .+ carry
+            hrows[k] = j + idx
+            hcols[k] = j + idx
+        end
+        carry += m-j+1
+    end
+
+    # Then need to fill the diagonal tail, split into n items so each thread needs to only fill in one spot 
+    idx_to_fill = thread_idx + carry
+    hrows[idx_to_fill] = idx + thread_idx
+    hcols[idx_to_fill] = idx + thread_idx
+
 end
 
 # CPU implementation
