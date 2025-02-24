@@ -1,3 +1,26 @@
+#=
+    VECCHIA_MUL
+    Front-end
+    kernel
+    CPU implementation
+=#
+
+# Front-end
+function vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_obj_vals::CuVector{T},
+    x::CuVector{T}, n::Int, m::CuVector{Int}, offsets::CuVector{Int}) where T <: AbstractFloat
+    # Reset the vector y
+    fill!(y, zero(T))
+
+    # Launch the kernel
+    backend = KA.get_backend(y)
+    kernel = vecchia_mul_kernel!(backend)
+    kernel(y, hess_obj_vals, x, m, offsets, ndrange=n)
+    KA.synchronize(backend)
+    return y
+end
+
+
+# kernel
 @kernel function vecchia_mul_kernel!(y, @Const(hess_obj_vals), @Const(x), @Const(m), @Const(offsets))
     index = @index(Global)
     offset = offsets[index]
@@ -26,19 +49,7 @@
     nothing
 end
 
-function vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_obj_vals::CuVector{T},
-                      x::CuVector{T}, n::Int, m::CuVector{Int}, offsets::CuVector{Int}) where T <: AbstractFloat
-    # Reset the vector y
-    fill!(y, zero(T))
-
-    # Launch the kernel
-    backend = KA.get_backend(y)
-    kernel = vecchia_mul_kernel!(backend)
-    kernel(y, hess_obj_vals, x, m, offsets, ndrange=n)
-    KA.synchronize(backend)
-    return y
-end
-
+# CPU implementation
 function vecchia_mul!(y::Vector{T}, B::Vector{Matrix{T}}, hess_obj_vals::Vector{T},
                       x::Vector{T}, n::Int, m::Vector{Int}, offsets::Vector{Int}) where T <: AbstractFloat
     pos = 0
@@ -52,6 +63,26 @@ function vecchia_mul!(y::Vector{T}, B::Vector{Matrix{T}}, hess_obj_vals::Vector{
     return y
 end
 
+#= 
+    VECCHIA_BUILD_B
+    Front-end 
+    kernel
+    CPU implementation
+=#
+
+# Front-end
+function vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix{T}, rowsL::CuVector{Int},
+    colptrL::CuVector{Int}, hess_obj_vals::CuVector{T}, n::Int, m::CuVector{Int}) where T <: AbstractFloat
+    # Launch the kernel
+    backend = KA.get_backend(samples)
+    r = size(samples, 1)
+    kernel = vecchia_build_B_kernel!(backend)
+    kernel(hess_obj_vals, samples, rowsL, colptrL, m, r, ndrange=n)
+    KA.synchronize(backend)
+    return nothing
+end
+
+# kernel
 @kernel function vecchia_build_B_kernel!(hess_obj_vals, @Const(samples), @Const(rowsL), @Const(colptrL), @Const(m), @Const(r))
     index = @index(Global)
     pos = colptrL[index]
@@ -75,17 +106,7 @@ end
     nothing
 end
 
-function vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix{T}, rowsL::CuVector{Int},
-                          colptrL::CuVector{Int}, hess_obj_vals::CuVector{T}, n::Int, m::CuVector{Int}) where T <: AbstractFloat
-    # Launch the kernel
-    backend = KA.get_backend(samples)
-    r = size(samples, 1)
-    kernel = vecchia_build_B_kernel!(backend)
-    kernel(hess_obj_vals, samples, rowsL, colptrL, m, r, ndrange=n)
-    KA.synchronize(backend)
-    return nothing
-end
-
+# CPU implementation
 function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vector{Int},
                           colptrL::Vector{Int}, hess_obj_vals::Vector{T}, n::Int, m::Vector{Int}) where T <: AbstractFloat
     pos = 0
@@ -105,4 +126,58 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vecto
         end
     end
     return nothing
+end
+
+#=
+    VECCHIA_GENERATE_HESS_TRI_STRUCTURE
+    Front-end
+    kernel
+    CPU implementation
+=#
+
+# Front-end
+function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::CuVector{Int}, 
+    hrows::CuVector{T}, hcols::CuVector{T}) where T <: AbstractFloat
+
+    # reset hrows, hcols
+    fill!(hrows, zero(T))
+    fill!(hcols, zero(T))
+
+    # launch the kernel
+    backend = KA.get_backend(hrows)
+    kernel = vecchia_generate_hess_tri_structure_kernel!(backend)
+    # check ndrange 
+    kernel(nnzh, n, colptr_diff, hrows, hcols, ndrange = n)
+
+    KA.synchronize(backend)
+    return nothing
+end
+
+# kernel
+@kernel function vecchia_generate_hess_tri_structure_kernel!(@Const(nnzh), @Const(n), @Const(colptr_diff), 
+    hrows, hcols)
+end
+
+# CPU implementation
+function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::Vector{Int}, 
+    hrows::Vector{T}, hcols::Vector{T}) where T <: AbstractFloat
+    
+    carry = 1
+    idx = 1
+    for i in 1:n
+        m = colptr_diff[i]
+            for j in 1:m
+                view(hrows, (0:(m-j)).+carry) .= (j:m).+(idx-1)
+                fill!(view(hcols, carry:carry+m-j), idx + j - 1)
+                carry += m - j + 1
+            end
+        idx += m
+    end
+
+    #Then need the diagonal tail
+    idx_to = idx + nnzh - carry
+    view(hrows, carry:nnzh) .= idx:idx_to
+    view(hcols, carry:nnzh) .= idx:idx_to
+
+    return hrows, hcols
 end
