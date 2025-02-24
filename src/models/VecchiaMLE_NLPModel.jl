@@ -115,13 +115,13 @@ function NLPModels.grad!(nlp::VecchiaModel, x::AbstractVector, gx::AbstractVecto
 end
 
 # Details the hessian structure. 
-# All work is delegated to generate_hessian_tri_structure!
+# All work is delegated to vecchia_generate_hess_tri_structure!
 function NLPModels.hess_structure!(nlp::VecchiaModel, hrows::AbstractVector, hcols::AbstractVector)
     @lencheck nlp.meta.nnzh hrows 
     @lencheck nlp.meta.nnzh hcols
 
     # stored as lower triangular!
-    generate_hessian_tri_structure!(nlp.meta.nnzh, nlp.cache.n, nlp.cache.m, hrows, hcols)
+    vecchia_generate_hess_tri_structure!(nlp.meta.nnzh, nlp.cache.n, nlp.cache.m, hrows, hcols)
     return hrows, hcols
 end
 
@@ -236,29 +236,3 @@ function NLPModels.jtprod!(nlp::VecchiaModel, x::AbstractVector, v::AbstractVect
     return Jtv
 end
 
-# function to generate the hessian structure in CSC format. 
-function generate_hessian_tri_structure!(nnzh::Int, n::Int, colptr_diff::VI, hrows::AbstractVector, hcols::AbstractArray) where VI
-    # Do a kernel on GPU for this function!
-    if VI != Vector{Int}
-        colptr_diff = Vector{Int}(colptr_diff)
-    end
-
-    carry = 1
-    idx = 1
-    for i in 1:n
-        m = colptr_diff[i]
-            for j in 1:m
-                view(hrows, (0:(m-j)).+carry) .= (j:m).+(idx-1)
-                fill!(view(hcols, carry:carry+m-j), idx + j - 1)
-                carry += m - j + 1
-            end
-        idx += m
-    end
-
-    #Then need the diagonal tail
-    idx_to = idx + nnzh - carry
-    view(hrows, carry:nnzh) .= idx:idx_to
-    view(hcols, carry:nnzh) .= idx:idx_to
-
-    return hrows, hcols
-end
