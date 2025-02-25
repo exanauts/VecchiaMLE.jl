@@ -43,7 +43,7 @@ MadNLP_Print_level::Integer          # Print level of MadNLP. Expects an int wit
 ## Usage
 Once `VecchiaMLEInput` has been filled appropriately, pass it to VecchiaMLE_Run() for the analysis to start. Note that some arguments have default values, such as mode (CPU), and MadNLP_Print_level (5). After the analysis has been completed, the function outputs diagnostics - that would be difficult other wise to acquire - and the resulting Lm factor in sparse, LowerTriangular format.
 
-## How To Run
+## Getting Samples from a Covariance Matrix
 I will describe here how to properly use this package. Some functions used are not exported since there is no need for the user to realistically use them. The only major work to do is to generate the samples (if this isn't done by another means). In production, I generated the samples via first creating a Covariance Matrix via the martern covariance kernel, then feeding it into a Multivariate normal distribution to create the samples. The code to do this, using functions defined in VecchiaMLE, is as follows:
 
 ```
@@ -54,14 +54,26 @@ MatCov = VecchiaMLE.generate_MatCov(n, params) # size n^2 x n^2
 samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples)
 ```
 
-To give insight as to why the covariance matrix is of that size, the creation of the covariance matrix requires a set of points in space to generate the matrix entries. This is done by generating a 2D grid, on the postive unit square. That is, we use the following function:
+You can easily skip the Covariance generation if you already have one. To give insight as to why the covariance matrix is of that size, the creation of the covariance matrix requires a set of points in space to generate the matrix entries. This is done by generating a 2D grid, on the postive unit square. That is, we use the following function:
 
 ```
 function covariance2D(xyGrid::AbstractVector, params::AbstractVector)::AbstractMatrix
-    return Symmetric([matern(x, y, params) for x in xyGrid, y in xyGrid])
+    return Symmetric([BesselK.matern(x, y, params) for x in xyGrid, y in xyGrid])
 end
 ```
 The matern function (provided by BesselK, credit to Chris Geoga) generates the entries of the covariance matrix via the given prarmeters, and returns the symmetric form.
+
+After the samples have been generated, they can simply be stored in the VecchiaMLEInput struct you intend to input into the program. Note that the resulting matrix, the cholesky factor of the precision matrix, is given as a LowerTriangular matrix, which does not clearly show its sparsity. However, the LowerTriangular format can be more easily leveraged by common operations (for example, solving systems and matrix inversion). 
+
+## Getting the error
+
+We can get the error for the approximation (assuming you have the true covariance matrix), via the KL-Divergence formula. This, along with its univariate cousin, can be queryed respectively by the following VecchiaMLE functions:
+
+```
+uni_error = VecchiaMLE.Uni_Error(True_Covariance, Approximate_Cholesky_Factor)
+kl_error = VecchiaMLE.KLDivergence(True_Covariance, Approximate_Cholesky_Factor)
+```
+Note the KL-Divergence error is very computationally heavy, thus takes a long time for large `n` values! Also, we assue mean-zero distributions. 
 
 ## Contribution
 Although the bulk of the project has been written, there are sure to be problems that arise from errors in logic. As such, please feel free to open an issue;
