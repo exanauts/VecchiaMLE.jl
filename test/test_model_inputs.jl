@@ -21,5 +21,11 @@
     input.samples = Matrix{Float64}(undef, 1, 1)
     @test_throws AssertionError VecchiaMLE_Run(input)
     input.samples = samples
+
+    ptGrid = [zeros(2) for i in 1:4]
+    @test_throws AssertionError VecchiaMLE_Run(input; ptGrid)
+
+    ptGrid = [[0.0] for i in 1:n^2]
+    @test_throws AssertionError VecchiaMLE.VecchiaMLE_Run(input; ptGrid)
     @test_nowarn VecchiaMLE_Run(input)
 end
