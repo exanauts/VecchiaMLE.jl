@@ -7,6 +7,7 @@ using SparseArrays
 using LinearAlgebra
 using CUDA
 using NLPModelsTest
+#using Random
 
 using .VecchiaMLE
 using VecchiaMLE: CPU, GPU
@@ -26,3 +27,4 @@ if CUDA.has_cuda()
 end
 
 include("test_model_inputs.jl")
+include("test_abnormal_ptGrid.jl")
