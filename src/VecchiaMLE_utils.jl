@@ -119,8 +119,8 @@ end
 """
 function generate_safe_xyGrid(n::Integer)::AbstractVector
     len = cld(n, 10)
-    grid1d = range(0.0, len, length = n)
-    return vec([[x[1], x[2]]] for x in Iteratorx.product(grid1d, grid1d))
+    grid1d = range(0.0, len, length=n)
+    return vec([[x[1], x[2]] for x in Iterators.product(grid1d, grid1d)])
 end
 
 """
@@ -511,9 +511,10 @@ function SparsityPattern_CSC(data, k::Int)
 end
 
 """
-    sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
+    sanitize_input!(iVecchiaMLE::VecchiaMLEInput, ptGrid::Union{AbstractVector, Nothing})
 
-A helper function to catch any inconsistencies in the input given by the user.
+A helper function to catch any inconsistencies in the input given by the user. 
+Note that if ptGrid is set as nothing, then the ptGrid is set as an equispaced mesh of grid points in [0, 1] x [0, 1]. 
 
 The current checks are:\n
     * Ensuring n > 0.
@@ -524,8 +525,9 @@ The current checks are:\n
 
 ## Input arguments
 * `iVecchiaMLE`: The filled-out VecchiaMLEInput struct. See VecchiaMLEInput struct for more details. 
+* `ptGrid`: The grid of point locations in 2D space. Must be a Vector of 2D Vectors! 
 """
-function sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
+function sanitize_input!(iVecchiaMLE::VecchiaMLEInput, ptGrid::Union{AbstractVector, Nothing})
     @assert iVecchiaMLE.n > 0 "The dimension n must be strictly positive!"
     @assert iVecchiaMLE.k <= iVecchiaMLE.n^2 "The number of conditioning neighbors must be less than n^2 !"
     @assert size(iVecchiaMLE.samples, 1) > 0 "Samples must be nonempty!"
@@ -533,4 +535,15 @@ function sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
     @assert size(iVecchiaMLE.samples, 2) == iVecchiaMLE.n^2 "samples must be of size Number_of_Samples x n^2!"
     @assert size(iVecchiaMLE.samples, 1) == iVecchiaMLE.Number_of_Samples "samples must be of size Number_of_Samples x n^2!"
     @assert iVecchiaMLE.mode in [1, 2] "Operation mode not valid! must be in [1, 2]." 
+    
+    if isnothing(ptGrid)
+        ptGrid = generate_xyGrid(iVecchiaMLE.n)
+    end
+
+    @assert length(ptGrid) == iVecchiaMLE.n^2  "The ptGrid given does not have n^2 elements!"
+    for (i, pt) in enumerate(ptGrid)
+        @assert length(pt) == 2 "Position $(i) in ptGrid is not 2 dimensional!"
+    end
+
+    return ptGrid::Vector{Vector{Float64}}
 end
