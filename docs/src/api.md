@@ -28,6 +28,7 @@ VecchiaMLE.generate_xyGrid
 VecchiaMLE.generate_safe_xyGrid
 VecchiaMLE.MadNLP_Print_Level
 VecchiaMLE.Int_to_Mode
+VecchiaMLE.Int_to_KKT_System
 VecchiaMLE.Uni_Error
 VecchiaMLE.IndexReorder
 VecchiaMLE.IndexMaxMin
