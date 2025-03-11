@@ -59,7 +59,7 @@ function create_vecchia_cache(samples::AbstractMatrix, k::Int, ptGrid::AbstractV
     if S != Vector{Float64}
 
         offsets = cumsum([0; m[1:end-1]]) |> CuVector{Int}
-        B = [CuMatrix{T}(undef, 0, 0)]
+        B = [CuMatrix{T}(undef, m[j], m[j]) for j in 1:n]
         rowsL = CuVector{Int}(rowsL)
         colsL = CuVector{Int}(colsL)
         colptrL = CuVector{Int}(colptrL)

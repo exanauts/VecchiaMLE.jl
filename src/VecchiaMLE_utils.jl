@@ -174,7 +174,7 @@ function MadNLP_Print_Level(pLevel::Integer)::MadNLP.LogLevels
 end
 
 """
-    cpu_mode = Int_to_Mode(n::Integer)
+    cpu_mode = Int_to_Mode(n::Int)
 
     A helper function to convert an integer to a COMPUTE_MODE.
     The mapping is [1: 'CPU', 2: 'GPU'].
@@ -197,13 +197,35 @@ function Int_to_Mode(n::Int)::COMPUTE_MODE
 end
 
 """
+    kkt_system = Int_to_KKT_System(n::Int)
+
+    A helper function to determine which KKT system to use.
+    The mapping is [1: 'Sparse System', 2: 'VecchiaKKTSystem'].
+
+## Input arguments
+* `n`: the given system as an int;
+
+## Output Arguments
+*`kkt_system` : The chosen KKT system. 
+"""
+function Int_to_KKT_System(n::Int)::MadNLP.AbstractKKTSystem
+    if n == 1
+        return MadNLP.AbstractSparseKKTSystem
+    elseif n == 2
+        return VecchiaKKTSystem
+    else 
+        return MadNLP.AbstractSparseKKTSystem
+    end
+end
+
+"""
     Error = Uni_Error(TCov::AbstractMatrix,
                       L::AbstractMatrix)
     Generates the "Univariate KL Divergence" from the Given True Covariane matrix 
     and Approximate Covariance matrix. The output is the result of the following 
-    optimization problem: sup(a^T X_A || a^⊺ X_T). The solution is 
-                f(μ) = ln(μ) + (2μ)^{-2} - 0.5,
-    where μ is the largest or smallest eigenvalue of the matrix Σ_A^{-1}Σ_T, whichever
+    optimization problem: sup(aᵀ X_A || aᵀ X_T). The solution is 
+                f(μ) = ln(μ) + (2μ)⁻² - 0.5,
+    where μ is the largest or smallest eigenvalue of the matrix Σ_A⁻¹Σ_T, whichever
     maximizes the function f(μ). Note: Σ_A , Σ_T are the respective approximate and true
     covariance matrices, and X_A, X_T are samples from the respective Distributions (mean zero).    
 
@@ -566,8 +588,8 @@ function sanitize_input!(iVecchiaMLE::VecchiaMLEInput, ptGrid::T) where T <: Uni
     @assert (iVecchiaMLE.MadNLP_print_level in 1:5) "MadNLP Print Level not in 1:5!"
     @assert size(iVecchiaMLE.samples, 2) == iVecchiaMLE.n^2 "samples must be of size Number_of_Samples x n^2!"
     @assert size(iVecchiaMLE.samples, 1) == iVecchiaMLE.Number_of_Samples "samples must be of size Number_of_Samples x n^2!"
-    @assert iVecchiaMLE.mode in [1, 2] "Operation mode not valid! must be in [1, 2]." 
-    
+    @assert iVecchiaMLE.mode in [1, 2] "Operation mode not valid! must be in [1, 2]."
+    @assert iVecchiaMLE.KKT_System in [1, 2] "KKT_System not properly specified! Must be in [1, 2]."
     if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.mode == 2
         iVecchiaMLE.samples = CuMatrix{Float64}(iVecchiaMLE.samples)
     end
