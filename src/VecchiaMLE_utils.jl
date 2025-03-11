@@ -26,12 +26,14 @@ end
     Samples_Matrix = generate_Samples(MatCov::AbstractMatrix, 
                                       n::Integer,
                                       Number_of_Samples::Int;
-                                      mode::VecchiaMLE.COMPUTE_MODE )
+                                      mode::VecchiaMLE.COMPUTE_MODE)
 
     Generate a number of samples according to the given Covariance Matrix MatCov.
     Note the samples are given as mean zero. 
     If a CUDA compatible device is detected, the samples are generated on the GPU
     and transferred back to the CPU. 
+    Note that this isn't the most optimized, and should only be used for small sample generation 
+    (i.e., n < 100, Number_of_Samples < 100).
 
 ## Input arguments
 
@@ -61,6 +63,7 @@ function generate_Samples(MatCov::AbstractMatrix, n::Integer, Number_of_Samples:
     LinearAlgebra.rmul!(V, UpperTriangular(S))
     return V
 end
+
 
 """
     Covariance_Matrix = generate_MatCov(n::Integer,
