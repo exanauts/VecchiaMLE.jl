@@ -57,8 +57,12 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, ptGrid::AbstractVector, pre
         model = get_vecchia_model(iVecchiaMLE, ptGrid)
     end
     
-    diags.solve_model_time = @elapsed begin
-        output = madnlp(model, print_level=MadNLP_Print_Level(iVecchiaMLE.MadNLP_print_level))
+    diags.solve_model_time = @elapsed begin        
+        if iVecchiaMLE.KKT_System == 1
+            output = madnlp(model, print_level=MadNLP_Print_Level(iVecchiaMLE.MadNLP_print_level))
+        elseif iVecchiaMLE.KKT_System == 2
+            output = madnlp(model, print_level=MadNLP_Print_Level(iVecchiaMLE.MadNLP_print_level), kkt_system = VecchiaKKTSystem)
+        end
     end
     
     
