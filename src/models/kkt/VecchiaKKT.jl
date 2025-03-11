@@ -136,6 +136,7 @@ function MadNLP.solve!(kkt::VecchiaKKTSystem, w::MadNLP.AbstractKKTVector)
     view(buffer_dz_ptr, 1:kkt.n) .= view(w, (1:kkt.n).+kkt.p)
     
     # TODO: MAYBE WRONG!!!
+    # TODO: This is for sure wrong, since the subviews are over the colptr, not just m either. 
     subviews = [view(buffer_dz_ptr, kkt.S[i] : (kkt.S[i+1] - 1)) for i in eachindex(kkt.S)]
     view(buffer_dz_ptr, 1:length(kkt.S)) .= dot.(kkt.S, subviews)
     

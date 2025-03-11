@@ -61,7 +61,11 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, ptGrid::AbstractVector, pre
         if iVecchiaMLE.KKT_System == 1
             output = madnlp(model, print_level=MadNLP_Print_Level(iVecchiaMLE.MadNLP_print_level))
         elseif iVecchiaMLE.KKT_System == 2
-            output = madnlp(model, print_level=MadNLP_Print_Level(iVecchiaMLE.MadNLP_print_level), kkt_system = VecchiaKKTSystem)
+            output = madnlp(model, 
+                print_level=MadNLP_Print_Level(iVecchiaMLE.MadNLP_print_level), 
+                kkt_system = VecchiaKKTSystem, 
+                linear_solver=MadNLPGPU.CUDSSSolver
+            )
         end
     end
     

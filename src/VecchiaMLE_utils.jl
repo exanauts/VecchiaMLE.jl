@@ -581,7 +581,7 @@ The current checks are:\n
 * `iVecchiaMLE`: The filled-out VecchiaMLEInput struct. See VecchiaMLEInput struct for more details. 
 * `ptGrid`: The grid of point locations in 2D space. Must be a Vector of 2D Vectors! 
 """
-function sanitize_input!(iVecchiaMLE::VecchiaMLEInput, ptGrid::T) where T <: Union{AbstractVector, Nothing} 
+function sanitize_input!(iVecchiaMLE::VecchiaMLEInput, ptGrid::T) where T <: Union{AbstractVector, Nothing}
     @assert iVecchiaMLE.n > 0 "The dimension n must be strictly positive!"
     @assert iVecchiaMLE.k <= iVecchiaMLE.n^2 "The number of conditioning neighbors must be less than n^2 !"
     @assert size(iVecchiaMLE.samples, 1) > 0 "Samples must be nonempty!"
@@ -603,5 +603,5 @@ function sanitize_input!(iVecchiaMLE::VecchiaMLEInput, ptGrid::T) where T <: Uni
         @assert length(pt) == 2 "Position $(i) in ptGrid is not 2 dimensional!"
     end
 
-    return ptGrid::Vector{Vector{Float64}}
+    return ptGrid
 end
