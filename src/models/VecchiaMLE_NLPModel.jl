@@ -1,9 +1,9 @@
 # TODO: GPU is running poorly. Something being ported from CPU?
 
-function VecchiaModel(::Type{S}, samples::AbstractMatrix, k::Int, xyGrid) where {S<:AbstractArray}
+function VecchiaModel(::Type{S}, samples::AbstractMatrix, k::Int, ptGrid::AbstractVector) where {S<:AbstractArray}
     T = eltype(S)
 
-    cache = create_vecchia_cache(samples, k, xyGrid, S)
+    cache = create_vecchia_cache(samples, k, ptGrid, S)
     nvar_ = length(cache.rowsL) + length(cache.colptrL) - 1
     
     # The initial condition is for L to be the identity. 
@@ -37,17 +37,17 @@ function VecchiaModel(::Type{S}, samples::AbstractMatrix, k::Int, xyGrid) where 
 end
 
 # Only two modes instantiated!!
-VecchiaModelCPU(samples::AbstractMatrix, k::Int, xyGrid) = VecchiaModel(Vector{Float64}, samples::AbstractMatrix, k::Int, xyGrid)
-VecchiaModelGPU(samples::AbstractMatrix, k::Int, xyGrid) = VecchiaModel(CuArray{Float64, 1, CUDA.DeviceMemory}, samples::AbstractMatrix, k::Int, xyGrid)
+VecchiaModelCPU(samples::AbstractMatrix, k::Int, ptGrid) = VecchiaModel(Vector{Float64}, samples::AbstractMatrix, k::Int, ptGrid)
+VecchiaModelGPU(samples::AbstractMatrix, k::Int, ptGrid) = VecchiaModel(CuArray{Float64, 1, CUDA.DeviceMemory}, samples::AbstractMatrix, k::Int, ptGrid)
 
 # Constructing the vecchia cache used everywhere in the code below.
-function create_vecchia_cache(samples::AbstractMatrix, k::Int, xyGrid, ::Type{S}) where {S <: AbstractVector}
+function create_vecchia_cache(samples::AbstractMatrix, k::Int, ptGrid::AbstractVector, ::Type{S}) where {S <: AbstractVector}
     Msamples = size(samples, 1)
     n = size(samples, 2)
     T = eltype(S)
 
     # SPARSITY PATTERN OF L IN COO, CSC FORMAT.
-    rowsL, colsL, colptrL = SparsityPattern(xyGrid, k, "CSC")
+    rowsL, colsL, colptrL = SparsityPattern(ptGrid, k, "CSC")
 
     nnzL = length(rowsL)
     m = Int[colptrL[j+1] - colptrL[j] for j in 1:n]
