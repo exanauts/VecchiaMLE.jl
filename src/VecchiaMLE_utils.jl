@@ -1,7 +1,7 @@
 export generate_Samples, generate_MatCov, generate_xyGrid
 
 """
-    Covariance_Matrix = covariance2D(xyGrid::AbstractVector, 
+    Covariance_Matrix = covariance2D(ptGrid::AbstractVector, 
                                      params::AbstractVector)
 
     Generate a Matern-Like Covariance Matrix for the parameters and locations given.
@@ -10,15 +10,15 @@ export generate_Samples, generate_MatCov, generate_xyGrid
 
 ## Input arguments
 
-* `xyGrid`: A set of points in 2D space upon which we determine the indices of the Covariance matrix;
+* `ptGrid`: A set of points in 2D space upon which we determine the indices of the Covariance matrix;
 * `params`: An array of length 3 (or 4) that holds the parameters to the matern covariance kernel (σ, ρ, ν).
 
 ## Output arguments
 
-* `Covariance_Matrix` : An n × n Matern matrix, where n is the length of the xyGrid 
+* `Covariance_Matrix` : An n × n Matern matrix, where n is the length of the ptGrid 
 """
-function covariance2D(xyGrid::AbstractVector, params::AbstractVector)::AbstractMatrix
-    return Symmetric([BesselK.matern(x, y, params) for x in xyGrid, y in xyGrid])
+function covariance2D(ptGrid::AbstractVector, params::AbstractVector)::AbstractMatrix
+    return Symmetric([BesselK.matern(x, y, params) for x in ptGrid, y in ptGrid])
 end
 
 
@@ -527,7 +527,7 @@ The current checks are:\n
 * `iVecchiaMLE`: The filled-out VecchiaMLEInput struct. See VecchiaMLEInput struct for more details. 
 * `ptGrid`: The grid of point locations in 2D space. Must be a Vector of 2D Vectors! 
 """
-function sanitize_input!(iVecchiaMLE::VecchiaMLEInput, ptGrid::Union{AbstractVector, Nothing})
+function sanitize_input!(iVecchiaMLE::VecchiaMLEInput, ptGrid::T) where T <: Union{AbstractVector, Nothing} 
     @assert iVecchiaMLE.n > 0 "The dimension n must be strictly positive!"
     @assert iVecchiaMLE.k <= iVecchiaMLE.n^2 "The number of conditioning neighbors must be less than n^2 !"
     @assert size(iVecchiaMLE.samples, 1) > 0 "Samples must be nonempty!"
