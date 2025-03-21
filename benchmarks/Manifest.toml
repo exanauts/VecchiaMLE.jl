@@ -4,7 +4,6 @@ julia_version = "1.11.3"
 manifest_format = "2.0"
 project_hash = "6251e26a7aeaf08ae605e9806f3d71dec9978f28"
 
-
 [[deps.AMD]]
 deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse_jll"]
 git-tree-sha1 = "45a1272e3f809d36431e57ab22703c6896b8908f"
