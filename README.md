@@ -59,8 +59,8 @@ samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples)
 You can easily skip the Covariance generation if you already have one. To give insight as to why the covariance matrix is of that size, the creation of the covariance matrix requires a set of points in space to generate the matrix entries. This is done by generating a 2D grid, on the postive unit square. That is, we use the following function:
 
 ```
-function covariance2D(xyGrid::AbstractVector, params::AbstractVector)::AbstractMatrix
-    return Symmetric([BesselK.matern(x, y, params) for x in xyGrid, y in xyGrid])
+function covariance2D(ptGrid::AbstractVector, params::AbstractVector)::AbstractMatrix
+    return Symmetric([BesselK.matern(x, y, params) for x in ptGrid, y in ptGrid])
 end
 ```
 The matern function (provided by BesselK, credit to Chris Geoga) generates the entries of the covariance matrix via the given prarmeters, and returns the symmetric form.
