@@ -408,7 +408,7 @@ end
 
 * `KL_Divergence`: The result of the KL Divergence function.
 """
-function KLDivergence(TCov::Symmetric{Float64}, AL::AbstractTriangular)
+function KLDivergence(TCov::Symmetric{Float64}, AL::AbstractMatrix)
     terms = zeros(4)
     terms[1] = tr(AL'*TCov*AL)
     terms[2] = -size(TCov, 1)
@@ -421,7 +421,7 @@ end
 """
 
 KL_Divergence = KLDivergence(TChol::T,
-AChol::T) where {T <: AbstractTriangular}
+AChol::T) where {T <: AbstractMatrix}
 
 Computes the KL Divergence of the cholesky of the True Covariance matrix, TChol, and
 The APPROXIMATE INVERSE CHOLESKY FACTOR (The output of VecchiaMLE), AChol. Assumed mean zero.
