@@ -406,9 +406,9 @@ end
 * `AL`: The cholesky factor to the approximate precision matrix. I.e., The ouptut of VecchiaMLE.  
 ## Output arguments
 
-* `res`: The result of the KL Divergence function.
+* `KL_Divergence`: The result of the KL Divergence function.
 """
-function KLDivergence(TCov::Symmetric{Float64}, AL)
+function KLDivergence(TCov::Symmetric{Float64}, AL::AbstractTriangular)
     terms = zeros(4)
     terms[1] = tr(AL'*TCov*AL)
     terms[2] = -size(TCov, 1)
@@ -416,6 +416,38 @@ function KLDivergence(TCov::Symmetric{Float64}, AL)
     terms[4] = -logdet(TCov)
     return 0.5*sum(terms)
 end
+
+
+"""
+
+KL_Divergence = KLDivergence(TChol::T,
+AChol::T) where {T <: AbstractTriangular}
+
+Computes the KL Divergence of the cholesky of the True Covariance matrix, TChol, and
+The APPROXIMATE INVERSE CHOLESKY FACTOR (The output of VecchiaMLE), AChol. Assumed mean zero.
+
+## Input arguments
+
+* `TChol`: The cholesky of the True Covariance Matrix;
+* `AChol`: The cholesky factor to the approximate precision matrix. I.e., The ouptut of VecchiaMLE.  
+
+## Output arguments
+
+* `KL_Divergence`: The result of the KL Divergence function.
+"""
+function KLDivergence(TChol::T, AChol::T) where {T <: AbstractTriangular}
+    terms = zeros(3)
+    M = zeros(size(TChol, 1))
+    for i in 1:size(TChol, 1)
+        mul!(M, AChol, view(TChol, :, i))
+        terms[1] += dot(M, M)
+    end
+    terms[2] = -size(TChol, 1)
+    terms[3] = 2*sum(log.(1.0./(diag(AChol) .* diag(TChol))))
+    return 0.5*sum(terms)
+end
+
+
 
 
 """
