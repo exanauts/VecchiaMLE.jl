@@ -435,7 +435,7 @@ The APPROXIMATE INVERSE CHOLESKY FACTOR (The output of VecchiaMLE), AChol. Assum
 
 * `KL_Divergence`: The result of the KL Divergence function.
 """
-function KLDivergence(TChol::T, AChol::T) where {T <: AbstractTriangular}
+function KLDivergence(TChol::T, AChol::T) where {T <: AbstractMatrix}
     terms = zeros(3)
     M = zeros(size(TChol, 1))
     for i in 1:size(TChol, 1)
