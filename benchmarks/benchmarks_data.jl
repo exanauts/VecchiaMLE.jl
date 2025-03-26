@@ -32,7 +32,7 @@ function main()
 
     # CPU tests done, onto GPU tests
     samples = convert(Matrix{Float64}, samples)
-    samples = CUDA.CuArray{Float64, 2, CUDA.DeviceMemory}(samples)
+    samples = CuMatrix{Float64}(samples)
     
     time_memory_io_file =  open("time_memory_gpu.txt","a")
     write(time_memory_io_file, "time, memory\n")

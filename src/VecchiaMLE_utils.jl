@@ -138,7 +138,7 @@ end
 function get_vecchia_model(iVecchiaMLE::VecchiaMLEInput, ptGrid::AbstractVector)::VecchiaModel
 
     if COMPUTE_MODE(iVecchiaMLE.mode) == GPU
-       return VecchiaModelGPU(CUDA.CuArray(iVecchiaMLE.samples), iVecchiaMLE.k, ptGrid)
+       return VecchiaModelGPU(CuArray(iVecchiaMLE.samples), iVecchiaMLE.k, ptGrid)
     else 
        return VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE.k, ptGrid)
     end
@@ -569,7 +569,7 @@ function sanitize_input!(iVecchiaMLE::VecchiaMLEInput, ptGrid::T) where T <: Uni
     @assert iVecchiaMLE.mode in [1, 2] "Operation mode not valid! must be in [1, 2]." 
     
     if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.mode == 2
-        iVecchiaMLE.samples = CUDA.CuArray{Float64, 2, CUDA.DeviceMemory}(iVecchiaMLE.samples)
+        iVecchiaMLE.samples = CuMatrix{Float64}(iVecchiaMLE.samples)
     end
 
     if isnothing(ptGrid)
