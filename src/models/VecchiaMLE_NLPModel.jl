@@ -38,7 +38,7 @@ end
 
 # Only two modes instantiated!!
 VecchiaModelCPU(samples::Matrix{T}, k::Int, xyGrid::AbstractVector) where {T <: AbstractFloat} = VecchiaModel(Vector{Float64}, samples::Matrix{Float64}, k::Int, xyGrid::AbstractVector) 
-VecchiaModelGPU(samples::CuArray{Float64, 2, CUDA.DeviceMemory}, k::Int, xyGrid::AbstractVector) = VecchiaModel(CuArray{Float64, 1, CUDA.DeviceMemory}, samples::AbstractMatrix, k::Int, xyGrid::AbstractVector)
+VecchiaModelGPU(samples::CuMatrix{Float64}, k::Int, xyGrid::AbstractVector) = VecchiaModel(CuVector{Float64}, samples::AbstractMatrix, k::Int, xyGrid::AbstractVector)
 
 # Constructing the vecchia cache used everywhere in the code below.
 function create_vecchia_cache(samples::AbstractMatrix, k::Int, ptGrid::AbstractVector, ::Type{S}) where {S <: AbstractVector}
