@@ -3,52 +3,56 @@ using VecchiaMLE
 using DelimitedFiles
 using CUDA
 
-function main()
+function main(; cpu::Bool=true, gpu::Bool=true)
     # The samples are given as a 3d array. Reshaping to 2d
-    samples = NPZ.npzread("caleb_samples.npy")
+    samples = NPZ.npzread("../../data/caleb_samples.npy")
     samples = reshape(samples, size(samples, 1), :)
+
     # Fist 100 samples.
-    samples = samples[1:100, 1:round(Int, sqrt(size(samples, 2)))^2]
+    samples_cpu = Matrix{Float64}(samples[1:100, :])
 
-    Number_of_Samples = size(samples, 1)
-    ens = 2:size(samples, 2)
-    ns = [x for x in ens if x == round(Int, (sqrt(x)))^2]
-
+    Number_of_Samples = size(samples_cpu, 1)
+    dim = size(samples_cpu, 2)
+    ns = collect(10000:10000:dim)
     k = 10
+
+    if cpu
     time_memory_io_file =  open("time_memory_cpu.txt","a")
     write(time_memory_io_file, "time, memory\n")
 
     for (i, n) in enumerate(ns)
-        input = VecchiaMLE.VecchiaMLEInput(Int(sqrt(n)), min(Int(sqrt(n)), k), samples[:, 1:n], Number_of_Samples, 5, 1)
+        nn = Int(floor(sqrt(n)))
+        input = VecchiaMLE.VecchiaMLEInput(nn, min(nn, k), samples_cpu[:, 1:nn^2], Number_of_Samples, 5, 1)
         diagsnostics = @timed VecchiaMLE_Run(input)
         
         write(time_memory_io_file, "$(diagsnostics[2]), $(diagsnostics[3])\n")
         println("$i, cpu, $(diagsnostics[2]) s, \t $(round(Float64(i)/length(ns)*100.0, digits=4))%")
-        if diagsnostics[2] > 25 
+        if diagsnostics[2] > 300
             break 
         end
     end
     close(time_memory_io_file)
+    end
 
     # CPU tests done, onto GPU tests
-    samples = convert(Matrix{Float64}, samples)
-    samples = CuMatrix{Float64}(samples)
-    
+    samples_gpu = CuMatrix{Float64}(samples_cpu)
+
+    if gpu
     time_memory_io_file =  open("time_memory_gpu.txt","a")
     write(time_memory_io_file, "time, memory\n")
 
     for (i, n) in enumerate(ns)
-        sample_slice = view(samples, :, 1:n)
-        input = VecchiaMLE.VecchiaMLEInput(Int(sqrt(n)), min(Int(sqrt(n)), k), sample_slice, Number_of_Samples, 5, 2)
+        nn = floor(sqrt(n))
+        input = VecchiaMLE.VecchiaMLEInput(nn, min(nn, k), samples_gpu[:, 1:nn^2], Number_of_Samples, 5, 2)
         diagsnostics = @timed VecchiaMLE_Run(input)
 
         write(time_memory_io_file, "$(diagsnostics[2]), $(diagsnostics[3])\n")
         println("$i, gpu, $(diagsnostics[2]) s, \t $(round(Float64(i)/length(ns)*100.0, digits=4))%")
         
-        if diagsnostics[2] > 25 
+        if diagsnostics[2] > 300
             break 
         end
     end
-
     close(time_memory_io_file)
+    end
 end
