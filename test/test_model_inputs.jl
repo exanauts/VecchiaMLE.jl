@@ -22,10 +22,11 @@
     @test_throws AssertionError VecchiaMLE_Run(input)
     input.samples = samples
 
-    ptGrid = [zeros(2) for i in 1:4]
-    @test_throws AssertionError VecchiaMLE_Run(input; ptGrid)
+    input.ptGrid = [zeros(2) for i in 1:4]
+    @test_throws AssertionError VecchiaMLE_Run(input)
 
-    ptGrid = [[0.0] for i in 1:n^2]
-    @test_throws AssertionError VecchiaMLE.VecchiaMLE_Run(input; ptGrid)
+    input.ptGrid = [[0.0] for i in 1:n^2]
+    @test_throws AssertionError VecchiaMLE.VecchiaMLE_Run(input)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1)
     @test_nowarn VecchiaMLE_Run(input)
 end

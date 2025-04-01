@@ -80,6 +80,19 @@ mutable struct VecchiaModel{T, S, VI, M} <: AbstractNLPModel{T, S}
     cache::VecchiaCache{T, S, VI, M}
 end
 
+mutable struct VecchiaMLEInputTemp{M}
+    n::Int
+    k::Int
+    samples::M
+    Number_of_Samples::Int
+    
+    ptGrid::AbstractVector    
+    observed_pts::AbstractVector
+
+    MadNLP_print_level::Int
+    mode::Int
+end
+
 """
 Input to the VecchiaMLE analysis, needs to be filled out by the user!
 The fields to the struct are as follows:\n
@@ -99,20 +112,23 @@ mutable struct VecchiaMLEInput{M}
     k::Int
     samples::M
     Number_of_Samples::Int
+    
+    ptGrid::AbstractVector    
+    observed_pts::AbstractVector
+
     MadNLP_print_level::Int
     mode::Int
     
-    observed_pts::AbstractVector
-    ptGrid::AbstractVector
-
-
     # Constructor to handle compatibility issues. That is, before we handled the observed_pts grid
-    function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, ptGrid::AbstractVector, observed_pts::V=nothing, MadNLP_print_Level::Int=5, mode::Int=1) where {V <: Union{Nothing, AbstractVector}}
-        if isa(observed_pts, Nothing) # Observe the entire grid
-            return new{M}(n, k, samples, Number_of_Samples, MadNLP_Print_Level, mode, ptGrid, ptGrid)
-        else
-            return new{M}(n, k, sampels, Number_of_Samples, MadNLP_Print_Level, mode, observed_pts, ptGrid)
-        end
+    function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, MadNLP_print_Level::Int=5, mode::Int=1; ptGrid::AbstractVector=[], observed_pts::AbstractVector=[]) where {M <: AbstractMatrix}
+        
+        iVecchiaMLE = VecchiaMLEInputTemp{M}(n, k, samples, Number_of_Samples, ptGrid, observed_pts, MadNLP_print_Level, mode)
+        sanitize_input!(iVecchiaMLE)
+        
+        return new{M}(iVecchiaMLE.n, iVecchiaMLE.k, iVecchiaMLE.samples, iVecchiaMLE.Number_of_Samples, 
+            iVecchiaMLE.ptGrid, iVecchiaMLE.observed_pts, iVecchiaMLE.MadNLP_print_level, iVecchiaMLE.mode
+            )
     end
-
 end
+
+

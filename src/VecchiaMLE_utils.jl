@@ -124,23 +124,22 @@ function generate_safe_xyGrid(n::Integer)::AbstractVector
 end
 
 """
-    model = get_vecchia_model(iVecchiaMLE::VecchiaMLEInput, ptGrid::AbstractVector)
+    model = get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)
 
     creates and returns a vecchia model based on the VecchiaMLEInput and point grid. 
 ## Input arguments
 
 * `iVecchiaMLE`: The filled out VecchiaMLEInput struct
-* `ptGrid`: The grid of locations
 ## Output arguments
 
 * `model`: The Vecchia model based on the VecchiaMLEInput  
 """
-function get_vecchia_model(iVecchiaMLE::VecchiaMLEInput, ptGrid::AbstractVector)::VecchiaModel
+function get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)::VecchiaModel
 
     if COMPUTE_MODE(iVecchiaMLE.mode) == GPU
-       return VecchiaModelGPU(CuArray(iVecchiaMLE.samples), iVecchiaMLE.k, ptGrid)
+       return VecchiaModelGPU(CuArray(iVecchiaMLE.samples), iVecchiaMLE.k, iVecchiaMLE.ptGrid)
     else 
-       return VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE.k, ptGrid)
+       return VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE.k, iVecchiaMLE.ptGrid)
     end
 end
 
@@ -557,29 +556,43 @@ The current checks are:\n
 
 ## Input arguments
 * `iVecchiaMLE`: The filled-out VecchiaMLEInput struct. See VecchiaMLEInput struct for more details. 
-* `ptGrid`: The grid of point locations in 2D space. Must be a Vector of 2D Vectors! 
 """
-function sanitize_input!(iVecchiaMLE::VecchiaMLEInput, ptGrid::T) where T <: Union{AbstractVector, Nothing} 
+function sanitize_input!(iVecchiaMLE::T) where {T <: Union{VecchiaMLEInput, VecchiaMLEInputTemp}} 
     @assert iVecchiaMLE.n > 0 "The dimension n must be strictly positive!"
     @assert iVecchiaMLE.k <= iVecchiaMLE.n^2 "The number of conditioning neighbors must be less than n^2 !"
     @assert size(iVecchiaMLE.samples, 1) > 0 "Samples must be nonempty!"
     @assert (iVecchiaMLE.MadNLP_print_level in 1:5) "MadNLP Print Level not in 1:5!"
-    @assert size(iVecchiaMLE.samples, 2) == iVecchiaMLE.n^2 "samples must be of size Number_of_Samples x n^2!"
-    @assert size(iVecchiaMLE.samples, 1) == iVecchiaMLE.Number_of_Samples "samples must be of size Number_of_Samples x n^2!"
+    if iVecchiaMLE.observed_pts == []
+        @assert size(iVecchiaMLE.samples, 2) == iVecchiaMLE.n^2 "observed points not given, so samples must have size n^2!"
+    else
+        @assert size(iVecchiaMLE.samples, 2) == length(iVecchiaMLE.observed_pts) "samples must be of size Number_of_Samples x length(observed_points)!"
+    end
+    @assert size(iVecchiaMLE.samples, 1) == iVecchiaMLE.Number_of_Samples "samples must be of size Number_of_Samples x length(observed_points)!"
     @assert iVecchiaMLE.mode in [1, 2] "Operation mode not valid! must be in [1, 2]." 
     
     if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.mode == 2
+        # Give warning here?
         iVecchiaMLE.samples = CuMatrix{Float64}(iVecchiaMLE.samples)
     end
 
-    if isnothing(ptGrid)
-        ptGrid = generate_xyGrid(iVecchiaMLE.n)
+    if isempty(iVecchiaMLE.ptGrid)
+        iVecchiaMLE.ptGrid = generate_xyGrid(iVecchiaMLE.n)
     end
 
-    @assert length(ptGrid) == iVecchiaMLE.n^2  "The ptGrid given does not have n^2 elements!"
-    for (i, pt) in enumerate(ptGrid)
+    if isempty(iVecchiaMLE.observed_pts)
+        iVecchiaMLE.observed_pts = iVecchiaMLE.ptGrid
+    end
+
+    for obs in iVecchiaMLE.observed_pts
+        @assert obs ∈ iVecchiaMLE.ptGrid "Observed point $(obs) not in gtGrid!"
+    end
+
+    @assert length(iVecchiaMLE.observed_pts) <= length(iVecchiaMLE.ptGrid) "More observed points than possible! Please ensure your observed_pts grid contains unique points"
+    @assert length(iVecchiaMLE.observed_pts[1]) == length(iVecchiaMLE.ptGrid[1]) "Observed points and ptGrid do not have the same dimensionality!"
+
+    @assert length(iVecchiaMLE.ptGrid) == iVecchiaMLE.n^2  "The ptGrid given does not have n^2 elements!"
+    for (i, pt) in enumerate(iVecchiaMLE.ptGrid)
         @assert length(pt) == 2 "Position $(i) in ptGrid is not 2 dimensional!"
     end
 
-    return ptGrid::Vector{Vector{Float64}}
 end
