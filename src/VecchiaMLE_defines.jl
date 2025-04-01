@@ -86,21 +86,33 @@ The fields to the struct are as follows:\n
 
 * `n`: The Square root size of the problem. I.e., the length of one side of ptGrid.  
 * `k`: The "number of neighbors", number of conditioning points regarding the Vecchia Approximation. 
-* `samples`: The Samples in which to generate the output. If you have no samples consult the Documentation.
+* `samples`: The Samples in which to generate the output. Each sample should be the length of the observed_pts vector. If you have no samples consult the Documentation.
 * `Number_of_Samples`: The Number of Samples the user gives input to the program.
 * `MadNLP_print_level`: The print level to the optimizer. Can be ignored, and will default to ERROR.
 * `mode`: The opertaing mode to the analysis(GPU or CPU). The mapping is [1: 'CPU', 2: 'GPU'].
-
+* `observed_pts` : The observed points at which you take samples. 
+* `ptGrid`: The larger gridded space in which the observed points lie.
 """
 mutable struct VecchiaMLEInput{M}
+    
     n::Int
     k::Int
     samples::M
     Number_of_Samples::Int
     MadNLP_print_level::Int
     mode::Int
+    
+    observed_pts::AbstractVector
+    ptGrid::AbstractVector
 
-    function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, MadNLP_print_Level::Int=5, mode::Int=1) where {M<:AbstractMatrix}
-        return new{M}(n, k, samples, Number_of_Samples, MadNLP_print_Level, mode)
+
+    # Constructor to handle compatibility issues. That is, before we handled the observed_pts grid
+    function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, ptGrid::AbstractVector, observed_pts::V=nothing, MadNLP_print_Level::Int=5, mode::Int=1) where {V <: Union{Nothing, AbstractVector}}
+        if isa(observed_pts, Nothing) # Observe the entire grid
+            return new{M}(n, k, samples, Number_of_Samples, MadNLP_Print_Level, mode, ptGrid, ptGrid)
+        else
+            return new{M}(n, k, sampels, Number_of_Samples, MadNLP_Print_Level, mode, observed_pts, ptGrid)
+        end
     end
+
 end
