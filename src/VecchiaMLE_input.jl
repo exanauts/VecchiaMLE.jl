@@ -27,25 +27,7 @@ See VecchiaMLE_Run().
 """
 function VecchiaMLE_Run_Analysis!(iVecchiaMLE::VecchiaMLEInput, pres_chol::AbstractMatrix, diagnostics::Diagnostics)
     model, output = ExecuteModel!(iVecchiaMLE, pres_chol, diagnostics)
-
-    diagnostics.LinAlg_solve_time = output.counters.linear_solver_time
-    diagnostics.MadNLP_iterations = output.iter
-    diagnostics.mode = iVecchiaMLE.mode
-
-    # Getting some values for error checking
-    diagnostics.objective_value = NLPModels.obj(model, output.solution)
-    cons_vec = typeof(output.solution)(undef, model.cache.n)
-    NLPModels.cons!(model, output.solution, cons_vec)
-
-    grad_vec = typeof(output.solution)(undef, length(output.solution))
-    fill!(grad_vec, 0.0)
-    NLPModels.grad!(model, output.solution, grad_vec)
-    Jtv = similar(grad_vec)
-    NLPModels.jtprod!(model, output.solution, output.multipliers, Jtv)
-    grad_vec .+= Jtv
-
-    diagnostics.normed_constraint_value = norm(cons_vec)
-    diagnostics.normed_grad_value = norm(grad_vec)
+    RetrieveDiagnostics!(iVecchiaMLE, output, model, diagnostics)
 end
 
 """
@@ -67,4 +49,28 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, pres_chol::AbstractMatrix, 
     colsL = Vector{Int}(model.cache.colsL)
     copyto!(pres_chol, LowerTriangular(sparse(rowsL, colsL, valsL)))
     return model, output
+end
+
+"""
+See VecchiaMLE_Run()
+"""
+function RetrieveDiagnostics!(iVecchiaMLE, output, model, diagnostics)
+    diagnostics.LinAlg_solve_time = output.counters.linear_solver_time
+    diagnostics.MadNLP_iterations = output.iter
+    diagnostics.mode = iVecchiaMLE.mode
+
+    # Getting some values for error checking
+    diagnostics.objective_value = NLPModels.obj(model, output.solution)
+    cons_vec = typeof(output.solution)(undef, model.cache.n)
+    NLPModels.cons!(model, output.solution, cons_vec)
+
+    grad_vec = typeof(output.solution)(undef, length(output.solution))
+    fill!(grad_vec, 0.0)
+    NLPModels.grad!(model, output.solution, grad_vec)
+    Jtv = similar(grad_vec)
+    NLPModels.jtprod!(model, output.solution, output.multipliers, Jtv)
+    grad_vec .+= Jtv
+
+    diagnostics.normed_constraint_value = norm(cons_vec)
+    diagnostics.normed_grad_value = norm(grad_vec)
 end
