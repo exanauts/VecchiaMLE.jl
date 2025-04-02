@@ -3,8 +3,8 @@
 function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:AbstractArray}
     T = eltype(S)
 
-    cache = create_vecchia_cache(S, iVecchiaMLE)
-    nvar_ = length(cache.rowsL) + length(cache.colptrL) - 1
+    cache::VecchiaCache = create_vecchia_cache(S, iVecchiaMLE)
+    nvar_::Int = length(cache.rowsL) + length(cache.colptrL) - 1
     
     # The initial condition is for L to be the identity. 
     x0_::S = S(undef, nvar_)
@@ -41,20 +41,20 @@ VecchiaModelCPU(iVecchiaMLE::VecchiaMLEInput) = VecchiaModel(Vector{Float64}, iV
 VecchiaModelGPU(iVecchiaMLE::VecchiaMLEInput) = VecchiaModel(CuVector{Float64,B}, iVecchiaMLE::VecchiaMLEInput)
 
 # Constructing the vecchia cache used everywhere in the code below.
-function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S <: AbstractVector}
-    Msamples = size(iVecchiaMLE.samples, 1)
-    n = size(iVecchiaMLE.samples, 2)
+function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaCache where {S <: AbstractVector}
+    Msamples::Int = size(iVecchiaMLE.samples, 1)
+    n::Int = size(iVecchiaMLE.samples, 2)
     T = eltype(S)
 
     # SPARSITY PATTERN OF L IN COO, CSC FORMAT.
     rowsL, colsL, colptrL = SparsityPattern(iVecchiaMLE.ptGrid, iVecchiaMLE.k, "CSC")
 
-    nnzL = length(rowsL)
+    nnzL::Int = length(rowsL)
     m = Int[colptrL[j+1] - colptrL[j] for j in 1:n]
 
     # Number of nonzeros in the the lower triangular part of the Hessians
-    nnzh_tri_obj = sum(m[j] * (m[j] + 1) for j in 1:n) ÷ 2
-    nnzh_tri_lag = nnzh_tri_obj + n
+    nnzh_tri_obj::Int = sum(m[j] * (m[j] + 1) for j in 1:n) ÷ 2
+    nnzh_tri_lag::Int = nnzh_tri_obj + n
 
     if S != Vector{Float64}
 
@@ -68,11 +68,11 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S 
         offsets = Int[]
         B = [Matrix{T}(undef, m[j], m[j]) for j = 1:n]
     end
-    hess_obj_vals = S(undef, nnzh_tri_obj)
+    hess_obj_vals::S = S(undef, nnzh_tri_obj)
     vecchia_build_B!(B, iVecchiaMLE.samples, rowsL, colptrL, hess_obj_vals, n, m)
 
-    diagL = colptrL[1:n]
-    buffer = S(undef, nnzL)
+    diagL = view(colptrL, 1:n)
+    buffer::S = S(undef, nnzL)
 
     return VecchiaCache{eltype(S), S, typeof(rowsL), typeof(B[1])}(
         n, Msamples, nnzL,
