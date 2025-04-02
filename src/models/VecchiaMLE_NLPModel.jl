@@ -43,14 +43,15 @@ VecchiaModelGPU(samples::CuMatrix{Float64, B}, iVecchiaMLE::VecchiaMLEInput) whe
 # Constructing the vecchia cache used everywhere in the code below.
 function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaCache where {S <: AbstractVector}
     Msamples::Int = size(iVecchiaMLE.samples, 1)
-    n::Int = size(iVecchiaMLE.samples, 2)
+    Lsamples::Int = size(iVecchiaMLE.samples, 2)
+    n::Int = iVecchiaMLE.n^2
     T = eltype(S)
 
     # SPARSITY PATTERN OF L IN COO, CSC FORMAT.
     rowsL, colsL, colptrL = SparsityPattern(iVecchiaMLE.ptGrid, iVecchiaMLE.k, iVecchiaMLE.observed_pts, "CSC")
 
     nnzL::Int = length(rowsL)
-    m = Int[colptrL[j+1] - colptrL[j] for j in 1:n]
+    m = [colptrL[j+1] - colptrL[j] for j in 1:n]
 
     # Number of nonzeros in the the lower triangular part of the Hessians
     nnzh_tri_obj::Int = sum(m[j] * (m[j] + 1) for j in 1:n) ÷ 2
@@ -69,7 +70,9 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
         B = [Matrix{T}(undef, m[j], m[j]) for j = 1:n]
     end
     hess_obj_vals::S = S(undef, nnzh_tri_obj)
-    vecchia_build_B!(B, iVecchiaMLE.samples, rowsL, colptrL, hess_obj_vals, n, m)
+
+    # For n here, you want the length of a sample
+    vecchia_build_B!(B, iVecchiaMLE.samples, rowsL, colptrL, hess_obj_vals, Lsamples, m)
 
     diagL = view(colptrL, 1:n)
     buffer::S = S(undef, nnzL)

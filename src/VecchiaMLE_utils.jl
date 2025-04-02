@@ -546,6 +546,9 @@ function SparsityPattern_CSC(data, k::Int, obs_pts)
         idx += len
         colptr[i+1] = idx
     end
+    #println("idx:", idx)
+    rows = rows[1:idx-1]
+    cols = cols[1:idx-1]
 
     return rows, cols, colptr
 end
@@ -574,9 +577,9 @@ function sanitize_input!(iVecchiaMLE::T) where {T <: Union{VecchiaMLEInput, Vecc
     if iVecchiaMLE.observed_pts == []
         @assert size(iVecchiaMLE.samples, 2) == iVecchiaMLE.n^2 "observed points not given, so samples must have size n^2!"
     else
-        @assert size(iVecchiaMLE.samples, 2) == length(iVecchiaMLE.observed_pts) "samples must be of size Number_of_Samples x length(observed_points)!"
+        @assert size(iVecchiaMLE.samples, 2) == iVecchiaMLE.n^2 "samples must be of size Number_of_Samples x n^2!"
     end
-    @assert size(iVecchiaMLE.samples, 1) == iVecchiaMLE.Number_of_Samples "samples must be of size Number_of_Samples x length(observed_points)!"
+    @assert size(iVecchiaMLE.samples, 1) == iVecchiaMLE.Number_of_Samples "samples must be of size Number_of_Samples x n^2!"
     @assert iVecchiaMLE.mode in [1, 2] "Operation mode not valid! must be in [1, 2]." 
     
     if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.mode == 2
