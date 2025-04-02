@@ -137,9 +137,9 @@ end
 function get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)::VecchiaModel
 
     if COMPUTE_MODE(iVecchiaMLE.mode) == GPU
-       return VecchiaModelGPU(iVecchiaMLE)
+       return VecchiaModelGPU(iVecchiaMLE.samples, iVecchiaMLE)
     else 
-       return VecchiaModelCPU(iVecchiaMLE)
+       return VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE)
     end
 end
 
@@ -469,11 +469,11 @@ end
 * `colptr`: A vector of incides which determine where new columns start. 
 
 """
-function SparsityPattern(data, k::Int, format="")
+function SparsityPattern(data, k::Int, obs_pts, format="")
     if format == ""
-        return SparsityPattern_CSC(data, k)
+        return SparsityPattern_CSC(data, k, obs_pts)
     elseif format == "CSC"
-        return SparsityPattern_CSC(data, k)
+        return SparsityPattern_CSC(data, k, obs_pts)
     else
         println("Sparsity Pattern: Bad format. Gave", format)
         return nothing
@@ -501,7 +501,7 @@ end
 """
 See SparsityPattern().
 """
-function SparsityPattern_CSC(data, k::Int)
+function SparsityPattern_CSC(data, k::Int, obs_pts)
     n = size(data, 1)
     rows = zeros(Int, Int(0.5 * k * (2*n - k + 1)))
     cols = copy(rows)  
@@ -516,16 +516,25 @@ function SparsityPattern_CSC(data, k::Int)
     for i in 2:n
         k_nn = min(i-1, k-1)
         buffer, _ = AdaptiveKDTrees.KNN.knn(kdtree, data[i, 1], k_nn)
-        spar_i = Sparsity_dict[i]  
-        push!(spar_i, i)
+        
+        # Push to i-th point itself, since it is a neighbor.
+        push!(Sparsity_dict[i], i)
     
+
         for j in 1:k_nn
-            push!(Sparsity_dict[buffer[j]], i)
+           
+            if data[i, 1] ∈ obs_pts
+                # record that i considers point[j] to be a neighbor
+                push!(Sparsity_dict[buffer[j]], i)
+            end
         end 
     
+        # Add point to kdtree. 
         add_point!(kdtree, data[i, 1])
     end
     
+    #println("Sparsity_dict:\n", Sparsity_dict)
+
     idx = 1
     colptr = zeros(Int, n+1)
     colptr[1] = 1

@@ -119,16 +119,13 @@ mutable struct VecchiaMLEInput{M}
     MadNLP_print_level::Int
     mode::Int
     
-    # Constructor to handle compatibility issues. That is, before we handled the observed_pts grid
-    function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, MadNLP_print_Level::Int=5, mode::Int=1; ptGrid::AbstractVector=[], observed_pts::AbstractVector=[]) where {M <: AbstractMatrix}
-        
-        iVecchiaMLE = VecchiaMLEInputTemp{M}(n, k, samples, Number_of_Samples, ptGrid, observed_pts, MadNLP_print_Level, mode)
-        sanitize_input!(iVecchiaMLE)
-        
-        return new{M}(iVecchiaMLE.n, iVecchiaMLE.k, iVecchiaMLE.samples, iVecchiaMLE.Number_of_Samples, 
-            iVecchiaMLE.ptGrid, iVecchiaMLE.observed_pts, iVecchiaMLE.MadNLP_print_level, iVecchiaMLE.mode
-            )
-    end
 end
 
 
+function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, MadNLP_print_Level::Int=5, mode::Int=1;
+    ptGrid::AbstractVector=[], observed_pts::AbstractVector=[]) where {M <: AbstractMatrix}
+
+    iVecchiaMLE = VecchiaMLEInput(n, k, samples, Number_of_Samples, ptGrid, observed_pts, MadNLP_print_Level, mode)
+    sanitize_input!(iVecchiaMLE)  
+    return iVecchiaMLE
+end

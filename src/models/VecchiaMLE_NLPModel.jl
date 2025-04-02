@@ -37,8 +37,8 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
 end
 
 # Only two modes instantiated!!
-VecchiaModelCPU(iVecchiaMLE::VecchiaMLEInput) = VecchiaModel(Vector{Float64}, iVecchiaMLE::VecchiaMLEInput) 
-VecchiaModelGPU(iVecchiaMLE::VecchiaMLEInput) = VecchiaModel(CuVector{Float64,B}, iVecchiaMLE::VecchiaMLEInput)
+VecchiaModelCPU(samples::Matrix{T}, iVecchiaMLE::VecchiaMLEInput) where {T}= VecchiaModel(Vector{Float64}, iVecchiaMLE::VecchiaMLEInput) 
+VecchiaModelGPU(samples::CuMatrix{Float64, B}, iVecchiaMLE::VecchiaMLEInput) where {B} = VecchiaModel(CuVector{Float64,B}, iVecchiaMLE::VecchiaMLEInput)
 
 # Constructing the vecchia cache used everywhere in the code below.
 function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaCache where {S <: AbstractVector}
@@ -47,7 +47,7 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
     T = eltype(S)
 
     # SPARSITY PATTERN OF L IN COO, CSC FORMAT.
-    rowsL, colsL, colptrL = SparsityPattern(iVecchiaMLE.ptGrid, iVecchiaMLE.k, "CSC")
+    rowsL, colsL, colptrL = SparsityPattern(iVecchiaMLE.ptGrid, iVecchiaMLE.k, iVecchiaMLE.observed_pts, "CSC")
 
     nnzL::Int = length(rowsL)
     m = Int[colptrL[j+1] - colptrL[j] for j in 1:n]
