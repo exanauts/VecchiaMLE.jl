@@ -1,9 +1,9 @@
 # TODO: GPU is running poorly. Something being ported from CPU?
 
-function VecchiaModel(::Type{S}, samples::AbstractMatrix, k::Int, ptGrid::AbstractVector) where {S<:AbstractArray}
+function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:AbstractArray}
     T = eltype(S)
 
-    cache = create_vecchia_cache(samples, k, ptGrid, S)
+    cache = create_vecchia_cache(S, iVecchiaMLE)
     nvar_ = length(cache.rowsL) + length(cache.colptrL) - 1
     
     # The initial condition is for L to be the identity. 
@@ -37,17 +37,17 @@ function VecchiaModel(::Type{S}, samples::AbstractMatrix, k::Int, ptGrid::Abstra
 end
 
 # Only two modes instantiated!!
-VecchiaModelCPU(samples::Matrix{T}, k::Int, xyGrid::AbstractVector) where {T <: AbstractFloat} = VecchiaModel(Vector{Float64}, samples::Matrix{Float64}, k::Int, xyGrid::AbstractVector) 
-VecchiaModelGPU(samples::CuMatrix{Float64,B}, k::Int, xyGrid::AbstractVector) where {B} = VecchiaModel(CuVector{Float64,B}, samples::AbstractMatrix, k::Int, xyGrid::AbstractVector)
+VecchiaModelCPU(iVecchiaMLE::VecchiaMLEInput) = VecchiaModel(Vector{Float64}, iVecchiaMLE::VecchiaMLEInput) 
+VecchiaModelGPU(iVecchiaMLE::VecchiaMLEInput) = VecchiaModel(CuVector{Float64,B}, iVecchiaMLE::VecchiaMLEInput)
 
 # Constructing the vecchia cache used everywhere in the code below.
-function create_vecchia_cache(samples::AbstractMatrix, k::Int, ptGrid::AbstractVector, ::Type{S}) where {S <: AbstractVector}
-    Msamples = size(samples, 1)
-    n = size(samples, 2)
+function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S <: AbstractVector}
+    Msamples = size(iVecchiaMLE.samples, 1)
+    n = size(iVecchiaMLE.samples, 2)
     T = eltype(S)
 
     # SPARSITY PATTERN OF L IN COO, CSC FORMAT.
-    rowsL, colsL, colptrL = SparsityPattern(ptGrid, k, "CSC")
+    rowsL, colsL, colptrL = SparsityPattern(iVecchiaMLE.ptGrid, iVecchiaMLE.k, "CSC")
 
     nnzL = length(rowsL)
     m = Int[colptrL[j+1] - colptrL[j] for j in 1:n]
@@ -69,7 +69,7 @@ function create_vecchia_cache(samples::AbstractMatrix, k::Int, ptGrid::AbstractV
         B = [Matrix{T}(undef, m[j], m[j]) for j = 1:n]
     end
     hess_obj_vals = S(undef, nnzh_tri_obj)
-    vecchia_build_B!(B, samples, rowsL, colptrL, hess_obj_vals, n, m)
+    vecchia_build_B!(B, iVecchiaMLE.samples, rowsL, colptrL, hess_obj_vals, n, m)
 
     diagL = colptrL[1:n]
     buffer = S(undef, nnzL)
