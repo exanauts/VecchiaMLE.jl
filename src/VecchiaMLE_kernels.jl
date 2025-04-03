@@ -115,29 +115,25 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vecto
     pos = 0
     for j in 1:n
         for s in 1:m[j]
+            # What happens if you don't have a key?
+
+            
             for t in 1:m[j]
-                if !haskey(mapping_dict, rowsL[colptrL[j] + t - 1])
-                    #println("key not found: ", rowsL[colptrL[j] + t - 1])
-                end
-                if !haskey(mapping_dict, rowsL[colptrL[j] + s - 1])
-                    #println("key not found: ", rowsL[colptrL[j] + s - 1])
-                end
-                # Need to find the index in mapping_vec s.t. rowsL[colptrL[j] + ...] == mapping_vec
-                # Problem when a row has nz only on diagonal. vt val tries to access idx not in mapping_vec
-                # What happens if you don't have a key?
-                #println("j: ", j, "\ts: ", s, "\tt: ", t)
-                #println("vt idx: ", colptrL[j] + t - 1, "\tvt val: ", mapping_dict[rowsL[colptrL[j] + t - 1]])
-                #println("vs idx: ", colptrL[j] + s - 1, "\tvs val: ", mapping_dict[rowsL[colptrL[j] + s - 1]])
-                if haskey(mapping_dict, rowsL[colptrL[j] + t - 1]) && haskey(mapping_dict, rowsL[colptrL[j] + s - 1])
-                    vt = view(samples, :, mapping_dict[rowsL[colptrL[j] + t - 1]])
-                    vs = view(samples, :, mapping_dict[rowsL[colptrL[j] + s - 1]])
+                
+                key1 = rowsL[colptrL[j] + t - 1]
+                key2 = rowsL[colptrL[j] + s - 1]
+                if haskey(mapping_dict, key2) && haskey(mapping_dict, key1)
+                    #println("key1: $(key1) -> $(mapping_dict[key1])")
+                    #println("key2: $(key2) -> $(mapping_dict[key2])")
+                    vt =  view(samples, :, mapping_dict[key1])
+                    vs =  view(samples, :, mapping_dict[key2])
                     B[j][t, s] = dot(vt, vs)
                 else
-                    # What do here?
-                    #vt = view(samples, :, 1)
-                    #vs = view(samples, :, 2)
-                    #B[j][t, s] = dot(vt, vs)
-                    B[j][t, s] = n
+                    if t == s
+                        B[j][t, s] = 1e-8
+                    else 
+                        B[j][t, s] = 0
+                    end
                 end
                 # Lower triangular part of the block Bⱼ
                 if s ≤ t
@@ -146,7 +142,10 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vecto
                 end
             end
         end
+        display(B[j])
+        println("cond: $(cond(B[j]))")
     end
+
     return nothing
 end
 
