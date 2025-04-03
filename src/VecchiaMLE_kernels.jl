@@ -116,15 +116,29 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vecto
     for j in 1:n
         for s in 1:m[j]
             for t in 1:m[j]
+                if !haskey(mapping_dict, rowsL[colptrL[j] + t - 1])
+                    #println("key not found: ", rowsL[colptrL[j] + t - 1])
+                end
+                if !haskey(mapping_dict, rowsL[colptrL[j] + s - 1])
+                    #println("key not found: ", rowsL[colptrL[j] + s - 1])
+                end
                 # Need to find the index in mapping_vec s.t. rowsL[colptrL[j] + ...] == mapping_vec
                 # Problem when a row has nz only on diagonal. vt val tries to access idx not in mapping_vec
                 # What happens if you don't have a key?
-                println("vt idx: ", colptrL[j] + t - 1, "\tvt val: ", mapping_dict[rowsL[colptrL[j] + t - 1]])
-                println("vs idx: ", colptrL[j] + s - 1, "\tvs val: ", mapping_dict[rowsL[colptrL[j] + s - 1]])
-                vt = view(samples, :, mapping_dict[rowsL[colptrL[j] + t - 1]])
-                vs = view(samples, :, mapping_dict[rowsL[colptrL[j] + s - 1]])
-                B[j][t, s] = dot(vt, vs)
-
+                #println("j: ", j, "\ts: ", s, "\tt: ", t)
+                #println("vt idx: ", colptrL[j] + t - 1, "\tvt val: ", mapping_dict[rowsL[colptrL[j] + t - 1]])
+                #println("vs idx: ", colptrL[j] + s - 1, "\tvs val: ", mapping_dict[rowsL[colptrL[j] + s - 1]])
+                if haskey(mapping_dict, rowsL[colptrL[j] + t - 1]) && haskey(mapping_dict, rowsL[colptrL[j] + s - 1])
+                    vt = view(samples, :, mapping_dict[rowsL[colptrL[j] + t - 1]])
+                    vs = view(samples, :, mapping_dict[rowsL[colptrL[j] + s - 1]])
+                    B[j][t, s] = dot(vt, vs)
+                else
+                    # What do here?
+                    #vt = view(samples, :, 1)
+                    #vs = view(samples, :, 2)
+                    #B[j][t, s] = dot(vt, vs)
+                    B[j][t, s] = n
+                end
                 # Lower triangular part of the block Bⱼ
                 if s ≤ t
                     pos = pos + 1

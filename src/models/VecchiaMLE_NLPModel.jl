@@ -84,8 +84,9 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
     end
     hess_obj_vals::S = S(undef, nnzh_tri_obj)
 
-    # For n here, you want the length of a sample
-    vecchia_build_B!(B, iVecchiaMLE.samples, rowsL, colptrL, hess_obj_vals, Lsamples, m, mapping_dict)
+    #println("m:\n", m)
+    # For n here, you want the length of a sample (pass Lsamples or n?)
+    vecchia_build_B!(B, iVecchiaMLE.samples, rowsL, colptrL, hess_obj_vals, n, m, mapping_dict)
 
     diagL = view(colptrL, 1:n)
     buffer::S = S(undef, nnzL)
