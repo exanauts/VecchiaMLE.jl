@@ -72,7 +72,10 @@ end
 
 # Front-end
 function vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix{T}, rowsL::CuVector{Int},
-    colptrL::CuVector{Int}, hess_obj_vals::CuVector{T}, n::Int, m::CuVector{Int}) where T <: AbstractFloat
+    colptrL::CuVector{Int}, hess_obj_vals::CuVector{T}, n::Int, m::CuVector{Int}, mapping_dict::CuVector{Int}) where T <: AbstractFloat
+    
+    # TODO: Is there a CUDA dictionary? This is for the mapping from samples to ptGrid size
+    
     # Launch the kernel
     backend = KA.get_backend(samples)
     r = size(samples, 1)
@@ -108,13 +111,18 @@ end
 
 # CPU implementation
 function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vector{Int},
-                          colptrL::Vector{Int}, hess_obj_vals::Vector{T}, n::Int, m::Vector{Int}) where T <: AbstractFloat
+                          colptrL::Vector{Int}, hess_obj_vals::Vector{T}, n::Int, m::Vector{Int}, mapping_dict::Dict{Int, Int}) where T <: AbstractFloat
     pos = 0
     for j in 1:n
         for s in 1:m[j]
             for t in 1:m[j]
-                vt = view(samples, :, rowsL[colptrL[j] + t - 1])
-                vs = view(samples, :, rowsL[colptrL[j] + s - 1])
+                # Need to find the index in mapping_vec s.t. rowsL[colptrL[j] + ...] == mapping_vec
+                # Problem when a row has nz only on diagonal. vt val tries to access idx not in mapping_vec
+                # What happens if you don't have a key?
+                println("vt idx: ", colptrL[j] + t - 1, "\tvt val: ", mapping_dict[rowsL[colptrL[j] + t - 1]])
+                println("vs idx: ", colptrL[j] + s - 1, "\tvs val: ", mapping_dict[rowsL[colptrL[j] + s - 1]])
+                vt = view(samples, :, mapping_dict[rowsL[colptrL[j] + t - 1]])
+                vs = view(samples, :, mapping_dict[rowsL[colptrL[j] + s - 1]])
                 B[j][t, s] = dot(vt, vs)
 
                 # Lower triangular part of the block Bⱼ
