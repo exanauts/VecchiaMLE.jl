@@ -72,7 +72,10 @@ end
 
 # Front-end
 function vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix{T}, rowsL::CuVector{Int},
-    colptrL::CuVector{Int}, hess_obj_vals::CuVector{T}, n::Int, m::CuVector{Int}) where T <: AbstractFloat
+    colptrL::CuVector{Int}, hess_obj_vals::CuVector{T}, n::Int, m::CuVector{Int}, mapping_dict::CuVector{Int}) where T <: AbstractFloat
+    
+    # TODO: Is there a CUDA dictionary? This is for the mapping from samples to ptGrid size
+    
     # Launch the kernel
     backend = KA.get_backend(samples)
     r = size(samples, 1)
@@ -108,15 +111,30 @@ end
 
 # CPU implementation
 function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vector{Int},
-                          colptrL::Vector{Int}, hess_obj_vals::Vector{T}, n::Int, m::Vector{Int}) where T <: AbstractFloat
+                          colptrL::Vector{Int}, hess_obj_vals::Vector{T}, n::Int, m::Vector{Int}, mapping_dict::Dict{Int, Int}) where T <: AbstractFloat
     pos = 0
     for j in 1:n
         for s in 1:m[j]
-            for t in 1:m[j]
-                vt = view(samples, :, rowsL[colptrL[j] + t - 1])
-                vs = view(samples, :, rowsL[colptrL[j] + s - 1])
-                B[j][t, s] = dot(vt, vs)
+            # What happens if you don't have a key?
 
+            
+            for t in 1:m[j]
+                
+                key1 = rowsL[colptrL[j] + t - 1]
+                key2 = rowsL[colptrL[j] + s - 1]
+                if haskey(mapping_dict, key2) && haskey(mapping_dict, key1)
+                    #println("key1: $(key1) -> $(mapping_dict[key1])")
+                    #println("key2: $(key2) -> $(mapping_dict[key2])")
+                    vt =  view(samples, :, mapping_dict[key1])
+                    vs =  view(samples, :, mapping_dict[key2])
+                    B[j][t, s] = dot(vt, vs)
+                else
+                    if t == s
+                        B[j][t, s] = 1e-8
+                    else 
+                        B[j][t, s] = 0
+                    end
+                end
                 # Lower triangular part of the block Bⱼ
                 if s ≤ t
                     pos = pos + 1
@@ -124,7 +142,10 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vecto
                 end
             end
         end
+        display(B[j])
+        println("cond: $(cond(B[j]))")
     end
+
     return nothing
 end
 

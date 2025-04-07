@@ -579,7 +579,7 @@ function sanitize_input!(iVecchiaMLE::T) where {T <: Union{VecchiaMLEInput, Vecc
     else
         @assert size(iVecchiaMLE.samples, 2) == length(iVecchiaMLE.observed_pts) "samples must be of size Number_of_Samples x length(observed_pts)!"
     end
-    @assert size(iVecchiaMLE.samples, 1) == iVecchiaMLE.Number_of_Samples "samples must be of size Number_of_Samples x n^2!"
+    @assert size(iVecchiaMLE.samples, 1) == iVecchiaMLE.Number_of_Samples "samples must be of size Number_of_Samples x length(observed_pts)!"
     @assert iVecchiaMLE.mode in [1, 2] "Operation mode not valid! must be in [1, 2]." 
     
     if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.mode == 2
