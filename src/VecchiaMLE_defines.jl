@@ -124,23 +124,23 @@ function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, Mad
     return iVecchiaMLE
 end
 
-"""
-Constructs a `VecchiaMLEInput` instance with specified `ptGrid` and `observed_idx_mapping`.
-
-# Arguments
-- `n::Int`: Square root size of the problem.
-- `k::Int`: Number of neighbors for the Vecchia Approximation.
-- `samples::M`: Samples for output generation.
-- `Number_of_Samples::Int`: Number of samples provided.
-- `print_level::Int`: (Optional) Print level for the optimizer. Defaults to `5`.
-- `mode::Int`: (Optional) Operating mode (`1` for 'CPU', `2` for 'GPU'). Defaults to `1`.
-- `ptGrid::AbstractVector`: (Keyword) Larger gridded space containing the observed points.
-- `observed_idx_mapping::AbstractVector`: (Keyword) Indices mapping to observed points within `ptGrid`.
-"""
-function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, print_level::Int=5, mode::Int=1;
-    ptGrid::AbstractVector=[], observed_idx_mapping::AbstractVector=[]) where {M <: AbstractMatrix}
-    @assert isa(observed_idx_mapping, Vector{Int}) "observed_idx_mapping is not a vector of indices!"
-    @assert maximum(observed_idx_mapping) <= length(ptGrid) && minimum(observed_idx_mapping) >= 1 "observed_idx_mapping has illegal indices!"
-    observed_pts = ptGrid[observed_idx_mapping]
-    return VecchiaMLEInput(n, k, samples, Number_of_Samples, print_level, mode; ptGrid=ptGrid, observed_pts=observed_pts)
-end
+#"""
+#Constructs a `VecchiaMLEInput` instance with specified `ptGrid` and `observed_idx_mapping`.
+#
+## Arguments
+#- `n::Int`: Square root size of the problem.
+#- `k::Int`: Number of neighbors for the Vecchia Approximation.
+#- `samples::M`: Samples for output generation.
+#- `Number_of_Samples::Int`: Number of samples provided.
+#- `print_level::Int`: (Optional) Print level for the optimizer. Defaults to `5`.
+#- `mode::Int`: (Optional) Operating mode (`1` for 'CPU', `2` for 'GPU'). Defaults to `1`.
+#- `ptGrid::AbstractVector`: (Keyword) Larger gridded space containing the observed points.
+#- `observed_idx_mapping::AbstractVector`: (Keyword) Indices mapping to observed points within `ptGrid`.
+#"""
+#function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, print_level::Int=5, mode::Int=1;
+#    ptGrid::AbstractVector=[], observed_idx_mapping::AbstractVector=[]) where {M <: AbstractMatrix}
+#    @assert isa(observed_idx_mapping, Vector{Int}) "observed_idx_mapping is not a vector of indices!"
+#    @assert maximum(observed_idx_mapping) <= length(ptGrid) && minimum(observed_idx_mapping) >= 1 "observed_idx_mapping has illegal indices!"
+#    observed_pts = ptGrid[observed_idx_mapping]
+#    return VecchiaMLEInput(n, k, samples, Number_of_Samples, print_level, mode; ptGrid=ptGrid, observed_pts=observed_pts)
+#end

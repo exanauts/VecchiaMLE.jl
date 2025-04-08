@@ -569,7 +569,7 @@ The current checks are:\n
 ## Input arguments
 * `iVecchiaMLE`: The filled-out VecchiaMLEInput struct. See VecchiaMLEInput struct for more details. 
 """
-function sanitize_input!(iVecchiaMLE::T) where {T <: Union{VecchiaMLEInput, VecchiaMLEInputTemp}} 
+function sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
     @assert iVecchiaMLE.n > 0 "The dimension n must be strictly positive!"
     @assert iVecchiaMLE.k <= iVecchiaMLE.n^2 "The number of conditioning neighbors must be less than n^2 !"
     @assert size(iVecchiaMLE.samples, 1) > 0 "Samples must be nonempty!"

@@ -142,8 +142,8 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vecto
                 end
             end
         end
-        display(B[j])
-        println("cond: $(cond(B[j]))")
+        #display(B[j])
+        #println("cond: $(cond(B[j]))")
     end
 
     return nothing
