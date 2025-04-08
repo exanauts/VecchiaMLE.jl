@@ -1,25 +1,3 @@
-@testset "GPU_memory_allocations" begin
-    n = 10
-    k = 10
-    Number_of_Samples = 100
-    params = [5.0, 0.2, 2.25, 0.25] 
-    xyGrid = VecchiaMLE.generate_xyGrid(n)
-    MatCov = VecchiaMLE.generate_MatCov(n, params, xyGrid)
-    samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples; mode=GPU)
-
-    model = VecchiaMLE.VecchiaModelGPU(samples, k, xyGrid)
-    mems = test_allocs_nlpmodels_gpu(model)
-
-    @test mems[:obj] == 8.0  # these allocations are related to allocations in "sum"
-    @test mems[:grad!] == 0.0
-    @test_broken mems[:cons!] == 0.0
-    @test_broken mems[:hess_structure!] == 0.0
-    @test mems[:jac_structure!] == 0.0
-    @test mems[:jac_coord!] == 0.0
-    @test mems[:hess_coord!] == 0.0
-    @test mems[:hess_lag_coord!] == 0.0
-end
-
 function test_allocs_nlpmodels_gpu(nlp::AbstractNLPModel; linear_api = false, exclude = [])
   nlp_allocations = Dict(
     :obj => NaN,
@@ -203,4 +181,26 @@ function test_allocs_nlpmodels_gpu(nlp::AbstractNLPModel; linear_api = false, ex
     end
   end
   return nlp_allocations
+end
+
+@testset "GPU_memory_allocations" begin
+    n = 10
+    k = 10
+    Number_of_Samples = 100
+    params = [5.0, 0.2, 2.25, 0.25]
+    xyGrid = VecchiaMLE.generate_xyGrid(n)
+    MatCov = VecchiaMLE.generate_MatCov(n, params, xyGrid)
+    samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples; mode=GPU)
+
+    model = VecchiaMLE.VecchiaModelGPU(samples, k, xyGrid)
+    mems = test_allocs_nlpmodels_gpu(model)
+
+    @test mems[:obj] == 8.0  # these allocations are related to allocations in "sum"
+    @test mems[:grad!] == 0.0
+    @test_broken mems[:cons!] == 0.0
+    @test_broken mems[:hess_structure!] == 0.0
+    @test mems[:jac_structure!] == 0.0
+    @test mems[:jac_coord!] == 0.0
+    @test mems[:hess_coord!] == 0.0
+    @test mems[:hess_lag_coord!] == 0.0
 end
