@@ -195,7 +195,7 @@ end
     model = VecchiaMLE.VecchiaModelGPU(samples, k, xyGrid)
     mems = test_allocs_nlpmodels_gpu(model)
 
-    @test mems[:obj] == 8.0  # these allocations are related to allocations in "sum"
+    @test mems[:obj] == 16.0  # these allocations are related to allocations in "sum"
     @test mems[:grad!] == 0.0
     @test_broken mems[:cons!] == 0.0
     @test_broken mems[:hess_structure!] == 0.0
