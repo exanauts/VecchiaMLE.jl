@@ -129,23 +129,18 @@ end
 function NLPModels.hess_coord!(nlp::VecchiaModel, x::AbstractVector, hvals::AbstractVector; obj_weight::Real=1.0)
     @lencheck nlp.meta.nnzh hvals
     increment!(nlp, :neval_hess)
-    hvals_obj = view(hvals, 1:nlp.cache.nnzh_tri_obj)
-    hvals_obj .= nlp.cache.hess_obj_vals .* obj_weight
-
-    hvals_con = view(hvals, nlp.cache.nnzh_tri_obj+1:nlp.cache.nnzh_tri_lag)
-    fill!(hvals_con, 0.0)
+    
+    view(hvals, 1:nlp.cache.nnzh_tri_obj) .= nlp.cache.hess_obj_vals .* obj_weight
+    fill!(view(hvals, nlp.cache.nnzh_tri_obj+1:nlp.cache.nnzh_tri_lag), 0.0)
     return hvals
 end
 
 function NLPModels.hess_coord!(nlp::VecchiaModel, x::AbstractVector, y::AbstractVector, hvals::AbstractVector; obj_weight::Real=1.0)
     @lencheck nlp.meta.nnzh hvals
     increment!(nlp, :neval_hess)
-    hvals_obj = view(hvals, 1:nlp.cache.nnzh_tri_obj)
-    hvals_obj .= nlp.cache.hess_obj_vals .* obj_weight
-
-    z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
-    hvals_con = view(hvals, nlp.cache.nnzh_tri_obj+1:nlp.cache.nnzh_tri_lag)
-    hvals_con .= y .* exp.(z)
+    
+    view(hvals, 1:nlp.cache.nnzh_tri_obj) .= nlp.cache.hess_obj_vals .* obj_weight
+    view(hvals, nlp.cache.nnzh_tri_obj+1:nlp.cache.nnzh_tri_lag) .= y .* exp.(view(x, nlp.cache.nnzL+1:nlp.meta.nvar))
     return hvals
 end
 
@@ -170,9 +165,7 @@ function NLPModels.cons!(nlp::VecchiaModel, x::AbstractVector, c::AbstractVector
     @lencheck nlp.meta.nvar x
     increment!(nlp, :neval_cons)
 
-    z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
-    diagL = view(x, nlp.cache.diagL)
-    c .= exp.(z) .- diagL
+    c .= exp.(view(x, nlp.cache.nnzL+1:nlp.meta.nvar)) .- view(x, nlp.cache.diagL)
     return c
 end
 
@@ -196,8 +189,7 @@ function NLPModels.jac_coord!(nlp::VecchiaModel, x::AbstractVector, jvals::Abstr
     increment!(nlp, :neval_jac)
 
     fill!(view(jvals, 1:nlp.cache.n), -1.0)
-    z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
-    view(jvals, nlp.cache.n+1:nlp.meta.nnzj) .= exp.(z)
+    view(jvals, nlp.cache.n+1:nlp.meta.nnzj) .= exp.(view(x, nlp.cache.nnzL+1:nlp.meta.nvar))
     return jvals
 end
 
@@ -210,10 +202,11 @@ function NLPModels.jprod!(nlp::VecchiaModel, x::AbstractVector, v::AbstractVecto
     increment!(nlp, :neval_jprod)
 
     fill!(Jv, 0.0)
-    z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
     copyto!(
         Jv, 1,
-        -view(v, view(nlp.cache.colptrL, 1:nlp.cache.n)) .+ exp.(z) .* view(v, (1:nlp.cache.n).+nlp.cache.nnzL),
+        -view(v, view(nlp.cache.colptrL, 1:nlp.cache.n)) 
+            .+ exp.(view(x, nlp.cache.nnzL+1:nlp.meta.nvar)) 
+            .* view(v, (1:nlp.cache.n).+nlp.cache.nnzL),
         1, nlp.cache.n
     )
     return Jv
@@ -230,9 +223,8 @@ function NLPModels.jtprod!(nlp::VecchiaModel, x::AbstractVector, v::AbstractVect
     increment!(nlp, :neval_jtprod)
 
     fill!(Jtv, 0.0)
-    z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
     copyto!(view(Jtv, view(nlp.cache.colptrL, 1:nlp.cache.n)), 1, -v, 1, nlp.cache.n)
-    copyto!(Jtv, nlp.cache.nnzL+1, exp.(z) .* v, 1, nlp.cache.n)
+    copyto!(Jtv, nlp.cache.nnzL+1, exp.(view(x, nlp.cache.nnzL+1:nlp.meta.nvar)) .* v, 1, nlp.cache.n)
     return Jtv
 end
 
