@@ -171,7 +171,7 @@ function NLPModels.cons!(nlp::VecchiaModel, x::AbstractVector, c::AbstractVector
     increment!(nlp, :neval_cons)
 
     z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
-    diagL = view(x, nlp.cache.diagL)
+    diagL = view(x, nlp.cache.diagL)  # we have allocations here!
     c .= exp.(z) .- diagL
     return c
 end

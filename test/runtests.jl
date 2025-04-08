@@ -6,8 +6,8 @@ using MadNLP, MadNLPGPU
 using SparseArrays
 using LinearAlgebra
 using CUDA
-using NLPModelsTest
-#using Random
+using NLPModels, NLPModelsTest
+# using Random
 
 using .VecchiaMLE
 using VecchiaMLE: CPU, GPU
