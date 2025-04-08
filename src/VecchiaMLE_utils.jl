@@ -475,6 +475,8 @@ function SparsityPattern(data, k::Int, format="")
         return SparsityPattern_CSC(data, k)
     elseif format == "CSC"
         return SparsityPattern_CSC(data, k)
+    elseif format == "Block"
+        return SparsityPattern_Block(data, k::Int)
     else
         println("Sparsity Pattern: Bad format. Gave", format)
         return nothing
@@ -528,14 +530,11 @@ function SparsityPattern_CSC(data, k::Int)
     end
     
     idx = 1
-    colptr = zeros(Int, n+1)
-    colptr[1] = 1
+    colptr = ones(Int, n+1)
     for i in 1:n
-        spar_i = Sparsity_dict[i]
-        len = length(spar_i)
-        cols[idx:idx+len-1] .= i
-        rows[idx:idx+len-1] .= spar_i
-        idx += len
+        view(cols, idx:idx+len-1) .= i
+        view(rows, idx:idx+len-1) .= Sparsity_dict[i]
+        idx += length(Sparsity_dict[i])
         colptr[i+1] = idx
     end
 
