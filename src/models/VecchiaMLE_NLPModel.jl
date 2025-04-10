@@ -57,19 +57,6 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
     nnzh_tri_obj::Int = sum(m[j] * (m[j] + 1) for j in 1:n) ÷ 2
     nnzh_tri_lag::Int = nnzh_tri_obj + n
 
-    # Mapping Dict from samples (size obs_pts) to ptGrid (size ptGrid)
-    mapping_dict = Dict{Int, Int}()
-
-    i, j = 1, 1
-    
-    while i <= length(iVecchiaMLE.ptGrid) && j <= length(iVecchiaMLE.observed_pts)
-        if iVecchiaMLE.ptGrid[i] == iVecchiaMLE.observed_pts[j]
-            mapping_dict[i] = j 
-            j += 1
-        end
-        i += 1
-    end
-
     if S != Vector{Float64}
 
         offsets = cumsum([0; m[1:end-1]]) |> CuVector{Int}
@@ -86,7 +73,7 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
 
     #println("m:\n", m)
     # For n here, you want the length of a sample (pass Lsamples or n?)
-    vecchia_build_B!(B, iVecchiaMLE.samples, rowsL, colptrL, hess_obj_vals, n, m, mapping_dict)
+    vecchia_build_B!(B, iVecchiaMLE.samples, rowsL, colptrL, hess_obj_vals, n, m)
 
     diagL = view(colptrL, 1:n)
     buffer::S = S(undef, nnzL)
