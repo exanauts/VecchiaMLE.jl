@@ -143,7 +143,6 @@ function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::Cu
     fill!(hrows, one(Int))
     fill!(hcols, one(Int))
 
-
     # launch the kernel
     backend = KA.get_backend(hrows)
     kernel = vecchia_generate_hess_tri_structure_kernel!(backend)
@@ -154,7 +153,7 @@ function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::Cu
     view(hrows, 2:n) .+= cumsum(f.(view(colptr_diff, 1:n-1)))
     view(hcols, 2:n) .+= cumsum(view(colptr_diff, 1:n-1))
 
-    kernel(nnzh, n, colptr_diff, view(hrows, 1:n), view(hcols, 1:n), hrows, hcols, ndrange = n)
+    kernel(nnzh, n, colptr_diff, hrows, hcols, hrows, hcols, ndrange = n)
 
     KA.synchronize(backend)
 

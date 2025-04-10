@@ -90,6 +90,7 @@ The fields to the struct are as follows:\n
 * `Number_of_Samples`: The Number of Samples the user gives input to the program.
 * `MadNLP_print_level`: The print level to the optimizer. Can be ignored, and will default to ERROR.
 * `mode`: The opertaing mode to the analysis(GPU or CPU). The mapping is [1: 'CPU', 2: 'GPU'].
+* `KKT_System`: Use the default Sparse KKT System or the custom VecchiaKKTSystem. The mapping is [1: 'Sparse System', 2: 'VecchiaKKTSystem'].
 
 """
 mutable struct VecchiaMLEInput{M}
@@ -99,8 +100,9 @@ mutable struct VecchiaMLEInput{M}
     Number_of_Samples::Int
     MadNLP_print_level::Int
     mode::Int
+    KKT_System::Int
 
-    function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, MadNLP_print_Level::Int=5, mode::Int=1) where {M<:AbstractMatrix}
-        return new{M}(n, k, samples, Number_of_Samples, MadNLP_print_Level, mode)
+    function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, MadNLP_print_Level::Int=5, mode::Int=1, KKT_System::Int=1) where {M<:AbstractMatrix}
+        return new{M}(n, k, samples, Number_of_Samples, MadNLP_print_Level, mode, KKT_System)
     end
 end
