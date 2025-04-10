@@ -36,6 +36,9 @@ struct VecchiaKKTSystem{T, VT, MT<:AbstractMatrix{T}, QN<:MadNLP.AbstractHessian
     buffer::VT
 
     linear_solver::LS
+
+    # constraint vector
+    c::VT 
 end
 
 #=
@@ -94,6 +97,9 @@ end
     # Setting the buffer avoids edge cases for small k values 
     buffer = CUDA.zeros(T, max(p+n, 3*n))
     
+    # Query for constraint vector
+    c = # ???
+
     return VecchiaKKTSystem{T, VT, AbstractMatrix{T}, MadNLP.AbstractHessian{T, VT}, typeof(linear_solver)}(
         p,
         n,
@@ -104,7 +110,8 @@ end
         jac,
         hess,
         buffer,
-        linear_solver
+        linear_solver,
+        c
     )
 end
 
