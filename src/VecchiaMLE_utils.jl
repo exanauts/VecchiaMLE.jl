@@ -157,6 +157,13 @@ end
 
 * `log_level` : The coded MadNLP.LogLevel.   
 """
+function _printlevel(pLevel::Union{Int, PrintLevel})
+    get(PRINT_LEVEL_TO_MADNLP, pLevel, MadNLP.ERROR)
+end
+
+"""
+    Dict to map VecchiaMLE Loglevel to MadNLP LogLevel. Also for Ints. 
+"""
 const PRINT_LEVEL_TO_MADNLP = Dict(
     VTRACE => MadNLP.TRACE,
     VDEBUG => MadNLP.DEBUG,
@@ -171,9 +178,6 @@ const PRINT_LEVEL_TO_MADNLP = Dict(
     5      => MadNLP.ERROR
 )
 
-function _printlevel(pLevel::Union{Int, PrintLevel})
-    get(PRINT_LEVEL_TO_MADNLP, pLevel, MadNLP.ERROR)
-end
 
 """
     cpu_mode = Int_to_Mode(n::Integer)
