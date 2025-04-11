@@ -1,5 +1,5 @@
 using VecchiaMLE
-using VecchiaMLE: CPU, GPU
+using VecchiaMLE: cpu, gpu
 using NLPModels
 using CUDA
 
@@ -8,17 +8,17 @@ function benchmarks_models(; n::Int=10, k::Int=10, Number_of_Samples::Int=100, v
   xyGrid = VecchiaMLE.generate_xyGrid(n)
   MatCov = VecchiaMLE.generate_MatCov(n, params, xyGrid)
 
-  samples_cpu = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples; mode=CPU)
-  samples_gpu = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples; mode=GPU)
+  samples_cpu = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples; mode=cpu)
+  samples_gpu = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples; mode=gpu)
   model_cpu = VecchiaMLE.VecchiaModelCPU(samples_cpu, k, xyGrid)  # warm up
   model_gpu = VecchiaMLE.VecchiaModelGPU(samples_gpu, k, xyGrid)  # warm up
   timer_model_cpu = @elapsed VecchiaMLE.VecchiaModelCPU(samples_cpu, k, xyGrid)
   timer_model_gpu = CUDA.@elapsed VecchiaMLE.VecchiaModelGPU(samples_gpu, k, xyGrid)
   ratio_timer_model = timer_model_cpu / timer_model_gpu
   verbose && println("-- Time to create the VecchiaModel --")
-  verbose && println("CPU: $timer_model_cpu")
-  verbose && println("GPU: $timer_model_gpu")
-  verbose && println("Ratio CPU / GPU: $ratio_timer_model")
+  verbose && println("cpu: $timer_model_cpu")
+  verbose && println("gpu: $timer_model_gpu")
+  verbose && println("Ratio cpu / gpu: $ratio_timer_model")
   verbose && println()
 
   x_cpu = get_x0(model_cpu)
@@ -29,9 +29,9 @@ function benchmarks_models(; n::Int=10, k::Int=10, Number_of_Samples::Int=100, v
   timer_obj_gpu = CUDA.@elapsed obj(model_gpu, x_gpu)
   ratio_timer_obj = timer_obj_cpu / timer_obj_gpu
   verbose && println("-- Time to evaluate the objective --")
-  verbose && println("CPU: $timer_obj_cpu")
-  verbose && println("GPU: $timer_obj_gpu")
-  verbose && println("Ratio CPU / GPU: $ratio_timer_obj")
+  verbose && println("cpu: $timer_obj_cpu")
+  verbose && println("gpu: $timer_obj_gpu")
+  verbose && println("Ratio cpu / gpu: $ratio_timer_obj")
   verbose && println()
 
   g_cpu = similar(x_cpu)
@@ -42,9 +42,9 @@ function benchmarks_models(; n::Int=10, k::Int=10, Number_of_Samples::Int=100, v
   timer_grad_gpu = CUDA.@elapsed grad!(model_gpu, x_gpu, g_gpu)
   ratio_timer_grad = timer_grad_cpu / timer_grad_gpu
   verbose && println("-- Time to evaluate the gradient --")
-  verbose && println("CPU: $timer_grad_cpu")
-  verbose && println("GPU: $timer_grad_gpu")
-  verbose && println("Ratio CPU / GPU: $ratio_timer_grad")
+  verbose && println("cpu: $timer_grad_cpu")
+  verbose && println("gpu: $timer_grad_gpu")
+  verbose && println("Ratio cpu / gpu: $ratio_timer_grad")
   verbose && println()
 
   c_cpu = Vector{eltype(x_cpu)}(undef, get_ncon(model_cpu))
@@ -55,9 +55,9 @@ function benchmarks_models(; n::Int=10, k::Int=10, Number_of_Samples::Int=100, v
   timer_cons_gpu = CUDA.@elapsed cons!(model_gpu, x_gpu, c_gpu)
   ratio_timer_cons = timer_cons_cpu / timer_cons_gpu
   verbose && println("-- Time to evaluate the constraints --")
-  verbose && println("CPU: $timer_cons_cpu")
-  verbose && println("GPU: $timer_cons_gpu")
-  verbose && println("Ratio CPU / GPU: $ratio_timer_cons")
+  verbose && println("cpu: $timer_cons_cpu")
+  verbose && println("gpu: $timer_cons_gpu")
+  verbose && println("Ratio cpu / gpu: $ratio_timer_cons")
   verbose && println()
 
   hrows_cpu = Vector{Int}(undef, model_cpu.meta.nnzh)
@@ -70,9 +70,9 @@ function benchmarks_models(; n::Int=10, k::Int=10, Number_of_Samples::Int=100, v
   timer_hess_structure_gpu = CUDA.@elapsed hess_structure!(model_gpu, hrows_gpu, hcols_gpu)
   ratio_timer_hess_structure = timer_hess_structure_cpu / timer_hess_structure_gpu
   verbose && println("-- Time to evaluate the structure of the Hessian --")
-  verbose && println("CPU: $timer_hess_structure_cpu")
-  verbose && println("GPU: $timer_hess_structure_gpu")
-  verbose && println("Ratio CPU / GPU: $ratio_timer_hess_structure")
+  verbose && println("cpu: $timer_hess_structure_cpu")
+  verbose && println("gpu: $timer_hess_structure_gpu")
+  verbose && println("Ratio cpu / gpu: $ratio_timer_hess_structure")
   verbose && println()
 
   hvals_cpu = Vector{eltype(x_cpu)}(undef, model_cpu.meta.nnzh)
@@ -83,9 +83,9 @@ function benchmarks_models(; n::Int=10, k::Int=10, Number_of_Samples::Int=100, v
   timer_hess_obj_gpu = CUDA.@elapsed hess_coord!(model_gpu, x_gpu, hvals_gpu)
   ratio_timer_hess_obj = timer_hess_obj_cpu / timer_hess_obj_gpu
   verbose && println("-- Time to evaluate the Hessian of the objective --")
-  verbose && println("CPU: $timer_hess_obj_cpu")
-  verbose && println("GPU: $timer_hess_obj_gpu")
-  verbose && println("Ratio CPU / GPU: $ratio_timer_hess_obj")
+  verbose && println("cpu: $timer_hess_obj_cpu")
+  verbose && println("gpu: $timer_hess_obj_gpu")
+  verbose && println("Ratio cpu / gpu: $ratio_timer_hess_obj")
   verbose && println()
 
   y_cpu = get_y0(model_cpu)
@@ -96,9 +96,9 @@ function benchmarks_models(; n::Int=10, k::Int=10, Number_of_Samples::Int=100, v
   timer_hess_lag_gpu = CUDA.@elapsed hess_coord!(model_gpu, x_gpu, y_gpu, hvals_gpu)
   ratio_timer_hess_lag = timer_hess_lag_cpu / timer_hess_lag_gpu
   verbose && println("-- Time to evaluate the Hessian of the Lagrangian --")
-  verbose && println("CPU: $timer_hess_lag_cpu")
-  verbose && println("GPU: $timer_hess_lag_gpu")
-  verbose && println("Ratio CPU / GPU: $ratio_timer_hess_lag")
+  verbose && println("cpu: $timer_hess_lag_cpu")
+  verbose && println("gpu: $timer_hess_lag_gpu")
+  verbose && println("Ratio cpu / gpu: $ratio_timer_hess_lag")
   verbose && println()
 
   jrows_cpu = Vector{Int}(undef, model_cpu.meta.nnzj)
@@ -111,9 +111,9 @@ function benchmarks_models(; n::Int=10, k::Int=10, Number_of_Samples::Int=100, v
   timer_jac_structure_gpu = CUDA.@elapsed jac_structure!(model_gpu, jrows_gpu, jcols_gpu)
   ratio_timer_jac_structure = timer_jac_structure_cpu / timer_jac_structure_gpu
   verbose && println("-- Time to evaluate the structure of the Jacobian --")
-  verbose && println("CPU: $timer_jac_structure_cpu")
-  verbose && println("GPU: $timer_jac_structure_gpu")
-  verbose && println("Ratio CPU / GPU: $ratio_timer_jac_structure")
+  verbose && println("cpu: $timer_jac_structure_cpu")
+  verbose && println("gpu: $timer_jac_structure_gpu")
+  verbose && println("Ratio cpu / gpu: $ratio_timer_jac_structure")
   verbose && println()
 
   jvals_cpu = Vector{eltype(x_cpu)}(undef, model_cpu.meta.nnzj)
@@ -124,9 +124,9 @@ function benchmarks_models(; n::Int=10, k::Int=10, Number_of_Samples::Int=100, v
   timer_jac_gpu = CUDA.@elapsed jac_coord!(model_gpu, x_gpu, jvals_gpu)
   ratio_timer_jac = timer_jac_cpu / timer_jac_gpu
   verbose && println("-- Time to evaluate the Jacobian --")
-  verbose && println("CPU: $timer_jac_cpu")
-  verbose && println("GPU: $timer_jac_gpu")
-  verbose && println("Ratio CPU / GPU: $ratio_timer_jac")
+  verbose && println("cpu: $timer_jac_cpu")
+  verbose && println("gpu: $timer_jac_gpu")
+  verbose && println("Ratio cpu / gpu: $ratio_timer_jac")
   verbose && println()
 
   timer_cpu = Dict(:model => timer_model_cpu,

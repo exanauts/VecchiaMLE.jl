@@ -30,7 +30,7 @@ function main()
     end
     close(time_memory_io_file)
 
-    # CPU tests done, onto GPU tests
+    # cpu tests done, onto gpu tests
     samples = convert(Matrix{Float64}, samples)
     samples = CuMatrix{Float64}(samples)
     

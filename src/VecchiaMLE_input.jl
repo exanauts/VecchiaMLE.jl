@@ -17,7 +17,7 @@ function VecchiaMLE_Run(iVecchiaMLE::VecchiaMLEInput; ptGrid::T=nothing) where T
 
     pres_chol = Matrix{eltype(iVecchiaMLE.samples)}(undef, iVecchiaMLE.n^2, iVecchiaMLE.n^2)
     fill!(pres_chol, zero(eltype(iVecchiaMLE.samples)))
-    diagnostics = Diagnostics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0)
+    diagnostics = Diagnostics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, cpu)
     VecchiaMLE_Run_Analysis!(iVecchiaMLE, ptGrid, pres_chol, diagnostics)
     
     return diagnostics, pres_chol
@@ -58,11 +58,11 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, ptGrid::AbstractVector, pre
     end
     
     diags.solve_model_time = @elapsed begin
-        output = madnlp(model, print_level=MadNLP_Print_Level(iVecchiaMLE.MadNLP_print_level))
+        output = madnlp(model, print_level=iVecchiaMLE.pLevel)
     end
     
     
-    # Casting to CPU matrices
+    # Casting to cpu matrices
     valsL = Vector{Float64}(output.solution[1:model.cache.nnzL])
     rowsL = Vector{Int}(model.cache.rowsL)
     colsL = Vector{Int}(model.cache.colsL)

@@ -18,4 +18,4 @@ This was written to see how big of a problem we could solve. It reports the time
 
 ## benchmarks_models.jl
 
-The file `benchmarks_models.jl` compares the evaluation time of the functions of the same `VecchiaModel` on the `CPU` and the `GPU`.
+The file `benchmarks_models.jl` compares the evaluation time of the functions of the same `VecchiaModel` on the `cpu` and the `gpu`.

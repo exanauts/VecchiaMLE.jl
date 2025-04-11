@@ -39,8 +39,8 @@ input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1)
 ```
 
 Here, we set (though not necessary) the optimizer (MadNLP) print level to 5 (ERROR), 
-which keep it silent. Furthermore, we set the compute mode to 1 (CPU). The other option 
-would be to set it to 2 (GPU), but since not all machines have a GPU connected, we opt
+which keep it silent. Furthermore, we set the compute mode to 1 (cpu). The other option 
+would be to set it to 2 (gpu), but since not all machines have a gpu connected, we opt
 for the sure-fire approach.
 
 All that's left is to run the analysis. This is done in one line:

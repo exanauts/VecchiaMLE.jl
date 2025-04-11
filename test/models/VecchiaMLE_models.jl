@@ -33,7 +33,7 @@ function VecchiaMLE_Row(n, k, samples, Number_of_Samples, Sparsity)
     @variable(model, ys[1:k+1])
     set_start_value(ys[1], 1.0)
 
-    # rows are independent -> parallelization, but GPU or CPU?
+    # rows are independent -> parallelization, but gpu or cpu?
     for row_idx in 1:n^2    
         model_sum = sum(dot(ys[1:length(Sparsity[row_idx])], samples[i, Sparsity[row_idx]]).^2 for i in 1:Number_of_Samples)
         
@@ -49,7 +49,7 @@ function VecchiaMLE_Row(n, k, samples, Number_of_Samples, Sparsity)
 end
 
 #=
-Big issue with this is transferring to ExaModel and GPU compilation speeds
+Big issue with this is transferring to ExaModel and gpu compilation speeds
 kill it.  
 =#
 function VecchiaMLE_Matrix_Sparse(n, k, samples, Number_of_Samples, xyGrid)
@@ -102,7 +102,7 @@ end
 
 
 #=
-    Making a JuMP model to be ported to ExaModels -> GPU.
+    Making a JuMP model to be ported to ExaModels -> gpu.
     Hence no Optimizer.
 =#
 function VecchiaMLE_Matrix_JuMP_Model(n, k, samples, Number_of_Samples, Sparsity_pattern)

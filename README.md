@@ -16,14 +16,14 @@ Note that if the samples matrix is empty or is not given as an input, the analys
 
 > **Note:** All samples (generated or provided) are assumed to have a zero-mean distribution.
 
-The code is written to be flexible enough to be run on either CPU or GPU capable systems, however only CUDA capable GPU's are supported at the moment.
+The code is written to be flexible enough to be run on either cpu or gpu capable systems, however only CUDA capable gpu's are supported at the moment.
 
 ## Installation and Dependencies
 
 Before you start, make sure you have the following:
 
 - **Julia**: Version 1.x or higher.
-- **CUDA**: Required for GPU mode (if you plan on using it).
+- **CUDA**: Required for gpu mode (if you plan on using it).
 - **MadNLP, MadNLPGPU**: Ensure that this nonlinear optimization solver is installed.
 - **AdaptiveKDTrees**: For use in generating the sparsity pattern for the Cholesky factor
 - **NLPModels**: Construction of the Optimization problem.
@@ -36,12 +36,12 @@ n::Integer                           # Square root of the size of the problem (e
 k::Integer                           # Number of conditioning points per point for the Vecchia Approximation.
 samples::Matrix{Float64}             # Matrix of samples (each row is a sample).
 Number_of_Samples::Integer           # Number of samples to generate (if samples_given=false).
-mode::Integer                        # Operation mode. Expects an int [1: CPU, 2: GPU].
+mode::Integer                        # Operation mode. Expects an int [1: cpu, 2: gpu].
 MadNLP_Print_level::Integer          # Print level of MadNLP. Expects an int with the corresponding flag [1: TRACE, 2: DEBUG, 3: INFO, 4: WARN, 5: ERROR].
 ```
 
 ## Usage
-Once `VecchiaMLEInput` has been filled appropriately, pass it to VecchiaMLE_Run() for the analysis to start. Note that some arguments have default values, such as mode (CPU), and MadNLP_Print_level (5). After the analysis has been completed, the function outputs diagnostics - that would be difficult other wise to acquire - and the resulting Lm factor in sparse, LowerTriangular format. 
+Once `VecchiaMLEInput` has been filled appropriately, pass it to VecchiaMLE_Run() for the analysis to start. Note that some arguments have default values, such as mode (cpu), and MadNLP_Print_level (5). After the analysis has been completed, the function outputs diagnostics - that would be difficult other wise to acquire - and the resulting Lm factor in sparse, LowerTriangular format. 
 
 > If the user desires to input their own location grid, then it must be passed as a keyword argument to VecchiaMLE_Run(). That is, `VecchiaMLE_Run(iVecchiaMLE::VecchiaMLEInput; ptGrid::AbstractVector)`. 
 

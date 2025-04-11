@@ -26,12 +26,12 @@ end
     Samples_Matrix = generate_Samples(MatCov::AbstractMatrix, 
                                       n::Integer,
                                       Number_of_Samples::Int;
-                                      mode::VecchiaMLE.COMPUTE_MODE )
+                                      mode::VecchiaMLE.ComputeMode )
 
     Generate a number of samples according to the given Covariance Matrix MatCov.
     Note the samples are given as mean zero. 
-    If a CUDA compatible device is detected, the samples are generated on the GPU
-    and transferred back to the CPU. 
+    If a CUDA compatible device is detected, the samples are generated on the gpu
+    and transferred back to the cpu. 
 
 ## Input arguments
 
@@ -40,17 +40,17 @@ end
 * `Number_of_Samples`: How many samples to return.
 
 ## Keyword Arguments
-* `mode`: Either generate samples on GPU or CPU
+* `mode`: Either generate samples on gpu or cpu
 
 ## Output arguments
 
 * `Samples_Matrix` : A matrix of size (Number_of_Samples × n), where the rows are the i.i.d samples  
 """
-function generate_Samples(MatCov::AbstractMatrix, n::Integer, Number_of_Samples::Integer; mode::COMPUTE_MODE=CPU)::AbstractMatrix
-    if mode == GPU
+function generate_Samples(MatCov::AbstractMatrix, n::Integer, Number_of_Samples::Integer; mode::ComputeMode=cpu)::AbstractMatrix
+    if mode == gpu
         V = CUDA.randn(Float64, Number_of_Samples, n^2)
         S = CuArray{Float64}(MatCov)
-    elseif mode == CPU 
+    elseif mode == cpu 
         V = randn(Number_of_Samples, n^2)
         S = Matrix{Float64}(MatCov)
     else
@@ -137,7 +137,7 @@ end
 """
 function get_vecchia_model(iVecchiaMLE::VecchiaMLEInput, ptGrid::AbstractVector)::VecchiaModel
 
-    if COMPUTE_MODE(iVecchiaMLE.mode) == GPU
+    if iVecchiaMLE.mode == gpu
        return VecchiaModelGPU(CuArray(iVecchiaMLE.samples), iVecchiaMLE.k, ptGrid)
     else 
        return VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE.k, ptGrid)
@@ -152,48 +152,54 @@ end
     Any other integer given is converted to MadNLP.Fatal. 
 ## Input arguments
 
-* `pLevel`: The given log level as an integer;
+* `pLevel`: The given log level;
 ## Output arguments
 
 * `log_level` : The coded MadNLP.LogLevel.   
 """
-function MadNLP_Print_Level(pLevel::Integer)::MadNLP.LogLevels
-    if pLevel == 1
-        return MadNLP.TRACE
-    elseif pLevel == 2
-        return MadNLP.DEBUG
-    elseif pLevel == 3
-        return MadNLP.INFO
-    elseif pLevel == 4
-        return MadNLP.WARN
-    elseif pLevel == 5
-        return MadNLP.ERROR
-    else 
-        return MadNLP.Fatal
-    end
+const PRINT_LEVEL_TO_MADNLP = Dict(
+    VTRACE => MadNLP.TRACE,
+    VDEBUG => MadNLP.DEBUG,
+    VINFO  => MadNLP.INFO,
+    VWARN  => MadNLP.WARN,
+    VERROR => MadNLP.ERROR,
+    VFATAL => MadNLP.ERROR,
+    1      => MadNLP.TRACE,
+    2      => MadNLP.DEBUG,
+    3      => MadNLP.INFO,
+    4      => MadNLP.WARN,
+    5      => MadNLP.ERROR
+)
+
+function _printlevel(pLevel::Union{Int, PrintLevel})
+    get(PRINT_LEVEL_TO_MADNLP, pLevel, MadNLP.ERROR)
 end
 
 """
     cpu_mode = Int_to_Mode(n::Integer)
 
-    A helper function to convert an integer to a COMPUTE_MODE.
-    The mapping is [1: 'CPU', 2: 'GPU'].
-    Any other integer given is converted CPU.
+    A helper function to convert an integer to a ComputeMode.
+    The mapping is [1: 'cpu', 2: 'gpu'].
+    Any other integer given is converted cpu.
 
 ## Input arguments
 
 * `n`: The given cpu mode as an integer;
 ## Output arguments
 
-* `cpu_mode` : The coded COMPUTE_MODE.   
+* `cpu_mode` : The coded ComputeMode.   
 """
-function Int_to_Mode(n::Int)::COMPUTE_MODE
-    if n == 1
-        return CPU
-    elseif n == 2
-        return GPU
+function _computemode(n::CM)::ComputeMode where {CM <: Union{ComputeMode, Int}}
+    if isa(n, ComputeMode)
+        return n
     end
-    return CPU
+
+    if n == 1
+        return cpu
+    elseif n == 2
+        return gpu
+    end
+    return cpu
 end
 
 """
@@ -552,7 +558,7 @@ The current checks are:\n
     * Ensuring n > 0.
     * Ensuring k <= n^2 (Makes sense considering the ptGrid and SparsityPattern sizes).
     * Ensuring the sample matrix, if the user gives one, is nonempty and is the same size as n^2.
-    * Ensuring the MadNLP_print_level in 1:5. See MadNLP_Print_Level().
+    * Ensuring the pLevel in 1:5. See MadNLP_Print_Level().
     * Ensuring the mode in 1:2. See Int_to_Mode().
 
 ## Input arguments
@@ -563,12 +569,10 @@ function sanitize_input!(iVecchiaMLE::VecchiaMLEInput, ptGrid::T) where T <: Uni
     @assert iVecchiaMLE.n > 0 "The dimension n must be strictly positive!"
     @assert iVecchiaMLE.k <= iVecchiaMLE.n^2 "The number of conditioning neighbors must be less than n^2 !"
     @assert size(iVecchiaMLE.samples, 1) > 0 "Samples must be nonempty!"
-    @assert (iVecchiaMLE.MadNLP_print_level in 1:5) "MadNLP Print Level not in 1:5!"
     @assert size(iVecchiaMLE.samples, 2) == iVecchiaMLE.n^2 "samples must be of size Number_of_Samples x n^2!"
     @assert size(iVecchiaMLE.samples, 1) == iVecchiaMLE.Number_of_Samples "samples must be of size Number_of_Samples x n^2!"
-    @assert iVecchiaMLE.mode in [1, 2] "Operation mode not valid! must be in [1, 2]." 
     
-    if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.mode == 2
+    if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.mode == gpu
         iVecchiaMLE.samples = CuMatrix{Float64}(iVecchiaMLE.samples)
     end
 
