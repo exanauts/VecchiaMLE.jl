@@ -3,7 +3,6 @@
 ```@docs
 VecchiaMLE.ComputeMode
 VecchiaMLE.PrintLevel
-VecchiaMLE.ConfigManager
 VecchiaMLE.VecchiaCache
 VecchiaMLE.Diagnostics
 VecchiaMLE.VecchiaModel
@@ -38,4 +37,5 @@ VecchiaMLE.SparsityPattern
 VecchiaMLE.SparsityPattern_Block
 VecchiaMLE.SparsityPattern_CSC
 VecchiaMLE.sanitize_input!
+VecchiaMLE.PRINT_LEVEL_TO_MADNLP
 ```
