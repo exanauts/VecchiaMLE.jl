@@ -1,4 +1,4 @@
-# TODO: GPU is running poorly. Something being ported from CPU?
+# TODO: gpu is running poorly. Something being ported from cpu?
 
 function VecchiaModel(::Type{S}, samples::AbstractMatrix, k::Int, ptGrid::AbstractVector) where {S<:AbstractArray}
     T = eltype(S)

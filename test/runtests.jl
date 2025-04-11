@@ -10,7 +10,7 @@ using NLPModels, NLPModelsTest
 # using Random
 
 using .VecchiaMLE
-using VecchiaMLE: CPU, GPU
+using VecchiaMLE: cpu, gpu
 
 include("models/JumpModel.jl")
 include("models/VecchiaMLE_models.jl")

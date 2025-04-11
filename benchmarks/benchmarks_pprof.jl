@@ -3,7 +3,7 @@ using VecchiaMLE
 using DelimitedFiles
 
 Profile.init(n = 10^8, delay = 0.05)
-# Only do CPU for now.
+# Only do cpu for now.
 n = 100
 k = 10
 Number_of_Samples = 100
@@ -11,7 +11,7 @@ params = [5.0, 0.2, 2.25, 0.25]
 
 @pprof begin
     MatCov = VecchiaMLE.generate_MatCov(n, params)
-    samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples; mode=VecchiaMLE.CPU)
+    samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples; mode=VecchiaMLE.cpu)
     input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1)
 
     global diagnostics, L = VecchiaMLE_Run(input)

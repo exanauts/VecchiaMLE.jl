@@ -1,29 +1,17 @@
 
 """
 Computation mode for which the analysis to run.
-Generally, we should see better performance at higher n values for the GPU.
+Generally, we should see better performance at higher n values for the gpu.
 """
-@enum COMPUTE_MODE CPU=1 GPU=2
+@enum ComputeMode cpu=1 gpu=2
 
 """
 Print level of the program.
 Not implemented yet, but will be given by the user to
 determine the print level of both VecchiaMLE and MadNLP.
 """
-@enum PRINT_LEVEL VTRACE=1 VDEBUG=2 VINFO=3 VWARN=4 Error=5 VFATAL=6
+@enum PrintLevel VTRACE=1 VDEBUG=2 VINFO=3 VWARN=4 VERROR=5 VFATAL=6
 
-
-"""
-At the moment, not used!
-"""
-struct ConfigManager{M}
-    n::Int                              # Size of the problem
-    k::Int                              # Length of conditioning points in Vecchia Approximation
-    mode::COMPUTE_MODE                  # Operation Mode: GPU or CPU
-    Number_of_Samples::Int              # Number of Samples from MvNormal
-    MadNLP_Print_Level::Int             # Print level for MadNLP
-    samples::M                          # Holds samples
-end
 
 """
 Internal struct from which to fetch persisting objects in the optimization function.
@@ -57,7 +45,7 @@ recover. The fields to the struct are as follows:\n
 * `normed_constraint_value`: Optimal norm of constraint vector.
 * `normed_grad_value`: Optimal norm of gradient vector.
 * `MadNLP_iterations`: Iterations for MadNLP to reach optimal.
-* `mode`: Operation mode: CPU or GPU
+* `mode`: Operation mode: cpu or gpu
 """
 mutable struct Diagnostics
     create_model_time::Float64          # Time taken to create Vecchia Cache and MadNLP init.              
@@ -67,7 +55,7 @@ mutable struct Diagnostics
     normed_constraint_value::Float64    # Optimal norm of constraint vector.
     normed_grad_value::Float64          # Optimal norm of gradient vector.
     MadNLP_iterations::Int              # Iterations for MadNLP to reach optimal.
-    mode::Int                           # Operation mode: CPU or GPU
+    mode::ComputeMode                   # Operation mode: cpu or gpu
 end
 
 """
@@ -88,8 +76,8 @@ The fields to the struct are as follows:\n
 * `k`: The "number of neighbors", number of conditioning points regarding the Vecchia Approximation. 
 * `samples`: The Samples in which to generate the output. If you have no samples consult the Documentation.
 * `Number_of_Samples`: The Number of Samples the user gives input to the program.
-* `MadNLP_print_level`: The print level to the optimizer. Can be ignored, and will default to ERROR.
-* `mode`: The opertaing mode to the analysis(GPU or CPU). The mapping is [1: 'CPU', 2: 'GPU'].
+* `pLevel`: The print level to the optimizer. Can be ignored, and will default to ERROR.
+* `mode`: The opertaing mode to the analysis(gpu or cpu). The mapping is [1: 'cpu', 2: 'gpu'].
 
 """
 mutable struct VecchiaMLEInput{M}
@@ -97,10 +85,19 @@ mutable struct VecchiaMLEInput{M}
     k::Int
     samples::M
     Number_of_Samples::Int
-    MadNLP_print_level::Int
-    mode::Int
+    pLevel::MadNLP.LogLevels
+    mode::ComputeMode
 
-    function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, MadNLP_print_Level::Int=5, mode::Int=1) where {M<:AbstractMatrix}
-        return new{M}(n, k, samples, Number_of_Samples, MadNLP_print_Level, mode)
+    function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, pLevel::PL=1, mode::CM=1) where
+        {M<:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}}
+        
+        return new{M}(
+            n, 
+            k, 
+            samples, 
+            Number_of_Samples, 
+            _printlevel(pLevel), 
+            _computemode(mode)
+        )
     end
 end
