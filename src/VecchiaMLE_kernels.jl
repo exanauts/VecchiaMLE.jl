@@ -115,7 +115,6 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vecto
     pos = 0
     for j in 1:n
         for s in 1:m[j]
-            # What happens if you don't have a key?
             for t in 1:m[j]
                     vt = view(samples, :, rowsL[colptrL[j] + t - 1])
                     vs = view(samples, :, rowsL[colptrL[j] + s - 1])

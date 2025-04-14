@@ -1,4 +1,3 @@
-# TODO: GPU is running poorly. Something being ported from CPU?
 
 function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:AbstractArray}
     T = eltype(S)
@@ -47,7 +46,7 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
     n::Int = iVecchiaMLE.n^2
     T = eltype(S)
 
-    # SPARSITY PATTERN OF L IN COO, CSC FORMAT.
+    # SPARSITY PATTERN OF L IN CSC FORMAT.
     rowsL, colsL, colptrL = SparsityPattern(iVecchiaMLE.ptGrid, iVecchiaMLE.k, iVecchiaMLE.observed_pts, "CSC")
 
     nnzL::Int = length(rowsL)

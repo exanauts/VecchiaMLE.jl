@@ -608,3 +608,68 @@ function sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
     end
 
 end
+
+"""
+    A_transpose = transpose(A)
+
+    Function to overload transpose of a SparseMatrixCSC. Returns Aᵀ in SparseMatrixCSC format.
+    All credit goes to Alexis for this. 
+    TODO: Maybe GPU kernel?
+
+## Input Arguments
+* `A`: A matrix in SparseMatrixCSC format.
+
+## Returns
+* `Aᵀ` : The transpose of A in SparseMatrixCSC format.
+"""
+function transpose(A::SparseMatrixCSC{T, CInt})::SparseMatrixCSC{T, Cint} where {T}
+
+    # Shorthand info for A
+    m, n = size(A)
+    nnzA = nnz(A)
+    A_colptr = A.colptr
+    A_rowval = A.rowval
+    A_nzval = A.nzval
+
+    # Allocate storage for B. 
+    B_colptr = zeros(Cint, m+1)
+    B_rowval = Vector{Cint}(undef, nnzA)
+    B_nzval = Vector{T}(undef, nnzA)
+
+    # Count the nnz for each row of A.
+    # This is the nnz for each column of B. Store in B_colptr.
+    # No need to worry about OOB since A_rowval[k] ∈ [1:m]
+    for k in 1:nnzA
+        B_colptr[A_rowval[k]] += 1
+    end
+
+    # Do cumsum for B_colptr. 
+    counter = 1
+    for col in 1:m
+        nnz_col = B_colptr[col]
+        B_colptr[col] = counter
+        counter += nnz_col
+    end
+    B_colptr[end] = counter
+
+    # Get row indices for each column of B
+    for j in 1:n
+        for idx in A_colptr[j] : (A_colptr[j+1] - 1)
+            i = A_rowval[idx]
+
+            # Update B_rowval for the nonzero B[j, i] = A[i, j]
+            pos = B_colptr[i]
+            B_rowval[pos] = j
+            B_nzval[pos] = A_nzval[idx]
+            B_colptr[i] += 1
+        end
+    end
+
+    # Adjust offsets of B_colptr
+    for col in m:-1:2
+        B_colptr[col] = B_colptr[col-1]
+    end
+    B_colptr[1] = 1
+
+    return SparseMatrixCSC{T, Cint}(n, m, B_colptr, B_rowval, B_nzval)
+end

@@ -39,4 +39,5 @@ VecchiaMLE.SparsityPattern
 VecchiaMLE.SparsityPattern_Block
 VecchiaMLE.SparsityPattern_CSC
 VecchiaMLE.sanitize_input!
+VecchiaMLE.transpose
 ```
