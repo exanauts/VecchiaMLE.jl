@@ -2,7 +2,7 @@ using VecchiaMLE
 using Test
 using JuMP
 using Ipopt, NLPModelsJuMP
-using MadNLP, MadNLPGPU
+using MadNLP, MadNLPGPU, MadNLPHSL, HSL
 using SparseArrays
 using LinearAlgebra
 using CUDA
@@ -18,6 +18,7 @@ include("models/VecchiaMLE_models.jl")
 #include("test_cpu_compatible_with_jump.jl")
 #include("test_cpu_diagnostics.jl")
 #include("test_memory_allocation_outliers_cpu.jl")
+include("test_linear_solver.jl")
 
 if CUDA.has_cuda()
  #   include("test_gpu_compatible_with_jump.jl")
