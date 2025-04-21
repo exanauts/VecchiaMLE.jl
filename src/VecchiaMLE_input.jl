@@ -47,7 +47,7 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, pres_chol::AbstractMatrix, 
     
     
     # Casting to CPU matrices
-    valsL = Vector{Float64}(output.solution[1:model.cache.nnzL])
+    valsL = Vector{Float64}(view(output.solution, 1:model.cache.nnzL))
     rowsL = Vector{Int}(model.cache.rowsL)
     colsL = Vector{Int}(model.cache.colsL)
     copyto!(pres_chol, LowerTriangular(sparse(rowsL, colsL, valsL)))
