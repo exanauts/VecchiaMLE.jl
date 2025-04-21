@@ -161,7 +161,8 @@ function NLPModels.hprod!(nlp::VecchiaModel, x::AbstractVector, y::AbstractVecto
     view(Hv, 1:nlp.cache.nnzL) .*= obj_weight
 
     z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
-    view(Hv, nlp.cache.nnzL+1:nlp.meta.nvar) .= y .* exp.(z) .* v .+ nlp.lambda .* obj_weight .* v
+    v_z = view(v, nlp.cache.nnzL+1:nlp.meta.nvar)
+    view(Hv, nlp.cache.nnzL+1:nlp.meta.nvar) .= y .* exp.(z) .* v_z .+ nlp.lambda .* obj_weight .* v_z
     return Hv
 end
 
@@ -171,7 +172,8 @@ function NLPModels.cons!(nlp::VecchiaModel, x::AbstractVector, c::AbstractVector
     @lencheck nlp.meta.nvar x
     increment!(nlp, :neval_cons)
 
-    c .= exp.(view(x, nlp.cache.nnzL+1:nlp.meta.nvar)) .- view(x, nlp.cache.diagL)
+    z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
+    c .= exp.(z) .- view(x, nlp.cache.diagL)
     return c
 end
 
