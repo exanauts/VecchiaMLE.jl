@@ -1,6 +1,6 @@
 # TODO: gpu is running poorly. Something being ported from cpu?
 
-function VecchiaModel(::Type{S}, samples::AbstractMatrix, k::Int, ptGrid::AbstractVector) where {S<:AbstractArray}
+function VecchiaModel(::Type{S}, samples::AbstractMatrix, k::Int, ptGrid::AbstractVector; lambda::Real=0.0) where {S<:AbstractArray}
     T = eltype(S)
 
     cache = create_vecchia_cache(samples, k, ptGrid, S)
@@ -33,12 +33,12 @@ function VecchiaModel(::Type{S}, samples::AbstractMatrix, k::Int, ptGrid::Abstra
         lin_nnzj = 0
     )
     
-    return VecchiaModel(meta, Counters(), cache)
+    return VecchiaModel(meta, Counters(), cache, lambda)
 end
 
 # Only two modes instantiated!!
-VecchiaModelCPU(samples::Matrix{T}, k::Int, xyGrid::AbstractVector) where {T <: AbstractFloat} = VecchiaModel(Vector{Float64}, samples::Matrix{Float64}, k::Int, xyGrid::AbstractVector) 
-VecchiaModelGPU(samples::CuMatrix{Float64,B}, k::Int, xyGrid::AbstractVector) where {B} = VecchiaModel(CuVector{Float64,B}, samples::AbstractMatrix, k::Int, xyGrid::AbstractVector)
+VecchiaModelCPU(samples::Matrix{T}, k::Int, xyGrid::AbstractVector; lambda::Real=0.0) where {T <: AbstractFloat} = VecchiaModel(Vector{Float64}, samples, k, xyGrid; lambda)
+VecchiaModelGPU(samples::CuMatrix{Float64,B}, k::Int, xyGrid::AbstractVector; lambda::Real=0.0) where {B} = VecchiaModel(CuVector{Float64,B}, samples, k, xyGrid; lambda)
 
 # Constructing the vecchia cache used everywhere in the code below.
 function create_vecchia_cache(samples::AbstractMatrix, k::Int, ptGrid::AbstractVector, ::Type{S}) where {S <: AbstractVector}
@@ -96,8 +96,9 @@ function NLPModels.obj(nlp::VecchiaModel, x::AbstractVector)
     vecchia_mul!(nlp.cache.buffer, nlp.cache.B, nlp.cache.hess_obj_vals, x, nlp.cache.n, nlp.cache.m, nlp.cache.offsets)
     y = view(x, 1:nlp.cache.nnzL)
     t2 = dot(nlp.cache.buffer, y)
+    t3 = nlp.lambda * dot(z, z)
 
-    return t1 + 0.5 * t2
+    return t1 + 0.5 * t2 + 0.5 * t3
 end
 
 # The Gradient of the objective.
@@ -109,8 +110,8 @@ function NLPModels.grad!(nlp::VecchiaModel, x::AbstractVector, gx::AbstractVecto
     # m is a vector of length n that gives the dimensions of each block Bj
     vecchia_mul!(gx, nlp.cache.B, nlp.cache.hess_obj_vals, x, nlp.cache.n, nlp.cache.m, nlp.cache.offsets)
     gx_z = view(gx, nlp.cache.nnzL+1:nlp.meta.nvar)
-    fill!(gx_z, -nlp.cache.M)
-
+    z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
+    gx_z .= nlp.lambda .* z .- nlp.cache.M
     return gx
 end
 
@@ -131,16 +132,18 @@ function NLPModels.hess_coord!(nlp::VecchiaModel, x::AbstractVector, hvals::Abst
     increment!(nlp, :neval_hess)
     
     view(hvals, 1:nlp.cache.nnzh_tri_obj) .= nlp.cache.hess_obj_vals .* obj_weight
-    fill!(view(hvals, nlp.cache.nnzh_tri_obj+1:nlp.cache.nnzh_tri_lag), 0.0)
+    view(hvals, nlp.cache.nnzh_tri_obj+1:nlp.cache.nnzh_tri_lag .= nlp.lambda .* obj_weight
     return hvals
 end
 
 function NLPModels.hess_coord!(nlp::VecchiaModel, x::AbstractVector, y::AbstractVector, hvals::AbstractVector; obj_weight::Real=1.0)
     @lencheck nlp.meta.nnzh hvals
     increment!(nlp, :neval_hess)
-    
+
     view(hvals, 1:nlp.cache.nnzh_tri_obj) .= nlp.cache.hess_obj_vals .* obj_weight
-    view(hvals, nlp.cache.nnzh_tri_obj+1:nlp.cache.nnzh_tri_lag) .= y .* exp.(view(x, nlp.cache.nnzL+1:nlp.meta.nvar))
+
+    z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
+    view(hvals, nlp.cache.nnzh_tri_obj+1:nlp.cache.nnzh_tri_lag) .= y .* exp.(z) .+ nlp.lambda .* obj_weight
     return hvals
 end
 
@@ -155,7 +158,10 @@ function NLPModels.hprod!(nlp::VecchiaModel, x::AbstractVector, y::AbstractVecto
     # n is the number of blocks Bj in B
     # m is a vector of length n that gives the dimensions of each block Bj
     vecchia_mul!(Hv, nlp.cache.B, nlp.cache.hess_obj_vals, v, nlp.cache.n, nlp.cache.m, nlp.cache.offsets)
-    view(Hv, nlp.cache.nnzL+1:nlp.meta.nvar) .-= nlp.cache.M .* y
+    view(Hv, 1:nlp.cache.nnzL) .*= obj_weight
+
+    z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
+    view(Hv, nlp.cache.nnzL+1:nlp.meta.nvar) .= y .* exp.(z) .* v .+ nlp.lambda .* obj_weight .* v
     return Hv
 end
 
@@ -227,4 +233,3 @@ function NLPModels.jtprod!(nlp::VecchiaModel, x::AbstractVector, v::AbstractVect
     copyto!(Jtv, nlp.cache.nnzL+1, exp.(view(x, nlp.cache.nnzL+1:nlp.meta.nvar)) .* v, 1, nlp.cache.n)
     return Jtv
 end
-
