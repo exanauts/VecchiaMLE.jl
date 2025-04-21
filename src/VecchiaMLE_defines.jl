@@ -66,6 +66,7 @@ mutable struct VecchiaModel{T, S, VI, M} <: AbstractNLPModel{T, S}
     meta::NLPModelMeta{T, S}
     counters::Counters
     cache::VecchiaCache{T, S, VI, M}
+    lambda::T
 end
 
 """
