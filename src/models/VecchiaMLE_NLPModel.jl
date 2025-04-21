@@ -132,7 +132,7 @@ function NLPModels.hess_coord!(nlp::VecchiaModel, x::AbstractVector, hvals::Abst
     increment!(nlp, :neval_hess)
     
     view(hvals, 1:nlp.cache.nnzh_tri_obj) .= nlp.cache.hess_obj_vals .* obj_weight
-    view(hvals, nlp.cache.nnzh_tri_obj+1:nlp.cache.nnzh_tri_lag .= nlp.lambda .* obj_weight
+    view(hvals, nlp.cache.nnzh_tri_obj+1:nlp.cache.nnzh_tri_lag) .= nlp.lambda .* obj_weight
     return hvals
 end
 
