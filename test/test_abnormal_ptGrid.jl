@@ -14,6 +14,6 @@
     end
     
     # Get result from VecchiaMLE cpu
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1)
-    _, _ = VecchiaMLE_Run(input; ptGrid)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptGrid=ptGrid)
+    @test_nowarn VecchiaMLE_Run(input)
 end
