@@ -191,8 +191,8 @@ end
     xyGrid = VecchiaMLE.generate_xyGrid(n)
     MatCov = VecchiaMLE.generate_MatCov(n, params, xyGrid)
     samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples; mode=gpu)
-
-    model = VecchiaMLE.VecchiaModelGPU(samples, k, xyGrid)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptGrid=xyGrid)
+    model = VecchiaMLE.VecchiaModelGPU(samples, input)
     mems = test_allocs_nlpmodels_gpu(model)
 
     @test mems[:obj] == 24.0  # these allocations are related to allocations in "sum" and "dot"
