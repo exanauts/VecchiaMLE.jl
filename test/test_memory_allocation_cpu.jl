@@ -6,7 +6,7 @@
     xyGrid = VecchiaMLE.generate_xyGrid(n)
     MatCov = VecchiaMLE.generate_MatCov(n, params, xyGrid)
     samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples; mode=cpu)
-
+    iVecchiaMLE = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 1, 5; ptGrid=xyGrid)
     model = VecchiaMLE.VecchiaModelCPU(iVecchiaMLE)
     mems = NLPModelsTest.test_allocs_nlpmodels(model)
 
