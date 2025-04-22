@@ -1,5 +1,4 @@
-
-function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:AbstractArray}
+function VecchiaModel(::Type{S}, samples::AbstractMatrix, k::Int, ptGrid::AbstractVector; lambda::Real=0.0) where {S<:AbstractArray}
     T = eltype(S)
 
     cache::VecchiaCache = create_vecchia_cache(S, iVecchiaMLE)
@@ -32,12 +31,13 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
         lin_nnzj = 0
     )
     
-    return VecchiaModel(meta, Counters(), cache)
+    return VecchiaModel(meta, Counters(), cache, lambda)
 end
 
 # Only two modes instantiated!!
-VecchiaModelCPU(samples::Matrix{T}, iVecchiaMLE::VecchiaMLEInput) where {T}= VecchiaModel(Vector{Float64}, iVecchiaMLE::VecchiaMLEInput) 
-VecchiaModelGPU(samples::CuMatrix{Float64, B}, iVecchiaMLE::VecchiaMLEInput) where {B} = VecchiaModel(CuVector{Float64,B}, iVecchiaMLE::VecchiaMLEInput)
+VecchiaModelCPU(samples::Matrix{T}, k::Int, ptGrid::AbstractVector; lambda::Real=0.0) where {T <: AbstractFloat} = VecchiaModel(Vector{Float64}, samples, k, ptGrid; lambda)
+VecchiaModelGPU(samples::CuMatrix{Float64,B}, k::Int, ptGrid::AbstractVector; lambda::Real=0.0) where {B} = VecchiaModel(CuVector{Float64,B}, samples, k, ptGrid; lambda)
+
 
 # Constructing the vecchia cache used everywhere in the code below.
 function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaCache where {S <: AbstractVector}
@@ -99,8 +99,9 @@ function NLPModels.obj(nlp::VecchiaModel, x::AbstractVector)
     vecchia_mul!(nlp.cache.buffer, nlp.cache.B, nlp.cache.hess_obj_vals, x, nlp.cache.n, nlp.cache.m, nlp.cache.offsets)
     y = view(x, 1:nlp.cache.nnzL)
     t2 = dot(nlp.cache.buffer, y)
+    t3 = nlp.lambda * dot(z, z)
 
-    return t1 + 0.5 * t2
+    return t1 + 0.5 * t2 + 0.5 * t3
 end
 
 # The Gradient of the objective.
@@ -112,8 +113,8 @@ function NLPModels.grad!(nlp::VecchiaModel, x::AbstractVector, gx::AbstractVecto
     # m is a vector of length n that gives the dimensions of each block Bj
     vecchia_mul!(gx, nlp.cache.B, nlp.cache.hess_obj_vals, x, nlp.cache.n, nlp.cache.m, nlp.cache.offsets)
     gx_z = view(gx, nlp.cache.nnzL+1:nlp.meta.nvar)
-    fill!(gx_z, -nlp.cache.M)
-
+    z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
+    gx_z .= nlp.lambda .* z .- nlp.cache.M
     return gx
 end
 
@@ -132,23 +133,20 @@ end
 function NLPModels.hess_coord!(nlp::VecchiaModel, x::AbstractVector, hvals::AbstractVector; obj_weight::Real=1.0)
     @lencheck nlp.meta.nnzh hvals
     increment!(nlp, :neval_hess)
-    hvals_obj = view(hvals, 1:nlp.cache.nnzh_tri_obj)
-    hvals_obj .= nlp.cache.hess_obj_vals .* obj_weight
-
-    hvals_con = view(hvals, nlp.cache.nnzh_tri_obj+1:nlp.cache.nnzh_tri_lag)
-    fill!(hvals_con, 0.0)
+    
+    view(hvals, 1:nlp.cache.nnzh_tri_obj) .= nlp.cache.hess_obj_vals .* obj_weight
+    view(hvals, nlp.cache.nnzh_tri_obj+1:nlp.cache.nnzh_tri_lag) .= nlp.lambda .* obj_weight
     return hvals
 end
 
 function NLPModels.hess_coord!(nlp::VecchiaModel, x::AbstractVector, y::AbstractVector, hvals::AbstractVector; obj_weight::Real=1.0)
     @lencheck nlp.meta.nnzh hvals
     increment!(nlp, :neval_hess)
-    hvals_obj = view(hvals, 1:nlp.cache.nnzh_tri_obj)
-    hvals_obj .= nlp.cache.hess_obj_vals .* obj_weight
+
+    view(hvals, 1:nlp.cache.nnzh_tri_obj) .= nlp.cache.hess_obj_vals .* obj_weight
 
     z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
-    hvals_con = view(hvals, nlp.cache.nnzh_tri_obj+1:nlp.cache.nnzh_tri_lag)
-    hvals_con .= y .* exp.(z)
+    view(hvals, nlp.cache.nnzh_tri_obj+1:nlp.cache.nnzh_tri_lag) .= y .* exp.(z) .+ nlp.lambda .* obj_weight
     return hvals
 end
 
@@ -163,7 +161,11 @@ function NLPModels.hprod!(nlp::VecchiaModel, x::AbstractVector, y::AbstractVecto
     # n is the number of blocks Bj in B
     # m is a vector of length n that gives the dimensions of each block Bj
     vecchia_mul!(Hv, nlp.cache.B, nlp.cache.hess_obj_vals, v, nlp.cache.n, nlp.cache.m, nlp.cache.offsets)
-    view(Hv, nlp.cache.nnzL+1:nlp.meta.nvar) .-= nlp.cache.M .* y
+    view(Hv, 1:nlp.cache.nnzL) .*= obj_weight
+
+    z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
+    v_z = view(v, nlp.cache.nnzL+1:nlp.meta.nvar)
+    view(Hv, nlp.cache.nnzL+1:nlp.meta.nvar) .= y .* exp.(z) .* v_z .+ nlp.lambda .* obj_weight .* v_z
     return Hv
 end
 
@@ -174,8 +176,7 @@ function NLPModels.cons!(nlp::VecchiaModel, x::AbstractVector, c::AbstractVector
     increment!(nlp, :neval_cons)
 
     z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
-    diagL = view(x, nlp.cache.diagL)
-    c .= exp.(z) .- diagL
+    c .= exp.(z) .- view(x, nlp.cache.diagL)
     return c
 end
 
@@ -199,8 +200,7 @@ function NLPModels.jac_coord!(nlp::VecchiaModel, x::AbstractVector, jvals::Abstr
     increment!(nlp, :neval_jac)
 
     fill!(view(jvals, 1:nlp.cache.n), -1.0)
-    z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
-    view(jvals, nlp.cache.n+1:nlp.meta.nnzj) .= exp.(z)
+    view(jvals, nlp.cache.n+1:nlp.meta.nnzj) .= exp.(view(x, nlp.cache.nnzL+1:nlp.meta.nvar))
     return jvals
 end
 
@@ -213,10 +213,11 @@ function NLPModels.jprod!(nlp::VecchiaModel, x::AbstractVector, v::AbstractVecto
     increment!(nlp, :neval_jprod)
 
     fill!(Jv, 0.0)
-    z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
     copyto!(
         Jv, 1,
-        -view(v, view(nlp.cache.colptrL, 1:nlp.cache.n)) .+ exp.(z) .* view(v, (1:nlp.cache.n).+nlp.cache.nnzL),
+        -view(v, view(nlp.cache.colptrL, 1:nlp.cache.n)) 
+            .+ exp.(view(x, nlp.cache.nnzL+1:nlp.meta.nvar)) 
+            .* view(v, (1:nlp.cache.n).+nlp.cache.nnzL),
         1, nlp.cache.n
     )
     return Jv
@@ -233,9 +234,7 @@ function NLPModels.jtprod!(nlp::VecchiaModel, x::AbstractVector, v::AbstractVect
     increment!(nlp, :neval_jtprod)
 
     fill!(Jtv, 0.0)
-    z = view(x, nlp.cache.nnzL+1:nlp.meta.nvar)
     copyto!(view(Jtv, view(nlp.cache.colptrL, 1:nlp.cache.n)), 1, -v, 1, nlp.cache.n)
-    copyto!(Jtv, nlp.cache.nnzL+1, exp.(z) .* v, 1, nlp.cache.n)
+    copyto!(Jtv, nlp.cache.nnzL+1, exp.(view(x, nlp.cache.nnzL+1:nlp.meta.nvar)) .* v, 1, nlp.cache.n)
     return Jtv
 end
-

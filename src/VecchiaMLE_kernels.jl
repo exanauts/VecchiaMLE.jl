@@ -2,7 +2,7 @@
     VECCHIA_MUL
     Front-end
     kernel
-    CPU implementation
+    cpu implementation
 =#
 
 # Front-end
@@ -49,7 +49,7 @@ end
     nothing
 end
 
-# CPU implementation
+# cpu implementation
 function vecchia_mul!(y::Vector{T}, B::Vector{Matrix{T}}, hess_obj_vals::Vector{T},
                       x::Vector{T}, n::Int, m::Vector{Int}, offsets::Vector{Int}) where T <: AbstractFloat
     pos = 0
@@ -67,7 +67,7 @@ end
     VECCHIA_BUILD_B
     Front-end 
     kernel
-    CPU implementation
+    cpu implementation
 =#
 
 # Front-end
@@ -109,7 +109,7 @@ end
     nothing
 end
 
-# CPU implementation
+# cpu implementation
 function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vector{Int},
                           colptrL::Vector{Int}, hess_obj_vals::Vector{T}, n::Int, m::Vector{Int}) where T <: AbstractFloat
     pos = 0
@@ -135,7 +135,7 @@ end
     VECCHIA_GENERATE_HESS_TRI_STRUCTURE
     Front-end
     kernel
-    CPU implementation
+    cpu implementation
 =#
 
 # Front-end
@@ -189,7 +189,7 @@ end
 
 
 
-# CPU implementation
+# cpu implementation
 function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::Vector{Int}, 
     hrows::Vector{Int}, hcols::Vector{Int}) 
     

@@ -1,29 +1,17 @@
 
 """
 Computation mode for which the analysis to run.
-Generally, we should see better performance at higher n values for the GPU.
+Generally, we should see better performance at higher n values for the gpu.
 """
-@enum COMPUTE_MODE CPU=1 GPU=2
+@enum ComputeMode cpu=1 gpu=2
 
 """
 Print level of the program.
 Not implemented yet, but will be given by the user to
 determine the print level of both VecchiaMLE and MadNLP.
 """
-@enum PRINT_LEVEL VTRACE=1 VDEBUG=2 VINFO=3 VWARN=4 Error=5 VFATAL=6
+@enum PrintLevel VTRACE=1 VDEBUG=2 VINFO=3 VWARN=4 VERROR=5 VFATAL=6
 
-
-"""
-At the moment, not used!
-"""
-struct ConfigManager{M}
-    n::Int                              # Size of the problem
-    k::Int                              # Length of conditioning points in Vecchia Approximation
-    mode::COMPUTE_MODE                  # Operation Mode: GPU or CPU
-    Number_of_Samples::Int              # Number of Samples from MvNormal
-    MadNLP_Print_Level::Int             # Print level for MadNLP
-    samples::M                          # Holds samples
-end
 
 """
 Internal struct from which to fetch persisting objects in the optimization function.
@@ -57,7 +45,7 @@ recover. The fields to the struct are as follows:\n
 * `normed_constraint_value`: Optimal norm of constraint vector.
 * `normed_grad_value`: Optimal norm of gradient vector.
 * `MadNLP_iterations`: Iterations for MadNLP to reach optimal.
-* `mode`: Operation mode: CPU or GPU
+* `mode`: Operation mode: cpu or gpu
 """
 mutable struct Diagnostics
     create_model_time::Float64          # Time taken to create Vecchia Cache and MadNLP init.              
@@ -67,7 +55,7 @@ mutable struct Diagnostics
     normed_constraint_value::Float64    # Optimal norm of constraint vector.
     normed_grad_value::Float64          # Optimal norm of gradient vector.
     MadNLP_iterations::Int              # Iterations for MadNLP to reach optimal.
-    mode::Int                           # Operation mode: CPU or GPU
+    mode::ComputeMode                   # Operation mode: cpu or gpu
 end
 
 """
@@ -78,50 +66,50 @@ mutable struct VecchiaModel{T, S, VI, M} <: AbstractNLPModel{T, S}
     meta::NLPModelMeta{T, S}
     counters::Counters
     cache::VecchiaCache{T, S, VI, M}
+    lambda::T
 end
 
 """
-Input to the VecchiaMLE analysis, to be filled out by the user.
+
+Input to the VecchiaMLE analysis, needs to be filled out by the user!
+The fields to the struct are as follows:\n
+
 
 # Fields
 - `n::Int`: Square root size of the problem, i.e., the length of one side of `ptGrid`.
 - `k::Int`: Number of neighbors, representing the number of conditioning points in the Vecchia Approximation.
 - `samples::M`: Samples to generate the output. Each sample should match the length of the `observed_pts` vector. If no samples are available, consult the documentation.
 - `Number_of_Samples::Int`: Number of samples provided as input to the program.
-- `ptGrid::AbstractVector`: The larger gridded space in which the observed points lie.
-- `observed_pts::AbstractVector`: The observed points within `ptGrid`.
 - `MadNLP_print_level::Int`: Print level for the optimizer. Defaults to `ERROR` if ignored.
 - `mode::Int`: Operating mode for the analysis (`1` for 'CPU', `2` for 'GPU').
+- `ptGrid::AbstractVector`: The locations from which the samples reveal their value.
 """
 mutable struct VecchiaMLEInput{M}
     n::Int
     k::Int
     samples::M
     Number_of_Samples::Int
-    ptGrid::AbstractVector    
-    observed_pts::AbstractVector
-    MadNLP_print_level::Int
-    mode::Int
-end
+    pLevel::MadNLP.LogLevels
+    mode::ComputeMode
+    ptGrid::AbstractVector
 
-"""
-Constructs a `VecchiaMLEInput` instance with specified `ptGrid` and `observed_pts`.
-
-# Arguments
-- `n::Int`: Square root size of the problem.
-- `k::Int`: Number of neighbors for the Vecchia Approximation.
-- `samples::M`: Samples for output generation.
-- `Number_of_Samples::Int`: Number of samples provided.
-- `MadNLP_print_level::Int`: (Optional) Print level for the optimizer. Defaults to `5`.
-- `mode::Int`: (Optional) Operating mode (`1` for 'CPU', `2` for 'GPU'). Defaults to `1`.
-- `ptGrid::AbstractVector`: (Keyword) Larger gridded space containing the observed points.
-- `observed_pts::AbstractVector`: (Keyword) Observed points within `ptGrid`.
-"""
-function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, MadNLP_print_level::Int=5, mode::Int=1;
-    ptGrid::AbstractVector=[], observed_pts::AbstractVector=[]) where {M <: AbstractMatrix}
-    iVecchiaMLE = VecchiaMLEInput(n, k, samples, Number_of_Samples, ptGrid, observed_pts, MadNLP_print_level, mode)
-    sanitize_input!(iVecchiaMLE)  
-    return iVecchiaMLE
+    function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, pLevel::PL=1, mode::CM=1; ptGrid::V=nothing) where
+        {M<:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}, V <: Union{Nothing, AbstractVector}}
+        
+        if isnothing(ptGrid)
+            ptGrid = generate_safe_xyGrid(n)
+        end
+        
+        return new{M}(
+            n,
+            k,
+            samples,
+            Number_of_Samples,
+            _printlevel(pLevel),
+            _computemode(mode),
+            ptGrid
+        )
+    end
 end
 
 #"""

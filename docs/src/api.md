@@ -1,9 +1,8 @@
 
 ## VecchiaMLE Defines
 ```@docs
-VecchiaMLE.COMPUTE_MODE
-VecchiaMLE.PRINT_LEVEL
-VecchiaMLE.ConfigManager
+VecchiaMLE.ComputeMode
+VecchiaMLE.PrintLevel
 VecchiaMLE.VecchiaCache
 VecchiaMLE.Diagnostics
 VecchiaMLE.VecchiaModel
@@ -27,8 +26,8 @@ VecchiaMLE.generate_Samples
 VecchiaMLE.generate_MatCov
 VecchiaMLE.generate_xyGrid
 VecchiaMLE.generate_safe_xyGrid
-VecchiaMLE.MadNLP_Print_Level
-VecchiaMLE.Int_to_Mode
+VecchiaMLE._printlevel
+VecchiaMLE._computemode
 VecchiaMLE.Uni_Error
 VecchiaMLE.IndexReorder
 VecchiaMLE.IndexMaxMin
@@ -39,4 +38,5 @@ VecchiaMLE.SparsityPattern
 VecchiaMLE.SparsityPattern_Block
 VecchiaMLE.SparsityPattern_CSC
 VecchiaMLE.sanitize_input!
+VecchiaMLE.PRINT_LEVEL_TO_MADNLP
 ```
