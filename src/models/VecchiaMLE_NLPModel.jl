@@ -47,7 +47,7 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
     T = eltype(S)
 
     # SPARSITY PATTERN OF L IN CSC FORMAT.
-    rowsL, colsL, colptrL = SparsityPattern(iVecchiaMLE.ptGrid, iVecchiaMLE.k, iVecchiaMLE.observed_pts, "CSC")
+    rowsL, colsL, colptrL = SparsityPattern(iVecchiaMLE.ptGrid, iVecchiaMLE.k, "CSC")
 
     nnzL::Int = length(rowsL)
     m = [colptrL[j+1] - colptrL[j] for j in 1:n]
