@@ -480,11 +480,11 @@ end
 * `colptr`: A vector of incides which determine where new columns start. 
 
 """
-function SparsityPattern(data, k::Int, obs_pts, format="")
+function SparsityPattern(data, k::Int, format="")
     if format == ""
-        return SparsityPattern_CSC(data, k, obs_pts)
+        return SparsityPattern_CSC(data, k)
     elseif format == "CSC"
-        return SparsityPattern_CSC(data, k, obs_pts)
+        return SparsityPattern_CSC(data, k)
     else
         println("Sparsity Pattern: Bad format. Gave", format)
         return nothing
@@ -512,7 +512,7 @@ end
 """
 See SparsityPattern().
 """
-function SparsityPattern_CSC(data, k::Int, obs_pts)
+function SparsityPattern_CSC(data, k::Int)
     n = size(data, 1)
     rows = zeros(Int, Int(0.5 * k * (2*n - k + 1)))
     cols = copy(rows)  
@@ -533,11 +533,7 @@ function SparsityPattern_CSC(data, k::Int, obs_pts)
     
 
         for j in 1:k_nn
-           
-            if data[i, 1] ∈ obs_pts
-                # record that i considers point[j] to be a neighbor
-                push!(Sparsity_dict[buffer[j]], i)
-            end
+            push!(Sparsity_dict[buffer[j]], i)
         end 
     
         # Add point to kdtree. 
