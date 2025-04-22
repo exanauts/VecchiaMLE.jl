@@ -23,9 +23,12 @@
     input.samples = samples
 
     ptGrid = [zeros(2) for i in 1:4]
-    @test_throws AssertionError VecchiaMLE_Run(input; ptGrid)
+    input.ptGrid = ptGrid
+    @test_throws AssertionError VecchiaMLE_Run(input)
 
     ptGrid = [[0.0] for i in 1:n^2]
-    @test_throws AssertionError VecchiaMLE.VecchiaMLE_Run(input; ptGrid)
+    input.ptGrid = ptGrid
+    @test_throws AssertionError VecchiaMLE.VecchiaMLE_Run(input)
+    input.ptGrid = VecchiaMLE.generate_safe_xyGrid(input.n)
     @test_nowarn VecchiaMLE_Run(input)
 end

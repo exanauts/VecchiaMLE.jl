@@ -88,17 +88,23 @@ mutable struct VecchiaMLEInput{M}
     Number_of_Samples::Int
     pLevel::MadNLP.LogLevels
     mode::ComputeMode
+    ptGrid::AbstractVector
 
-    function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, pLevel::PL=1, mode::CM=1) where
-        {M<:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}}
+    function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, pLevel::PL=1, mode::CM=1; ptGrid::V=nothing) where
+        {M<:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}, V <: Union{Nothing, AbstractVector}}
+        
+        if isnothing(ptGrid)
+            ptGrid = generate_safe_xyGrid(n)
+        end
         
         return new{M}(
-            n, 
-            k, 
-            samples, 
-            Number_of_Samples, 
-            _printlevel(pLevel), 
-            _computemode(mode)
+            n,
+            k,
+            samples,
+            Number_of_Samples,
+            _printlevel(pLevel),
+            _computemode(mode),
+            ptGrid
         )
     end
 end
