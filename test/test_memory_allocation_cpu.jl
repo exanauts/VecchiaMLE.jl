@@ -7,7 +7,7 @@
     MatCov = VecchiaMLE.generate_MatCov(n, params, xyGrid)
     samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples; mode=cpu)
 
-    model = VecchiaMLE.VecchiaModelCPU(samples, k, xyGrid)
+    model = VecchiaMLE.VecchiaModelCPU(iVecchiaMLE)
     mems = NLPModelsTest.test_allocs_nlpmodels(model)
 
     @test mems[:obj] == 0.0
