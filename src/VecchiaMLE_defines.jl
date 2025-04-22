@@ -73,13 +73,16 @@ end
 Input to the VecchiaMLE analysis, needs to be filled out by the user!
 The fields to the struct are as follows:\n
 
-* `n`: The Square root size of the problem. I.e., the length of one side of ptGrid.  
-* `k`: The "number of neighbors", number of conditioning points regarding the Vecchia Approximation. 
-* `samples`: The Samples in which to generate the output. If you have no samples consult the Documentation.
-* `Number_of_Samples`: The Number of Samples the user gives input to the program.
-* `pLevel`: The print level to the optimizer. Can be ignored, and will default to ERROR.
-* `mode`: The opertaing mode to the analysis(gpu or cpu). The mapping is [1: 'cpu', 2: 'gpu'].
 
+#### Fields
+
+- `n::Int`: Square root size of the problem, i.e., the length of one side of `ptGrid`.
+- `k::Int`: Number of neighbors, representing the number of conditioning points in the Vecchia Approximation.
+- `samples::M`: Samples to generate the output. Each sample should match the length of the `observed_pts` vector. If no samples are available, consult the documentation.
+- `Number_of_Samples::Int`: Number of samples provided as input to the program.
+- `MadNLP_print_level::Int`: Print level for the optimizer. Defaults to `ERROR` if ignored.
+- `mode::Int`: Operating mode for the analysis (`1` for 'CPU', `2` for 'GPU').
+- `ptGrid::AbstractVector`: The locations from which the samples reveal their value.
 """
 mutable struct VecchiaMLEInput{M}
     n::Int
@@ -108,3 +111,25 @@ mutable struct VecchiaMLEInput{M}
         )
     end
 end
+
+#"""
+#Constructs a `VecchiaMLEInput` instance with specified `ptGrid` and `observed_idx_mapping`.
+#
+#### Arguments
+
+#- `n::Int`: Square root size of the problem.
+#- `k::Int`: Number of neighbors for the Vecchia Approximation.
+#- `samples::M`: Samples for output generation.
+#- `Number_of_Samples::Int`: Number of samples provided.
+#- `print_level::Int`: (Optional) Print level for the optimizer. Defaults to `5`.
+#- `mode::Int`: (Optional) Operating mode (`1` for 'CPU', `2` for 'GPU'). Defaults to `1`.
+#- `ptGrid::AbstractVector`: (Keyword) Larger gridded space containing the observed points.
+#- `observed_idx_mapping::AbstractVector`: (Keyword) Indices mapping to observed points within `ptGrid`.
+#"""
+#function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, print_level::Int=5, mode::Int=1;
+#    ptGrid::AbstractVector=[], observed_idx_mapping::AbstractVector=[]) where {M <: AbstractMatrix}
+#    @assert isa(observed_idx_mapping, Vector{Int}) "observed_idx_mapping is not a vector of indices!"
+#    @assert maximum(observed_idx_mapping) <= length(ptGrid) && minimum(observed_idx_mapping) >= 1 "observed_idx_mapping has illegal indices!"
+#    observed_pts = ptGrid[observed_idx_mapping]
+#    return VecchiaMLEInput(n, k, samples, Number_of_Samples, print_level, mode; ptGrid=ptGrid, observed_pts=observed_pts)
+#end

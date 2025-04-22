@@ -1,10 +1,8 @@
-# TODO: gpu is running poorly. Something being ported from cpu?
-
-function VecchiaModel(::Type{S}, samples::AbstractMatrix, k::Int, ptGrid::AbstractVector; lambda::Real=0.0) where {S<:AbstractArray}
+function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput; lambda::Real=0.0) where {S<:AbstractArray}
     T = eltype(S)
 
-    cache = create_vecchia_cache(samples, k, ptGrid, S)
-    nvar_ = length(cache.rowsL) + length(cache.colptrL) - 1
+    cache::VecchiaCache = create_vecchia_cache(S, iVecchiaMLE)
+    nvar_::Int = length(cache.rowsL) + length(cache.colptrL) - 1
     
     # The initial condition is for L to be the identity. 
     x0_::S = S(undef, nvar_)
@@ -37,24 +35,26 @@ function VecchiaModel(::Type{S}, samples::AbstractMatrix, k::Int, ptGrid::Abstra
 end
 
 # Only two modes instantiated!!
-VecchiaModelCPU(samples::Matrix{T}, k::Int, xyGrid::AbstractVector; lambda::Real=0.0) where {T <: AbstractFloat} = VecchiaModel(Vector{Float64}, samples, k, xyGrid; lambda)
-VecchiaModelGPU(samples::CuMatrix{Float64,B}, k::Int, xyGrid::AbstractVector; lambda::Real=0.0) where {B} = VecchiaModel(CuVector{Float64,B}, samples, k, xyGrid; lambda)
+VecchiaModelCPU(samples::Matrix{T}, iVecchiaMLE::VecchiaMLEInput; lambda::Real=0.0) where {T <: AbstractFloat} = VecchiaModel(Vector{Float64}, iVecchiaMLE; lambda)
+VecchiaModelGPU(samples::CuMatrix{Float64, B}, iVecchiaMLE::VecchiaMLEInput; lambda::Real=0.0) where {B} = VecchiaModel(CuVector{Float64,B}, iVecchiaMLE; lambda)
+
 
 # Constructing the vecchia cache used everywhere in the code below.
-function create_vecchia_cache(samples::AbstractMatrix, k::Int, ptGrid::AbstractVector, ::Type{S}) where {S <: AbstractVector}
-    Msamples = size(samples, 1)
-    n = size(samples, 2)
+function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaCache where {S <: AbstractVector}
+    Msamples::Int = size(iVecchiaMLE.samples, 1)
+    Lsamples::Int = size(iVecchiaMLE.samples, 2)
+    n::Int = iVecchiaMLE.n^2
     T = eltype(S)
 
-    # SPARSITY PATTERN OF L IN COO, CSC FORMAT.
-    rowsL, colsL, colptrL = SparsityPattern(ptGrid, k, "CSC")
+    # SPARSITY PATTERN OF L IN CSC FORMAT.
+    rowsL, colsL, colptrL = SparsityPattern(iVecchiaMLE.ptGrid, iVecchiaMLE.k, "CSC")
 
-    nnzL = length(rowsL)
-    m = Int[colptrL[j+1] - colptrL[j] for j in 1:n]
+    nnzL::Int = length(rowsL)
+    m = [colptrL[j+1] - colptrL[j] for j in 1:n]
 
     # Number of nonzeros in the the lower triangular part of the Hessians
-    nnzh_tri_obj = sum(m[j] * (m[j] + 1) for j in 1:n) ÷ 2
-    nnzh_tri_lag = nnzh_tri_obj + n
+    nnzh_tri_obj::Int = sum(m[j] * (m[j] + 1) for j in 1:n) ÷ 2
+    nnzh_tri_lag::Int = nnzh_tri_obj + n
 
     if S != Vector{Float64}
 
@@ -68,11 +68,14 @@ function create_vecchia_cache(samples::AbstractMatrix, k::Int, ptGrid::AbstractV
         offsets = Int[]
         B = [Matrix{T}(undef, m[j], m[j]) for j = 1:n]
     end
-    hess_obj_vals = S(undef, nnzh_tri_obj)
-    vecchia_build_B!(B, samples, rowsL, colptrL, hess_obj_vals, n, m)
+    hess_obj_vals::S = S(undef, nnzh_tri_obj)
 
-    diagL = colptrL[1:n]
-    buffer = S(undef, nnzL)
+    #println("m:\n", m)
+    # For n here, you want the length of a sample (pass Lsamples or n?)
+    vecchia_build_B!(B, iVecchiaMLE.samples, rowsL, colptrL, hess_obj_vals, n, m)
+
+    diagL = view(colptrL, 1:n)
+    buffer::S = S(undef, nnzL)
 
     return VecchiaCache{eltype(S), S, typeof(rowsL), typeof(B[1])}(
         n, Msamples, nnzL,

@@ -73,6 +73,9 @@ end
 # Front-end
 function vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix{T}, rowsL::CuVector{Int},
     colptrL::CuVector{Int}, hess_obj_vals::CuVector{T}, n::Int, m::CuVector{Int}) where T <: AbstractFloat
+    
+    # TODO: Is there a CUDA dictionary? This is for the mapping from samples to ptGrid size
+    
     # Launch the kernel
     backend = KA.get_backend(samples)
     r = size(samples, 1)
@@ -113,10 +116,9 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vecto
     for j in 1:n
         for s in 1:m[j]
             for t in 1:m[j]
-                vt = view(samples, :, rowsL[colptrL[j] + t - 1])
-                vs = view(samples, :, rowsL[colptrL[j] + s - 1])
-                B[j][t, s] = dot(vt, vs)
-
+                    vt = view(samples, :, rowsL[colptrL[j] + t - 1])
+                    vs = view(samples, :, rowsL[colptrL[j] + s - 1])
+                    B[j][t, s] = dot(vt, vs)
                 # Lower triangular part of the block Bⱼ
                 if s ≤ t
                     pos = pos + 1
@@ -125,6 +127,7 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vecto
             end
         end
     end
+
     return nothing
 end
 

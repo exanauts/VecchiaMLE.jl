@@ -28,3 +28,9 @@ end
 
 include("test_model_inputs.jl")
 include("test_abnormal_ptGrid.jl")
+
+using HSL, MadNLPHSL
+
+if LIBHSL_isfunctional()
+    include("test_linear_solver.jl")
+end

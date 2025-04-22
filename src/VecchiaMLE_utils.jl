@@ -136,15 +136,16 @@ end
 """
 function get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)::VecchiaModel
 
+
     if iVecchiaMLE.mode == gpu
-       return VecchiaModelGPU(CuArray(iVecchiaMLE.samples), iVecchiaMLE.k, iVecchiaMLE.ptGrid)
+       return VecchiaModelGPU(iVecchiaMLE.samples, iVecchiaMLE)
     else 
-       return VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE.k, iVecchiaMLE.ptGrid)
+       return VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE)
     end
 end
 
 """
-    log_level = MadNLP_Print_Level(pLEvel::Int)
+    log_level = _printlevel(pLevel::Union{Int, PrintLevel})
 
     A helper function to convert an Int to a MadNLP LogLevel.
     The mapping is [1: 'TRACE', 2: 'DEBUG', 3: 'INFO', 4: 'WARN', 5: 'ERROR'].
@@ -156,7 +157,7 @@ end
 
 * `log_level` : The coded MadNLP.LogLevel.   
 """
-function _printlevel(pLevel::Union{Int, PrintLevel})
+function _printlevel(pLevel::PL) where {PL <: Union{Int, PrintLevel}}
     get(PRINT_LEVEL_TO_MADNLP, pLevel, MadNLP.ERROR)
 end
 
@@ -526,16 +527,21 @@ function SparsityPattern_CSC(data, k::Int)
     for i in 2:n
         k_nn = min(i-1, k-1)
         buffer, _ = AdaptiveKDTrees.KNN.knn(kdtree, data[i, 1], k_nn)
-        spar_i = Sparsity_dict[i]  
-        push!(spar_i, i)
+        
+        # Push to i-th point itself, since it is a neighbor.
+        push!(Sparsity_dict[i], i)
     
+
         for j in 1:k_nn
             push!(Sparsity_dict[buffer[j]], i)
         end 
     
+        # Add point to kdtree. 
         add_point!(kdtree, data[i, 1])
     end
     
+    #println("Sparsity_dict:\n", Sparsity_dict)
+
     idx = 1
     colptr = zeros(Int, n+1)
     colptr[1] = 1
@@ -547,6 +553,9 @@ function SparsityPattern_CSC(data, k::Int)
         idx += len
         colptr[i+1] = idx
     end
+    #println("idx:", idx)
+    rows = rows[1:idx-1]
+    cols = cols[1:idx-1]
 
     return rows, cols, colptr
 end
@@ -566,7 +575,6 @@ The current checks are:\n
 
 ## Input arguments
 * `iVecchiaMLE`: The filled-out VecchiaMLEInput struct. See VecchiaMLEInput struct for more details. 
-* `ptGrid`: The grid of point locations in 2D space. Must be a Vector of 2D Vectors! 
 """
 function sanitize_input!(iVecchiaMLE::VecchiaMLEInput) 
     @assert iVecchiaMLE.n > 0 "The dimension n must be strictly positive!"

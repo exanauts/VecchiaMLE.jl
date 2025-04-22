@@ -15,6 +15,7 @@ VecchiaMLE.VecchiaMLEInput
 VecchiaMLE.VecchiaMLE_Run
 VecchiaMLE.VecchiaMLE_Run_Analysis!
 VecchiaMLE.ExecuteModel!
+VecchiaMLE.RetrieveDiagnostics!
 ```
 
 ## VecchiaMLE utils

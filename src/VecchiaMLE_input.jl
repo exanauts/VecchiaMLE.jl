@@ -14,7 +14,6 @@
 function VecchiaMLE_Run(iVecchiaMLE::VecchiaMLEInput)
 
     sanitize_input!(iVecchiaMLE)
-
     pres_chol = Matrix{eltype(iVecchiaMLE.samples)}(undef, iVecchiaMLE.n^2, iVecchiaMLE.n^2)
     fill!(pres_chol, zero(eltype(iVecchiaMLE.samples)))
     diagnostics = Diagnostics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, cpu)
@@ -28,7 +27,36 @@ See VecchiaMLE_Run().
 """
 function VecchiaMLE_Run_Analysis!(iVecchiaMLE::VecchiaMLEInput, pres_chol::AbstractMatrix, diagnostics::Diagnostics)
     model, output = ExecuteModel!(iVecchiaMLE, pres_chol, diagnostics)
+    RetrieveDiagnostics!(iVecchiaMLE, output, model, diagnostics)
+end
 
+"""
+See VecchiaMLE_Run().
+"""
+function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, pres_chol::AbstractMatrix, diags::Diagnostics)
+    diags.create_model_time = @elapsed begin
+        model = get_vecchia_model(iVecchiaMLE)
+    end
+    
+    diags.solve_model_time = @elapsed begin
+        output = madnlp(model, 
+            #linear_solver=MadNLPHSL.Ma57Solver, # Linear Solver should be determined if found on machine! #TODO: Later
+            print_level=iVecchiaMLE.pLevel
+        )
+    end
+    
+    # Casting to CPU matrices
+    valsL = Vector{Float64}(view(output.solution, 1:model.cache.nnzL))
+    rowsL = Vector{Int}(model.cache.rowsL)
+    colsL = Vector{Int}(model.cache.colsL)
+    copyto!(pres_chol, LowerTriangular(sparse(rowsL, colsL, valsL)))
+    return model, output
+end
+
+"""
+See VecchiaMLE_Run()
+"""
+function RetrieveDiagnostics!(iVecchiaMLE, output, model, diagnostics)
     diagnostics.LinAlg_solve_time = output.counters.linear_solver_time
     diagnostics.MadNLP_iterations = output.iter
     diagnostics.mode = iVecchiaMLE.mode
@@ -47,25 +75,5 @@ function VecchiaMLE_Run_Analysis!(iVecchiaMLE::VecchiaMLEInput, pres_chol::Abstr
 
     diagnostics.normed_constraint_value = norm(cons_vec)
     diagnostics.normed_grad_value = norm(grad_vec)
-end
 
-"""
-See VecchiaMLE_Run().
-"""
-function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, pres_chol::AbstractMatrix, diags::Diagnostics)
-    diags.create_model_time = @elapsed begin
-        model = get_vecchia_model(iVecchiaMLE)
-    end
-    
-    diags.solve_model_time = @elapsed begin
-        output = madnlp(model, print_level=iVecchiaMLE.pLevel)
-    end
-    
-    
-    # Casting to cpu matrices
-    valsL = Vector{Float64}(output.solution[1:model.cache.nnzL])
-    rowsL = Vector{Int}(model.cache.rowsL)
-    colsL = Vector{Int}(model.cache.colsL)
-    copyto!(pres_chol, LowerTriangular(sparse(rowsL, colsL, valsL)))
-    return model, output
 end
