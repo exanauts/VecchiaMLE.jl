@@ -14,7 +14,7 @@
     model = VecchiaMLE.get_vecchia_model(input)
     output = madnlp(model, 
         linear_solver=MadNLPHSL.Ma57Solver,
-        print_level=VecchiaMLE._printlevel(input.MadNLP_print_level)
+        print_level=VecchiaMLE._printlevel(input.pLevel)
     )
 
 
