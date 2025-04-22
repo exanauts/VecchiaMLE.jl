@@ -70,12 +70,12 @@ mutable struct VecchiaModel{T, S, VI, M} <: AbstractNLPModel{T, S}
 end
 
 """
-
 Input to the VecchiaMLE analysis, needs to be filled out by the user!
 The fields to the struct are as follows:\n
 
 
-# Fields
+#### Fields
+
 - `n::Int`: Square root size of the problem, i.e., the length of one side of `ptGrid`.
 - `k::Int`: Number of neighbors, representing the number of conditioning points in the Vecchia Approximation.
 - `samples::M`: Samples to generate the output. Each sample should match the length of the `observed_pts` vector. If no samples are available, consult the documentation.
@@ -115,7 +115,8 @@ end
 #"""
 #Constructs a `VecchiaMLEInput` instance with specified `ptGrid` and `observed_idx_mapping`.
 #
-## Arguments
+#### Arguments
+
 #- `n::Int`: Square root size of the problem.
 #- `k::Int`: Number of neighbors for the Vecchia Approximation.
 #- `samples::M`: Samples for output generation.

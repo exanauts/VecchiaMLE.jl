@@ -40,11 +40,10 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, pres_chol::AbstractMatrix, 
     
     diags.solve_model_time = @elapsed begin
         output = madnlp(model, 
-            #linear_solver=MadNLPHSL.Ma57Solver, # Linear Sovler should be determined if found on machine! #TODO: Later
+            #linear_solver=MadNLPHSL.Ma57Solver, # Linear Solver should be determined if found on machine! #TODO: Later
             print_level=iVecchiaMLE.pLevel
         )
     end
-    
     
     # Casting to CPU matrices
     valsL = Vector{Float64}(view(output.solution, 1:model.cache.nnzL))
