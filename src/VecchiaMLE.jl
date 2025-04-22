@@ -3,7 +3,7 @@ module VecchiaMLE
 # External Packages
 using NLPModels, LinearAlgebra
 using AdaptiveKDTrees, AdaptiveKDTrees.KNN
-using MadNLP, MadNLPGPU #, MadNLPHSL
+using MadNLP, MadNLPGPU
 using SparseArrays 
 using CUDA
 using BesselK, SpecialFunctions
