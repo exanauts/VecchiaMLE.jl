@@ -78,24 +78,3 @@ function RetrieveDiagnostics!(iVecchiaMLE, output, model, diagnostics)
     diagnostics.normed_grad_value = norm(grad_vec)
 
 end
-
-"""
-See VecchiaMLE_Run().
-"""
-function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, pres_chol::AbstractMatrix, diags::Diagnostics)
-    diags.create_model_time = @elapsed begin
-        model = get_vecchia_model(iVecchiaMLE)
-    end
-    
-    diags.solve_model_time = @elapsed begin
-        output = madnlp(model, print_level=iVecchiaMLE.pLevel)
-    end
-    
-    
-    # Casting to cpu matrices
-    valsL = Vector{Float64}(output.solution[1:model.cache.nnzL])
-    rowsL = Vector{Int}(model.cache.rowsL)
-    colsL = Vector{Int}(model.cache.colsL)
-    copyto!(pres_chol, LowerTriangular(sparse(rowsL, colsL, valsL)))
-    return model, output
-end
