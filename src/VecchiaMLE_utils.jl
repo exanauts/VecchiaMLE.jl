@@ -138,9 +138,9 @@ function get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)::VecchiaModel
 
 
     if iVecchiaMLE.mode == gpu
-       return VecchiaModelGPU(iVecchiaMLE)
+       return VecchiaModelGPU(iVecchiaMLE.samples, iVecchiaMLE)
     else 
-       return VecchiaModelCPU(iVecchiaMLE)
+       return VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE)
     end
 end
 
