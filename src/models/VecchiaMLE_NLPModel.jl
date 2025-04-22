@@ -35,8 +35,8 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput; lambda::Real=0.0)
 end
 
 # Only two modes instantiated!!
-VecchiaModelCPU(iVecchiaMLE::VecchiaMLEInput; lambda::Real=0.0) where {T <: AbstractFloat} = VecchiaModel(Vector{Float64}, iVecchiaMLE; lambda)
-VecchiaModelGPU(iVecchiaMLE::VecchiaMLEInput; lambda::Real=0.0) where {B} = VecchiaModel(CuVector{Float64,B}, iVecchiaMLE; lambda)
+VecchiaModelCPU(samples::Matrix{T} iVecchiaMLE::VecchiaMLEInput; lambda::Real=0.0) where {T <: AbstractFloat} = VecchiaModel(Vector{Float64}, iVecchiaMLE; lambda)
+VecchiaModelGPU(samples::CuMatrix{Float64, B}, iVecchiaMLE::VecchiaMLEInput; lambda::Real=0.0) where {B} = VecchiaModel(CuVector{Float64,B}, iVecchiaMLE; lambda)
 
 
 # Constructing the vecchia cache used everywhere in the code below.
