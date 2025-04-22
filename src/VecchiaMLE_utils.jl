@@ -145,7 +145,7 @@ function get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)::VecchiaModel
 end
 
 """
-    log_level = MadNLP_Print_Level(pLEvel::Int)
+    log_level = _printlevel(pLevel::Union{Int, PrintLevel})
 
     A helper function to convert an Int to a MadNLP LogLevel.
     The mapping is [1: 'TRACE', 2: 'DEBUG', 3: 'INFO', 4: 'WARN', 5: 'ERROR'].
@@ -157,7 +157,7 @@ end
 
 * `log_level` : The coded MadNLP.LogLevel.   
 """
-function _printlevel(pLevel::Union{Int, PrintLevel})
+function _printlevel(pLevel::PL) where {PL <: Union{Int, PrintLevel}}
     get(PRINT_LEVEL_TO_MADNLP, pLevel, MadNLP.ERROR)
 end
 
