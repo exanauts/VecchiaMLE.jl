@@ -2,7 +2,7 @@ using VecchiaMLE
 using Test
 using JuMP
 using Ipopt, NLPModelsJuMP
-using MadNLP, MadNLPGPU, MadNLPHSL, HSL
+using MadNLP, MadNLPGPU #, MadNLPHSL, HSL
 using SparseArrays
 using LinearAlgebra
 using CUDA
