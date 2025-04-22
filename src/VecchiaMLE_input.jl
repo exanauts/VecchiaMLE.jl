@@ -40,8 +40,10 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, pres_chol::AbstractMatrix, 
     
     diags.solve_model_time = @elapsed begin
         output = madnlp(model, 
-            #linear_solver=MadNLPHSL.Ma57Solver, # Linear Solver should be determined if found on machine! #TODO: Later
-            print_level=iVecchiaMLE.pLevel
+            #linear_solver=MadNLPHSL.Ma27Solver, # Linear Solver should be determined if found on machine! #TODO: Later
+            #max_iter=100,      # Flexible 
+            print_level=iVecchiaMLE.pLevel,
+            tol=1e-7
         )
     end
     
