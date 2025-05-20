@@ -13,7 +13,7 @@
 """
 function VecchiaMLE_Run(iVecchiaMLE::VecchiaMLEInput)
 
-    sanitize_input!(iVecchiaMLE)
+    !iVecchiaMLE.skip_check && sanitize_input!(iVecchiaMLE)
     pres_chol = Matrix{eltype(iVecchiaMLE.samples)}(undef, iVecchiaMLE.n^2, iVecchiaMLE.n^2)
     diagnostics = Diagnostics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, cpu)
     VecchiaMLE_Run_Analysis!(iVecchiaMLE, pres_chol, diagnostics)
@@ -26,7 +26,8 @@ See VecchiaMLE_Run().
 """
 function VecchiaMLE_Run_Analysis!(iVecchiaMLE::VecchiaMLEInput, pres_chol::AbstractMatrix, diagnostics::Diagnostics)
     model, output = ExecuteModel!(iVecchiaMLE, pres_chol, diagnostics)
-    RetrieveDiagnostics!(iVecchiaMLE, output, model, diagnostics)
+    
+    !iVecchiaMLE.diagnostics && RetrieveDiagnostics!(iVecchiaMLE, output, model, diagnostics)
 end
 
 """

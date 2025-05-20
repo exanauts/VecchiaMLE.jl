@@ -80,11 +80,15 @@ The fields to the struct are as follows:\n
 - `k::Int`: Number of neighbors, representing the number of conditioning points in the Vecchia Approximation.
 - `samples::M`: Samples to generate the output. Each sample should match the length of the `observed_pts` vector. If no samples are available, consult the documentation.
 - `Number_of_Samples::Int`: Number of samples provided as input to the program.
-- `MadNLP_print_level::Int`: Print level for the optimizer. Defaults to `ERROR` if ignored.
-- `mode::Int`: Operating mode for the analysis (`1` for 'CPU', `2` for 'GPU').
+- `MadNLP_print_level::MadNLP.LogLevels`: Print level for the optimizer. Defaults to `ERROR` if ignored.
+- `mode::ComputeMode`: Operating mode for the analysis. Either `gpu` or `cpu`. Defaults to `cpu`.
 - `ptGrid::AbstractVector`: The locations from which the samples reveal their value.
+- `rowsL::AbstractVector`: The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT! 
+- `colsL::AbstractVector`: The sparsity pattern cols of L if the user gives one. MUST BE IN CSC FORMAT!
+- `colptrL::AbstractVector`: The column pointer of L if the user gives one. MUST BE IN CSC FORMAT! 
+- `skip_check::Bool`: Whether or not to skip the sanitize_input! funciton. 
 """
-mutable struct VecchiaMLEInput{M}
+mutable struct VecchiaMLEInput{M, V}
     n::Int
     k::Int
     samples::M
@@ -92,44 +96,44 @@ mutable struct VecchiaMLEInput{M}
     pLevel::MadNLP.LogLevels
     mode::ComputeMode
     ptGrid::AbstractVector
+    diagnostics::Bool
+    rowsL::V
+    colsL::V
+    colptrL::V
+    skip_check::Bool
 
-    function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, pLevel::PL=1, mode::CM=1; ptGrid::V=nothing) where
-        {M<:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}, V <: Union{Nothing, AbstractVector}}
+    function VecchiaMLEInput(
+        n::Int, k::Int, 
+        samples::M, Number_of_Samples::Int, 
+        pLevel::PL=1, mode::CM=1
+        ; ptGrid::V=nothing, 
+        diagnostics::Bool=false,
+        rowsL::V1=nothing,
+        colsL::V1=nothing,
+        colptrL::V1=nothing,
+        skip_check::Bool=false
+    ) where
+        {M <:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}, V <: Union{Nothing, AbstractVector},
+        V1 <: Union{Nothing, AbstractVector}}
         
         if isnothing(ptGrid)
             ptGrid = generate_safe_xyGrid(n)
         end
         
-        return new{M}(
+        return new{M, V1}(
             n,
             k,
             samples,
             Number_of_Samples,
             _printlevel(pLevel),
             _computemode(mode),
-            ptGrid
+            ptGrid,
+            diagnostics,
+            rowsL,
+            colsL,
+            colptrL,
+            skip_check
         )
     end
 end
 
-#"""
-#Constructs a `VecchiaMLEInput` instance with specified `ptGrid` and `observed_idx_mapping`.
-#
-#### Arguments
-
-#- `n::Int`: Square root size of the problem.
-#- `k::Int`: Number of neighbors for the Vecchia Approximation.
-#- `samples::M`: Samples for output generation.
-#- `Number_of_Samples::Int`: Number of samples provided.
-#- `print_level::Int`: (Optional) Print level for the optimizer. Defaults to `5`.
-#- `mode::Int`: (Optional) Operating mode (`1` for 'CPU', `2` for 'GPU'). Defaults to `1`.
-#- `ptGrid::AbstractVector`: (Keyword) Larger gridded space containing the observed points.
-#- `observed_idx_mapping::AbstractVector`: (Keyword) Indices mapping to observed points within `ptGrid`.
-#"""
-#function VecchiaMLEInput(n::Int, k::Int, samples::M, Number_of_Samples::Int, print_level::Int=5, mode::Int=1;
-#    ptGrid::AbstractVector=[], observed_idx_mapping::AbstractVector=[]) where {M <: AbstractMatrix}
-#    @assert isa(observed_idx_mapping, Vector{Int}) "observed_idx_mapping is not a vector of indices!"
-#    @assert maximum(observed_idx_mapping) <= length(ptGrid) && minimum(observed_idx_mapping) >= 1 "observed_idx_mapping has illegal indices!"
-#    observed_pts = ptGrid[observed_idx_mapping]
-#    return VecchiaMLEInput(n, k, samples, Number_of_Samples, print_level, mode; ptGrid=ptGrid, observed_pts=observed_pts)
-#end

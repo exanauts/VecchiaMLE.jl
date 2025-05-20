@@ -560,6 +560,24 @@ function SparsityPattern_CSC(data, k::Int)
     return rows, cols, colptr
 end
 
+
+function is_csc_format(iVecchiaMLE::VecchiaMLEInput)::Bool
+    rowsL = view(iVecchiaMLE.rowsL)
+    colsL = view(iVecchiaMLE.colsL)
+
+    # check lengths
+    (length(rowsL) != length(colsL)) || return false
+
+    # check cols
+    !all(in(1:iVecchiaMLE.n^2), colsL) || return false
+    !all(in((0, 1)), diff(colsL)) || return false 
+    
+    # check rows
+    !all(in(1:iVecchiaMLE.n^2), rowsL) || return false
+    # there should be another check, if the pattern of rowsL is as expected (sorted wrt columns). But not important rn.
+    return true
+end
+
 """
     sanitize_input!(iVecchiaMLE::VecchiaMLEInput, ptGrid::Union{AbstractVector, Nothing})
 
@@ -590,5 +608,12 @@ function sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
     @assert length(iVecchiaMLE.ptGrid) == iVecchiaMLE.n^2  "The ptGrid given does not have n^2 elements!"
     for (i, pt) in enumerate(iVecchiaMLE.ptGrid)
         @assert length(pt) == 2 "Position $(i) in ptGrid is not 2 dimensional!"
+    end
+
+    # Check is not relevant rn since rowsL and colsL are stored as the same type.
+    @assert (isnothing(iVecchiaMLE.rowsL) == isnothing(iVecchiaMLE.colsL)) "Both rowsL and colsL must be given!"
+
+    if !isnothing(iVecchiaMLE.rowsL)
+        @assert is_csc_format(iVecchiaMLE) "rowsL and colsL are not in CSC format!"
     end
 end
