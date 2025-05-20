@@ -15,7 +15,6 @@ function VecchiaMLE_Run(iVecchiaMLE::VecchiaMLEInput)
 
     sanitize_input!(iVecchiaMLE)
     pres_chol = Matrix{eltype(iVecchiaMLE.samples)}(undef, iVecchiaMLE.n^2, iVecchiaMLE.n^2)
-    fill!(pres_chol, zero(eltype(iVecchiaMLE.samples)))
     diagnostics = Diagnostics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, cpu)
     VecchiaMLE_Run_Analysis!(iVecchiaMLE, pres_chol, diagnostics)
     
@@ -40,18 +39,26 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, pres_chol::AbstractMatrix, 
     
     diags.solve_model_time = @elapsed begin
         output = madnlp(model, 
-            #linear_solver=MadNLPHSL.Ma27Solver, # Linear Solver should be determined if found on machine! #TODO: Later
-            #max_iter=100,      # Flexible 
+            linear_solver=MadNLPHSL.Ma57Solver, # Linear Solver should be determined if found on machine! #TODO: Later
             print_level=iVecchiaMLE.pLevel,
-            tol=1e-7
+            tol=1e-8
         )
     end
     
     # Casting to CPU matrices
-    valsL = Vector{Float64}(view(output.solution, 1:model.cache.nnzL))
-    rowsL = Vector{Int}(model.cache.rowsL)
-    colsL = Vector{Int}(model.cache.colsL)
-    copyto!(pres_chol, LowerTriangular(sparse(rowsL, colsL, valsL)))
+    if eltype(pres_chol) != Float64
+        valsL = Vector{Float64}(view(output.solution, 1:model.cache.nnzL))
+        rowsL = Vector{Int}(model.cache.rowsL)
+        colsL = Vector{Int}(model.cache.colsL)
+    else
+        valsL = view(output.solution, 1:model.cache.nnzL)
+        rowsL = view(model.cache.rowsL, :)
+        colsL = view(model.cache.colsL, :)
+    end
+
+    pres_chol .= LowerTriangular(sparse(rowsL, colsL, valsL))
+
+
     return model, output
 end
 
