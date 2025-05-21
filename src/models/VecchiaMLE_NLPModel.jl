@@ -49,7 +49,7 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
     # SPARSITY PATTERN OF L IN CSC FORMAT.
     if !isnothing(iVecchiaMLE.rowsL)
         rowsL, colsL, colptrL = iVecchiaMLE.rowsL, iVecchiaMLE.colsL, iVecchiaMLE.colptrL
-    else    
+    else
         rowsL, colsL, colptrL = SparsityPattern(iVecchiaMLE.ptGrid, iVecchiaMLE.k, "CSC")
     end
 

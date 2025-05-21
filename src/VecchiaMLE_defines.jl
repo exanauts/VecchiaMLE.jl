@@ -88,18 +88,18 @@ The fields to the struct are as follows:\n
 - `colptrL::AbstractVector`: The column pointer of L if the user gives one. MUST BE IN CSC FORMAT! 
 - `skip_check::Bool`: Whether or not to skip the sanitize_input! funciton. 
 """
-mutable struct VecchiaMLEInput{M, V}
+mutable struct VecchiaMLEInput{M, V, V1}
     n::Int
     k::Int
     samples::M
     Number_of_Samples::Int
     pLevel::MadNLP.LogLevels
     mode::ComputeMode
-    ptGrid::AbstractVector
+    ptGrid::V
     diagnostics::Bool
-    rowsL::V
-    colsL::V
-    colptrL::V
+    rowsL::V1
+    colsL::V1
+    colptrL::V1
     skip_check::Bool
 
     function VecchiaMLEInput(
@@ -120,7 +120,7 @@ mutable struct VecchiaMLEInput{M, V}
             ptGrid = generate_safe_xyGrid(n)
         end
         
-        return new{M, V1}(
+        return new{M, V, V1}(
             n,
             k,
             samples,
