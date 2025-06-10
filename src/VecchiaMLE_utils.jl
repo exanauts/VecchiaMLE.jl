@@ -617,3 +617,45 @@ function sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
         @assert is_csc_format(iVecchiaMLE) "rowsL and colsL are not in CSC format!"
     end
 end
+
+
+"""
+    rows, cols, colptr = nn_to_csc(sparmat::Matrix{Float64})
+
+    A helper funciton to generate the sparsity pattern of the vecchia approximation (inverse cholesky) based 
+    on each point's nearest neighbors. If there are n points, each with k nearest neighbors, then the matrix
+    sparmat should be of size n x k. 
+    
+    NOTE: The Nearest Neighbors algorithm should only consider points which appear before the given point. If
+    you do standard nearest neighbors and hack off the indices greater than the row number, it will not work. 
+    
+## Input arguments
+* `sparmat`: The n x k matrix which for each row holds the indices of the nearest neighbors in the ptGrid.
+
+## Output arguments
+* `rows`: A vector of row indices of the sparsity pattern for L, in CSC format.
+* `cols`: A vector of column indices of the sparsity pattern for L, in CSC format.
+* `colptr`: A vector of incides which determine where new columns start. 
+
+"""
+function nn_to_csc(sparmat::Matrix{Float64})
+    n, k = size(sparmat)
+    rows = zeros(Int, Int(0.5 * k * (2*n - k + 1)))
+    cols = copy(rows)  
+    idx = 1
+    colptr = zeros(Int, n+1)
+    colptr[1] = 1
+    for i in 1:n
+        spar_i = sparmat[i, :]
+        len = length(spar_i)
+        cols[idx:idx+len-1] .= i
+        rows[idx:idx+len-1] .= spar_i
+        idx += len
+        colptr[i+1] = idx
+    end
+    #println("idx:", idx)
+    rows = rows[1:idx-1]
+    cols = cols[1:idx-1]
+
+    return rows, cols, colptr
+end
