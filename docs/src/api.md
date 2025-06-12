@@ -35,7 +35,7 @@ VecchiaMLE.dist_from_set
 VecchiaMLE.IndexRandom
 VecchiaMLE.KLDivergence
 VecchiaMLE.SparsityPattern
-VecchiaMLE.SparsityPattern_Block
+VecchiaMLE.SparsityPattern_Experimental
 VecchiaMLE.SparsityPattern_CSC
 VecchiaMLE.sanitize_input!
 VecchiaMLE.PRINT_LEVEL_TO_MADNLP

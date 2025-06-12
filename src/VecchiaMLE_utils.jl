@@ -480,9 +480,9 @@ end
 * `colptr`: A vector of incides which determine where new columns start. 
 
 """
-function SparsityPattern(data, k::Int, format="")
-    if format == ""
-        return SparsityPattern_CSC(data, k)
+function SparsityPattern(data, k::Int, format="CSC")
+    if format == "Experimental"
+        return SparsityPattern_Experimental(data, k)
     elseif format == "CSC"
         return SparsityPattern_CSC(data, k)
     else
@@ -492,25 +492,34 @@ function SparsityPattern(data, k::Int, format="")
 end
 
 """
-See SparsityPattern().
+See SparsityPattern(). Uses NearestNeighbors library. 
 """
-function SparsityPattern_Block(data, k::Int)
+function SparsityPattern_Experimental(data, k)
     n = size(data, 1)
-    Sparsity = Vector{Vector{Int}}(undef, n)  
+    
+    Sparsity = Matrix{Int}(undef, n, k)
+    fill!(Sparsity, -1)
+    view(Sparsity, :, 1) .= 1:n
+    
+    data = hcat(data...)
 
-    Sparsity[1] = [1]  
-    kdtree = KNN.KDTree(reshape(Vector(data[1, 1]), :, 1))
     for i in 2:n
-        neighbors, _ = AdaptiveKDTrees.KNN.knn(kdtree, data[i, 1], min(i-1, k))
-        Sparsity[i] = [i; neighbors] 
-        add_point!(kdtree, data[i, 1])
+    
+        k_nn = min(i-1, k-1)
+    
+        # Reform kdtree. Only bad part.  
+        kdtree = NearestNeighbors.KDTree(data[:, 1:i-1]; leafsize = 1)
+        #println("i: $(i), k_nn: $(k_nn)")
+        #view(Sparsity, i,  1:k_nn) .= i # point i is a neighbor of i! 
+        view(Sparsity, i, 2:k_nn+1) .= reverse(NearestNeighbors.knn(kdtree, data[:, i], k_nn)[1])
     end
-
-    return Sparsity
+    println("sparsity")
+    display(Sparsity)
+    return nn_to_csc(Sparsity)
 end
 
 """
-See SparsityPattern().
+See SparsityPattern(). Uses AdaptiveKDTrees library.
 """
 function SparsityPattern_CSC(data, k::Int)
     n = size(data, 1)
@@ -638,18 +647,28 @@ end
 * `colptr`: A vector of incides which determine where new columns start. 
 
 """
-function nn_to_csc(sparmat::Matrix{Float64})
+function nn_to_csc(sparmat::Matrix{Int})
     n, k = size(sparmat)
-    rows = zeros(Int, Int(0.5 * k * (2*n - k + 1)))
+    
+    # Preprocess the counts
+    count_vec = zeros(Int, n)
+    for i in 1:n
+        k_nn = min(i, k)
+        view(count_vec, view(sparmat, i, 1:k_nn)) .+= 1
+    end
+    println("count_vec")
+    println(count_vec)
+
+    rows = ones(Int, Int(0.5 * k * (2*n - k + 1)))
     cols = copy(rows)  
     idx = 1
-    colptr = zeros(Int, n+1)
-    colptr[1] = 1
+    colptr = ones(Int, n+1)
     for i in 1:n
-        spar_i = sparmat[i, :]
+        k_nn = min(i, k)
+        spar_i = view(sparmat, i, 1:k_nn)
         len = length(spar_i)
-        cols[idx:idx+len-1] .= i
-        rows[idx:idx+len-1] .= spar_i
+        cols[(1:len).+idx] .= i
+        rows[(1:len).+idx] .= spar_i
         idx += len
         colptr[i+1] = idx
     end
