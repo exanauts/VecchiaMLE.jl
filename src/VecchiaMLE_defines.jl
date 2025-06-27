@@ -87,6 +87,7 @@ The fields to the struct are as follows:\n
 - `colsL::AbstractVector`: The sparsity pattern cols of L if the user gives one. MUST BE IN CSC FORMAT!
 - `colptrL::AbstractVector`: The column pointer of L if the user gives one. MUST BE IN CSC FORMAT! 
 - `skip_check::Bool`: Whether or not to skip the sanitize_input! funciton. 
+- `metric`: The metric by which nearest neighbors are determined. Defaults to Euclidean
 """
 mutable struct VecchiaMLEInput{M, V, V1}
     n::Int
@@ -101,6 +102,7 @@ mutable struct VecchiaMLEInput{M, V, V1}
     colsL::V1
     colptrL::V1
     skip_check::Bool
+    metric::Distances.Metric
 
     function VecchiaMLEInput(
         n::Int, k::Int, 
@@ -111,7 +113,8 @@ mutable struct VecchiaMLEInput{M, V, V1}
         rowsL::V1=nothing,
         colsL::V1=nothing,
         colptrL::V1=nothing,
-        skip_check::Bool=false
+        skip_check::Bool=false,
+        metric::Distances.Metric=Distances.Euclidean()
     ) where
         {M <:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}, V <: Union{Nothing, AbstractVector},
         V1 <: Union{Nothing, AbstractVector}}
@@ -132,7 +135,8 @@ mutable struct VecchiaMLEInput{M, V, V1}
             rowsL,
             colsL,
             colptrL,
-            skip_check
+            skip_check,
+            metric
         )
     end
 end

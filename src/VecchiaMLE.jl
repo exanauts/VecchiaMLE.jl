@@ -2,6 +2,7 @@ module VecchiaMLE
 
 # External Packages
 using NLPModels, LinearAlgebra
+using Distances
 using NearestNeighbors
 using MadNLP, MadNLPGPU, MadNLPHSL
 using SparseArrays 
