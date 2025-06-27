@@ -7,7 +7,7 @@
     MatCov = VecchiaMLE.generate_MatCov(n, params)
     samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples; mode=cpu)
     xyGrid = VecchiaMLE.generate_xyGrid(n)
-    Sparsity = VecchiaMLE.SparsityPattern(xyGrid, k, "CSC")
+    Sparsity = VecchiaMLE.SparsityPattern(xyGrid, k)
 
     # Model itself
     model = Model(()->MadNLP.Optimizer(max_iter=100, print_level=MadNLP.ERROR))

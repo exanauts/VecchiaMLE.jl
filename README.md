@@ -25,7 +25,7 @@ Before you start, make sure you have the following:
 - **Julia**: Version 1.x or higher.
 - **CUDA**: Required for gpu mode (if you plan on using it).
 - **MadNLP, MadNLPGPU**: Ensure that this nonlinear optimization solver is installed.
-- **AdaptiveKDTrees**: For use in generating the sparsity pattern for the Cholesky factor
+- **NearestNeighbors**: For use in generating the sparsity pattern for the Cholesky factor
 - **NLPModels**: Construction of the Optimization problem.
 
 ## Configuration

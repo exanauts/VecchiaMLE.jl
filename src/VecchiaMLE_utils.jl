@@ -463,7 +463,7 @@ end
 """
     rows, cols, colptr = SparsityPattern(data::AbstractVector,
                                          k::Int,
-                                         format::String = "")
+                                         method::String="NN")
 
     Front end to generate the sparsity pattern of the approximate 
     precision's cholesky factor, L, in CSC format. The pattern is 
@@ -472,7 +472,7 @@ end
 ## Input arguments
 * `data`: The point grid that was used to either generate the covariance matrix, or any custom ptGrid.
 * `k`: The number of nearest neighbors for each point (Including the point itself)
-* `format`: Either blank or "CSC". This can be ignored.
+* `method`: How the sparsity pattern is generated. Either NN (NearestNeighbors.jl) or Experimental (HNSW.jl) 
 
 ## Output arguments
 * `rows`: A vector of row indices of the sparsity pattern for L, in CSC format.
@@ -480,93 +480,42 @@ end
 * `colptr`: A vector of incides which determine where new columns start. 
 
 """
-function SparsityPattern(data, k::Int, format="CSC")
-    if format == "Experimental"
-        return SparsityPattern_Experimental(data, k)
-    elseif format == "CSC"
-        return SparsityPattern_CSC(data, k)
+function SparsityPattern(data, k::Int, method="NN")
+    if method == "NN"
+        return SparsityPattern_NN(data, k) # NearestNeighbors.jl
+    elseif method == "Experimental"
+        # In place for HNSW.jl
+        return nothing 
     else
-        println("Sparsity Pattern: Bad format. Gave", format)
+        println("Sparsity Pattern: Bad method. Gave ", method)
         return nothing
     end
 end
 
 """
-See SparsityPattern(). Uses NearestNeighbors library. 
+See SparsityPattern(). Uses NearestNeighbors library. In case of tie, opt for larger index. 
 """
-function SparsityPattern_Experimental(data, k)
+function SparsityPattern_NN(data, k)::Tuple{Vector{Int}, Vector{Int}, Vector{Int}}
     n = size(data, 1)
     
     Sparsity = Matrix{Int}(undef, n, k)
     fill!(Sparsity, -1)
     view(Sparsity, :, 1) .= 1:n
-    
+    inds = Vector{Int}(undef, k)
+
+    # only weird part
     data = hcat(data...)
 
-    for i in 2:n
-    
+    for i in 2:n    
         k_nn = min(i-1, k-1)
     
-        # Reform kdtree. Only bad part.  
+        # Reform kdtree.  
         kdtree = NearestNeighbors.KDTree(data[:, 1:i-1]; leafsize = 1)
-        #println("i: $(i), k_nn: $(k_nn)")
-        #view(Sparsity, i,  1:k_nn) .= i # point i is a neighbor of i! 
-        view(Sparsity, i, 2:k_nn+1) .= reverse(NearestNeighbors.knn(kdtree, data[:, i], k_nn)[1])
+
+        view(inds, 1:k_nn) .= NearestNeighbors.knn(kdtree, data[:, i], k_nn)[1]
+        view(Sparsity, i, 2:k_nn+1) .= view(inds, k_nn:-1:1)
     end
-    println("sparsity")
-    display(Sparsity)
     return nn_to_csc(Sparsity)
-end
-
-"""
-See SparsityPattern(). Uses AdaptiveKDTrees library.
-"""
-function SparsityPattern_CSC(data, k::Int)
-    n = size(data, 1)
-    rows = zeros(Int, Int(0.5 * k * (2*n - k + 1)))
-    cols = copy(rows)  
-    
-    Sparsity_dict = Dict(i => Vector{Int}(undef, 0) for i in 1:n) 
-    Sparsity_dict[1] = [1]
-    
-    kdtree = KNN.KDTree(reshape(Vector(data[1, 1]), :, 1))
-    
-    buffer = Vector{Int}(undef, k)  
-    
-    for i in 2:n
-        k_nn = min(i-1, k-1)
-        buffer, _ = AdaptiveKDTrees.KNN.knn(kdtree, data[i, 1], k_nn)
-        
-        # Push to i-th point itself, since it is a neighbor.
-        push!(Sparsity_dict[i], i)
-    
-
-        for j in 1:k_nn
-            push!(Sparsity_dict[buffer[j]], i)
-        end 
-    
-        # Add point to kdtree. 
-        add_point!(kdtree, data[i, 1])
-    end
-    
-    #println("Sparsity_dict:\n", Sparsity_dict)
-
-    idx = 1
-    colptr = zeros(Int, n+1)
-    colptr[1] = 1
-    for i in 1:n
-        spar_i = Sparsity_dict[i]
-        len = length(spar_i)
-        cols[idx:idx+len-1] .= i
-        rows[idx:idx+len-1] .= spar_i
-        idx += len
-        colptr[i+1] = idx
-    end
-    #println("idx:", idx)
-    rows = rows[1:idx-1]
-    cols = cols[1:idx-1]
-
-    return rows, cols, colptr
 end
 
 
@@ -637,6 +586,8 @@ end
     
     NOTE: The Nearest Neighbors algorithm should only consider points which appear before the given point. If
     you do standard nearest neighbors and hack off the indices greater than the row number, it will not work. 
+
+    TODO: Can be parallelized. GPU kernel?
     
 ## Input arguments
 * `sparmat`: The n x k matrix which for each row holds the indices of the nearest neighbors in the ptGrid.
@@ -647,7 +598,7 @@ end
 * `colptr`: A vector of incides which determine where new columns start. 
 
 """
-function nn_to_csc(sparmat::Matrix{Int})
+function nn_to_csc(sparmat::Matrix{Int})::Tuple{Vector{Int}, Vector{Int}, Vector{Int}}
     n, k = size(sparmat)
     
     # Preprocess the counts
@@ -656,25 +607,32 @@ function nn_to_csc(sparmat::Matrix{Int})
         k_nn = min(i, k)
         view(count_vec, view(sparmat, i, 1:k_nn)) .+= 1
     end
-    println("count_vec")
-    println(count_vec)
 
+    # Preallocate spar_i
+    spar_i = zeros(maximum(count_vec))
     rows = ones(Int, Int(0.5 * k * (2*n - k + 1)))
     cols = copy(rows)  
-    idx = 1
+    idx = 0
     colptr = ones(Int, n+1)
     for i in 1:n
         k_nn = min(i, k)
-        spar_i = view(sparmat, i, 1:k_nn)
-        len = length(spar_i)
+        # Find all rows that contain i in it. TODO: Could be better?
+        spar_i_idx = 1
+        for j in i:n
+            if i in view(sparmat, j, :)
+                spar_i[spar_i_idx] = j
+                spar_i_idx+=1
+            end
+        end
+
+        len = count_vec[i]
         cols[(1:len).+idx] .= i
-        rows[(1:len).+idx] .= spar_i
+        rows[(1:len).+idx] .= view(spar_i, 1:len)
         idx += len
-        colptr[i+1] = idx
+
     end
-    #println("idx:", idx)
-    rows = rows[1:idx-1]
-    cols = cols[1:idx-1]
+    count_vec .= cumsum(count_vec)
+    view(colptr, 2:n+1) .+= count_vec
 
     return rows, cols, colptr
 end
