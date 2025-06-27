@@ -40,21 +40,21 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, pres_chol::AbstractMatrix, 
     
     diags.solve_model_time = @elapsed begin
         output = madnlp(model, 
-            linear_solver=MadNLPHSL.Ma57Solver, # Linear Solver should be determined if found on machine! #TODO: Later
+            #linear_solver=MadNLPHSL.Ma57Solver, # Linear Solver should be determined if found on machine! #TODO: Later
             print_level=iVecchiaMLE.pLevel,
             tol=1e-8
         )
     end
     
+    valsL = view(output.solution, 1:model.cache.nnzL)
+    rowsL = view(model.cache.rowsL, :)
+    colsL = view(model.cache.colsL, :)
+
     # Casting to CPU matrices
-    if eltype(pres_chol) != Float64
-        valsL = Vector{Float64}(view(output.solution, 1:model.cache.nnzL))
-        rowsL = Vector{Int}(model.cache.rowsL)
-        colsL = Vector{Int}(model.cache.colsL)
-    else
-        valsL = view(output.solution, 1:model.cache.nnzL)
-        rowsL = view(model.cache.rowsL, :)
-        colsL = view(model.cache.colsL, :)
+    if iVecchiaMLE.mode != cpu
+        valsL = Vector{Float64}(valsL)
+        rowsL = Vector{Int}(rowsL)
+        colsL = Vector{Int}(colsL)
     end
 
     pres_chol .= sparse(rowsL, colsL, valsL)

@@ -4,7 +4,6 @@ authors = ["Caleb Derrickson <calebderrickson@gmail.com> and contributors"]
 version = "0.1.0"
 
 [deps]
-AdaptiveKDTrees = "68d1b5e8-2215-47d8-a76e-d1727e222b22"
 BesselK = "432ab697-7a72-484f-bc4a-bc531f5c819b"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
@@ -21,7 +20,6 @@ SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
-AdaptiveKDTrees = "0.1.0"
 BesselK = "0.5.6"
 CUDA = "5.6.1"
 Distributions = "0.25.117"
