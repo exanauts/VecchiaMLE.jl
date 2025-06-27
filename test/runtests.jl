@@ -1,6 +1,7 @@
 using VecchiaMLE
 using Test
 using JuMP
+using Distances
 using Ipopt, NLPModelsJuMP
 using MadNLP, MadNLPGPU
 using SparseArrays
@@ -18,6 +19,7 @@ include("models/VecchiaMLE_models.jl")
 include("test_cpu_compatible_with_jump.jl")
 include("test_cpu_diagnostics.jl")
 include("test_memory_allocation_cpu.jl")
+include("test_different_metrics.jl")
 
 if CUDA.has_cuda()
     include("test_gpu_compatible_with_jump.jl")

@@ -473,6 +473,7 @@ end
 * `data`: The point grid that was used to either generate the covariance matrix, or any custom ptGrid.
 * `k`: The number of nearest neighbors for each point (Including the point itself)
 * `method`: How the sparsity pattern is generated. Either NN (NearestNeighbors.jl) or Experimental (HNSW.jl) 
+* `metric`: The metric for determining nearest neighbors. 
 
 ## Output arguments
 * `rows`: A vector of row indices of the sparsity pattern for L, in CSC format.
@@ -480,9 +481,9 @@ end
 * `colptr`: A vector of incides which determine where new columns start. 
 
 """
-function SparsityPattern(data, k::Int, method="NN")
+function SparsityPattern(data, k::Int, metric::Distances.Metric=Distances.Euclidean(), method::String="NN")
     if method == "NN"
-        return SparsityPattern_NN(data, k) # NearestNeighbors.jl
+        return SparsityPattern_NN(data, k, metric) # NearestNeighbors.jl
     elseif method == "Experimental"
         # In place for HNSW.jl
         return nothing 
@@ -495,9 +496,8 @@ end
 """
 See SparsityPattern(). Uses NearestNeighbors library. In case of tie, opt for larger index. 
 """
-function SparsityPattern_NN(data, k)::Tuple{Vector{Int}, Vector{Int}, Vector{Int}}
+function SparsityPattern_NN(data, k, metric::Distances.Metric=Distances.Euclidean())::Tuple{Vector{Int}, Vector{Int}, Vector{Int}}
     n = size(data, 1)
-    
     Sparsity = Matrix{Int}(undef, n, k)
     fill!(Sparsity, -1)
     view(Sparsity, :, 1) .= 1:n
@@ -509,10 +509,10 @@ function SparsityPattern_NN(data, k)::Tuple{Vector{Int}, Vector{Int}, Vector{Int
     for i in 2:n    
         k_nn = min(i-1, k-1)
     
-        # Reform kdtree.  
-        kdtree = NearestNeighbors.KDTree(data[:, 1:i-1]; leafsize = 1)
+        # Reform balltree.  
+        balltree = NearestNeighbors.BallTree(data[:, 1:i-1], metric; leafsize = 1)
 
-        view(inds, 1:k_nn) .= NearestNeighbors.knn(kdtree, data[:, i], k_nn)[1]
+        view(inds, 1:k_nn) .= NearestNeighbors.knn(balltree, data[:, i], k_nn)[1]
         view(Sparsity, i, 2:k_nn+1) .= view(inds, k_nn:-1:1)
     end
     return nn_to_csc(Sparsity)
