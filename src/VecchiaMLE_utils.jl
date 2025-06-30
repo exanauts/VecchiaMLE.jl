@@ -236,7 +236,7 @@ end
     indx_perm, dist_set = IndexReorder(Cond_set::AbstractVector,
                                        data::AbstractVector,
                                        mean_mu::AbstractVector,
-                                       method::String = "random", 
+                                       method::String = "standard", 
                                        reverse_ordering::Bool = true)
 
     Front End function to determine the reordering of the given indices (data).
@@ -258,16 +258,18 @@ end
 * `indx_perm`: The index set which permutes the given data.
 * `dist_set`: The array of maximum distances to iterating conditioning sets.    
 """
-function IndexReorder(Cond_set::AbstractVector, data::AbstractVector, mean_mu::AbstractVector, method::String="random", reverse_ordering::Bool=true)::AbstractVector
+function IndexReorder(Cond_set::AbstractVector, data::AbstractVector, mean_mu::AbstractVector, method::String="standard", reverse_ordering::Bool=true)
     
     if method == "random"
         return IndexRandom(Cond_set, data, reverse_ordering)
     elseif method == "maxmin"
         return IndexMaxMin(Cond_set, data, mean_mu, reverse_ordering)
-    else 
-        # Do Random
-        return IndexRandom(Cond_set, data, reverse_ordering)
+    elseif method == "standard"
+        len = length(data)
+        return 1:len, []    
     end
+
+    println("Invalid Reordering: ", method)
 end
 
 #=
@@ -288,7 +290,7 @@ end
 """
 See IndexReorder().
 """
-function IndexMaxMin(Cond_set::AbstractVector, data::AbstractVector, mean_mu::AbstractVector, reverse_ordering::Bool=true)::AbstractVector
+function IndexMaxMin(Cond_set::AbstractVector, data::AbstractVector, mean_mu::AbstractVector, reverse_ordering::Bool=true)
     n = size(data, 1)
     
     # distance array
@@ -305,7 +307,7 @@ function IndexMaxMin(Cond_set::AbstractVector, data::AbstractVector, mean_mu::Ab
         last_idx = 0
         min_norm = Inf64
         for i in 1:n
-            data_norm = norm(mean_mu - data[i, :])
+            data_norm = norm(mean_mu - data[i, :][1])
             if data_norm < min_norm
                 min_norm = data_norm
                 last_idx = i
@@ -391,9 +393,7 @@ See IndexReorder().
 """
 function IndexRandom(Cond_set::AbstractVector, data::AbstractVector, reverse_ordering::Bool)
     
-    n = size(data, 1)
-    
-    reorder_idx = [i for i in 1:n]
+    n = size(data, 1)    
     return Random.randperm(n), []
 end
 #    KLDivergence for the true covariance, TCov, and the 

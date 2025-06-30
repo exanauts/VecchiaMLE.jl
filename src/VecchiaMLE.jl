@@ -1,6 +1,7 @@
 module VecchiaMLE
 
 # External Packages
+using Random
 using NLPModels, LinearAlgebra
 using Distances
 using NearestNeighbors
