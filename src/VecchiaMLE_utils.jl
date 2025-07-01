@@ -486,7 +486,7 @@ function SparsityPattern(data, k::Int, metric::Distances.Metric=Distances.Euclid
         return SparsityPattern_NN(data, k, metric) # NearestNeighbors.jl
     elseif method == "Experimental"
         # In place for HNSW.jl
-        return nothing 
+        return SparsityPattern_Experimental(data, k, metric) 
     else
         println("Sparsity Pattern: Bad method. Gave ", method)
         return nothing
@@ -516,6 +516,13 @@ function SparsityPattern_NN(data, k, metric::Distances.Metric=Distances.Euclidea
         view(Sparsity, i, 2:k_nn+1) .= view(inds, k_nn:-1:1)
     end
     return nn_to_csc(Sparsity)
+end
+
+"""
+See SparsityPattern(). In place for HNSW.jl
+"""
+function SparsityPattern_Experimental(data, k, metric::Distances.Metric=Distances.Euclidean())
+    return nothing
 end
 
 
