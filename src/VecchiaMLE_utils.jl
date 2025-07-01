@@ -525,7 +525,9 @@ function SparsityPattern_Experimental(data, k, metric::Distances.Metric=Distance
     return nothing
 end
 
-
+"""
+    Checks csc format. A user can call this, but not advised. 
+"""
 function is_csc_format(iVecchiaMLE::VecchiaMLEInput)::Bool
     rowsL = view(iVecchiaMLE.rowsL)
     colsL = view(iVecchiaMLE.colsL)
