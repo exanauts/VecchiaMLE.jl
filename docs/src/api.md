@@ -40,4 +40,5 @@ VecchiaMLE.SparsityPattern_NN
 VecchiaMLE.sanitize_input!
 VecchiaMLE.PRINT_LEVEL_TO_MADNLP
 VecchiaMLE.nn_to_csc
+VecchiaMLE.is_csc_format
 ```
