@@ -4,3 +4,5 @@ docs/build
 *.png
 *.csv
 main.jl
+*.txt
+scripts/
