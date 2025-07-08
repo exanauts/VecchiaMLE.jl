@@ -24,7 +24,6 @@ end
 
 """
     Samples_Matrix = generate_Samples(MatCov::AbstractMatrix, 
-                                      n::Int,
                                       Number_of_Samples::Int;
                                       mode::VecchiaMLE.ComputeMode )
 
@@ -46,12 +45,13 @@ end
 
 * `Samples_Matrix` : A matrix of size (Number_of_Samples × n), where the rows are the i.i.d samples  
 """
-function generate_Samples(MatCov::AbstractMatrix, n::Int, Number_of_Samples::Int; mode::ComputeMode=cpu)::AbstractMatrix
+function generate_Samples(MatCov::AbstractMatrix, Number_of_Samples::Int; mode::ComputeMode=cpu)::AbstractMatrix
+    n = size(MatCov, 1)
     if mode == gpu
-        V = CUDA.randn(Float64, Number_of_Samples, n^2)
+        V = CUDA.randn(Float64, Number_of_Samples, n)
         S = CuArray{Float64}(MatCov)
     elseif mode == cpu 
-        V = randn(Number_of_Samples, n^2)
+        V = randn(Number_of_Samples, n)
         S = Matrix{Float64}(MatCov)
     else
         error("Unsupported compute mode!")
@@ -63,15 +63,13 @@ function generate_Samples(MatCov::AbstractMatrix, n::Int, Number_of_Samples::Int
 end
 
 """
-    Covariance_Matrix = generate_MatCov(n::Int,
-                                        params::AbstractArray,
+    Covariance_Matrix = generate_MatCov(params::AbstractArray,
                                         ptGrid::AbstractVector)
 
     Generates a Matern Covariance Matrix determined via the given paramters (params) and ptGrid.
 
 ## Input arguments
 
-* `n`: The length of the ptGrid;
 * `params`: An array of length 3 (or 4) that holds the parameters to the matern covariance kernel (σ, ρ, ν);
 * `ptGrid`: A set of points in 2D space upon which we determine the indices of the Covariance matrix;
 
@@ -79,11 +77,11 @@ end
 
 * `Covariance_Matrix` : An n × n Symmetric Matern matrix 
 """
-function generate_MatCov(n::Int, params::AbstractArray, ptGrid::AbstractVector)::Symmetric{Float64}
+function generate_MatCov(params::AbstractArray, ptGrid::AbstractVector)::Symmetric{Float64}
     return covariance2D(ptGrid, params)
 end
 
-generate_MatCov(n::Int, params::AbstractVector) = generate_MatCov(n::Int, params::AbstractVector, generate_xyGrid(n::Integer))
+generate_MatCov(n::Int, params::AbstractVector) = generate_MatCov(params::AbstractVector, generate_xyGrid(n::Integer))
 
 """
     xyGrid = generate_xyGrid(n::Integer)
@@ -536,11 +534,11 @@ function is_csc_format(iVecchiaMLE::VecchiaMLEInput)::Bool
     (length(rowsL) != length(colsL)) || return false
 
     # check cols
-    !all(in(1:iVecchiaMLE.n^2), colsL) || return false
+    !all(in(1:iVecchiaMLE.n), colsL) || return false
     !all(in((0, 1)), diff(colsL)) || return false 
     
     # check rows
-    !all(in(1:iVecchiaMLE.n^2), rowsL) || return false
+    !all(in(1:iVecchiaMLE.n), rowsL) || return false
     # there should be another check, if the pattern of rowsL is as expected (sorted wrt columns). But not important rn.
     return true
 end
@@ -553,8 +551,8 @@ Note that if ptGrid is set as nothing, then the ptGrid is set as an equispaced m
 
 The current checks are:\n
     * Ensuring n > 0.
-    * Ensuring k <= n^2 (Makes sense considering the ptGrid and SparsityPattern sizes).
-    * Ensuring the sample matrix, if the user gives one, is nonempty and is the same size as n^2.
+    * Ensuring k <= n (Makes sense considering the ptGrid and SparsityPattern sizes).
+    * Ensuring the sample matrix, if the user gives one, is nonempty and is the same size as n.
     * Ensuring the pLevel in 1:5. See MadNLP_Print_Level().
     * Ensuring the mode in 1:2. See Int_to_Mode().
 
@@ -563,16 +561,16 @@ The current checks are:\n
 """
 function sanitize_input!(iVecchiaMLE::VecchiaMLEInput) 
     @assert iVecchiaMLE.n > 0 "The dimension n must be strictly positive!"
-    @assert iVecchiaMLE.k <= iVecchiaMLE.n^2 "The number of conditioning neighbors must be less than n^2 !"
+    @assert iVecchiaMLE.k <= iVecchiaMLE.n "The number of conditioning neighbors must be less than n !"
     @assert size(iVecchiaMLE.samples, 1) > 0 "Samples must be nonempty!"
-    @assert size(iVecchiaMLE.samples, 2) == iVecchiaMLE.n^2 "samples must be of size Number_of_Samples x n^2!"
-    @assert size(iVecchiaMLE.samples, 1) == iVecchiaMLE.Number_of_Samples "samples must be of size Number_of_Samples x n^2!"
+    @assert size(iVecchiaMLE.samples, 2) == iVecchiaMLE.n "samples must be of size Number_of_Samples x n!"
+    @assert size(iVecchiaMLE.samples, 1) == iVecchiaMLE.Number_of_Samples "samples must be of size Number_of_Samples x n!"
     
     if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.mode == gpu
         iVecchiaMLE.samples = CuMatrix{Float64}(iVecchiaMLE.samples)
     end
 
-    @assert length(iVecchiaMLE.ptGrid) == iVecchiaMLE.n^2  "The ptGrid given does not have n^2 elements!"
+    @assert length(iVecchiaMLE.ptGrid) == iVecchiaMLE.n  "The ptGrid given does not have n elements!"
     for (i, pt) in enumerate(iVecchiaMLE.ptGrid)
         @assert length(pt) == 2 "Position $(i) in ptGrid is not 2 dimensional!"
     end
@@ -646,66 +644,6 @@ function nn_to_csc(sparmat::Matrix{Int})::Tuple{Vector{Int}, Vector{Int}, Vector
     return rows, cols, colptr
 end
 
-
-"""
-    rows, cols, colptr = nn_to_csc(sparmat::Matrix{Float64})
-
-    A helper funciton to generate the sparsity pattern of the vecchia approximation (inverse cholesky) based 
-    on each point's nearest neighbors. If there are n points, each with k nearest neighbors, then the matrix
-    sparmat should be of size n x k. 
-    
-    NOTE: The Nearest Neighbors algorithm should only consider points which appear before the given point. If
-    you do standard nearest neighbors and hack off the indices greater than the row number, it will not work. 
-
-    TODO: Can be parallelized. GPU kernel?
-    
-## Input arguments
-* `sparmat`: The n x k matrix which for each row holds the indices of the nearest neighbors in the ptGrid.
-
-## Output arguments
-* `rows`: A vector of row indices of the sparsity pattern for L, in CSC format.
-* `cols`: A vector of column indices of the sparsity pattern for L, in CSC format.
-* `colptr`: A vector of incides which determine where new columns start. 
-
-"""
-function nn_to_csc(sparmat::Matrix{Int})::Tuple{Vector{Int}, Vector{Int}, Vector{Int}}
-    n, k = size(sparmat)
-    
-    # Preprocess the counts
-    count_vec = zeros(Int, n)
-    for i in 1:n
-        k_nn = min(i, k)
-        view(count_vec, view(sparmat, i, 1:k_nn)) .+= 1
-    end
-
-    # Preallocate spar_i
-    spar_i = zeros(maximum(count_vec))
-    rows = ones(Int, Int(0.5 * k * (2*n - k + 1)))
-    cols = copy(rows)  
-    idx = 0
-    colptr = ones(Int, n+1)
-    for i in 1:n
-        k_nn = min(i, k)
-        # Find all rows that contain i in it. TODO: Could be better?
-        spar_i_idx = 1
-        for j in i:n
-            if i in view(sparmat, j, :)
-                spar_i[spar_i_idx] = j
-                spar_i_idx+=1
-            end
-        end
-
-        len = count_vec[i]
-        cols[(1:len).+idx] .= i
-        rows[(1:len).+idx] .= view(spar_i, 1:len)
-        idx += len
-
-    end
-    count_vec .= cumsum(count_vec)
-    view(colptr, 2:n+1) .+= count_vec
-
-    return rows, cols, colptr
-end
 
 """
     print_diagnostics(d::Diagnostics)

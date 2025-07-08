@@ -1,14 +1,15 @@
 @testset "Linear_Solvers -- $solver" for solver in (:ma27, :ma57)
 
     # Things for model
-    n = 10
+    n = 100
     k = 10
     Number_of_Samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
-    MatCov = VecchiaMLE.generate_MatCov(n, params)
-    samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples)
+    ptGrid = VecchiaMLE.generate_safe_xyGrid(Int(sqrt(n)))
+    MatCov = VecchiaMLE.generate_MatCov(params, ptGrid)
+    samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples)
 
-    input = VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1)
+    input = VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptGrid = ptGrid)
     linear_solver = solver == :ma27 ? MadNLPHSL.Ma27Solver : MadNLPHSL.Ma57Solver
 
     model = VecchiaMLE.get_vecchia_model(input)

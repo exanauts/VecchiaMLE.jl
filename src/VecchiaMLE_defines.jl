@@ -118,13 +118,13 @@ mutable struct VecchiaMLEInput{M, V, V1}
     ) where
         {M <:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}, V <: Union{Nothing, AbstractVector},
         V1 <: Union{Nothing, AbstractVector}}
-        
+        m = n
         if isnothing(ptGrid)
             ptGrid = generate_safe_xyGrid(n)
         end
-        
+        m = length(ptGrid)
         return new{M, AbstractVector, V1}(
-            n,
+            m,
             k,
             samples,
             Number_of_Samples,

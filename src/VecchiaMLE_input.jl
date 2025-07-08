@@ -14,7 +14,7 @@
 function VecchiaMLE_Run(iVecchiaMLE::VecchiaMLEInput)
 
     !iVecchiaMLE.skip_check && sanitize_input!(iVecchiaMLE)
-    pres_chol = spzeros(iVecchiaMLE.n^2, iVecchiaMLE.n^2)
+    pres_chol = spzeros(iVecchiaMLE.n, iVecchiaMLE.n)
     diagnostics = Diagnostics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, cpu)
     VecchiaMLE_Run_Analysis!(iVecchiaMLE, pres_chol, diagnostics)
     
