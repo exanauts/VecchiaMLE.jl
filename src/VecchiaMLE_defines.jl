@@ -107,7 +107,7 @@ mutable struct VecchiaMLEInput{M, V, V1}
     function VecchiaMLEInput(
         n::Int, k::Int, 
         samples::M, Number_of_Samples::Int, 
-        pLevel::PL=1, mode::CM=1
+        pLevel::PL=5, mode::CM=1
         ; ptGrid::V=nothing, 
         diagnostics::Bool=false,
         rowsL::V1=nothing,
