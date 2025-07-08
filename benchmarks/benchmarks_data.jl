@@ -19,7 +19,7 @@ function main()
     write(time_memory_io_file, "time, memory\n")
 
     for (i, n) in enumerate(ns)
-        input = VecchiaMLE.VecchiaMLEInput(Int(sqrt(n)), min(Int(sqrt(n)), k), samples[:, 1:n], Number_of_Samples, 5, 1)
+        input = VecchiaMLE.VecchiaMLEInput(n, min(n, k), samples[:, 1:n], Number_of_Samples, 5, 1)
         diagsnostics = @timed VecchiaMLE_Run(input)
         
         write(time_memory_io_file, "$(diagsnostics[2]), $(diagsnostics[3])\n")
@@ -39,7 +39,7 @@ function main()
 
     for (i, n) in enumerate(ns)
         sample_slice = view(samples, :, 1:n)
-        input = VecchiaMLE.VecchiaMLEInput(Int(sqrt(n)), min(Int(sqrt(n)), k), sample_slice, Number_of_Samples, 5, 2)
+        input = VecchiaMLE.VecchiaMLEInput(n, min(n, k), sample_slice, Number_of_Samples, 5, 2)
         diagsnostics = @timed VecchiaMLE_Run(input)
 
         write(time_memory_io_file, "$(diagsnostics[2]), $(diagsnostics[3])\n")
