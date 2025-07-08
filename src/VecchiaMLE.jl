@@ -11,6 +11,7 @@ using CUDA
 using BesselK, SpecialFunctions
 using Distributions, Statistics
 using KernelAbstractions
+using HNSW
 const KA = KernelAbstractions
 
 # Includes

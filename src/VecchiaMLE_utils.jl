@@ -522,7 +522,25 @@ end
 See SparsityPattern(). In place for HNSW.jl
 """
 function SparsityPattern_Experimental(data, k, metric::Distances.Metric=Distances.Euclidean())
-    return nothing
+    n = size(data, 1)
+    Sparsity = Matrix{Int}(undef, n, k)
+    fill!(Sparsity, -1)
+    view(Sparsity, :, 1) .= 1:n
+    inds = Vector{Int}(undef, k)
+
+    # only weird part
+    data = hcat(data...)
+
+    for i in 2:n    
+        k_nn = min(i-1, k-1)
+    
+        # Reform balltree.  
+        balltree = NearestNeighbors.BallTree(data[:, 1:i-1], metric; leafsize = 1)
+
+        view(inds, 1:k_nn) .= NearestNeighbors.knn(balltree, data[:, i], k_nn)[1]
+        view(Sparsity, i, 2:k_nn+1) .= view(inds, k_nn:-1:1)
+    end
+    return nn_to_csc(Sparsity)
 end
 
 """
@@ -584,68 +602,6 @@ function sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
         @assert is_csc_format(iVecchiaMLE) "rowsL and colsL are not in CSC format!"
     end
 end
-
-
-"""
-    rows, cols, colptr = nn_to_csc(sparmat::Matrix{Float64})
-
-    A helper funciton to generate the sparsity pattern of the vecchia approximation (inverse cholesky) based 
-    on each point's nearest neighbors. If there are n points, each with k nearest neighbors, then the matrix
-    sparmat should be of size n x k. 
-    
-    NOTE: The Nearest Neighbors algorithm should only consider points which appear before the given point. If
-    you do standard nearest neighbors and hack off the indices greater than the row number, it will not work. 
-
-    TODO: Can be parallelized. GPU kernel?
-    
-## Input arguments
-* `sparmat`: The n x k matrix which for each row holds the indices of the nearest neighbors in the ptGrid.
-
-## Output arguments
-* `rows`: A vector of row indices of the sparsity pattern for L, in CSC format.
-* `cols`: A vector of column indices of the sparsity pattern for L, in CSC format.
-* `colptr`: A vector of incides which determine where new columns start. 
-
-"""
-function nn_to_csc(sparmat::Matrix{Int})::Tuple{Vector{Int}, Vector{Int}, Vector{Int}}
-    n, k = size(sparmat)
-    
-    # Preprocess the counts
-    count_vec = zeros(Int, n)
-    for i in 1:n
-        k_nn = min(i, k)
-        view(count_vec, view(sparmat, i, 1:k_nn)) .+= 1
-    end
-
-    # Preallocate spar_i
-    spar_i = zeros(maximum(count_vec))
-    rows = ones(Int, Int(0.5 * k * (2*n - k + 1)))
-    cols = copy(rows)  
-    idx = 0
-    colptr = ones(Int, n+1)
-    for i in 1:n
-        k_nn = min(i, k)
-        # Find all rows that contain i in it. TODO: Could be better?
-        spar_i_idx = 1
-        for j in i:n
-            if i in view(sparmat, j, :)
-                spar_i[spar_i_idx] = j
-                spar_i_idx+=1
-            end
-        end
-
-        len = count_vec[i]
-        cols[(1:len).+idx] .= i
-        rows[(1:len).+idx] .= view(spar_i, 1:len)
-        idx += len
-
-    end
-    count_vec .= cumsum(count_vec)
-    view(colptr, 2:n+1) .+= count_vec
-
-    return rows, cols, colptr
-end
-
 
 """
     rows, cols, colptr = nn_to_csc(sparmat::Matrix{Float64})
