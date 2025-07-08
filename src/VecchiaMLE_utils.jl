@@ -98,7 +98,9 @@ generate_MatCov(n::Int, params::AbstractVector) = generate_MatCov(params::Abstra
 * `xyGrid` : The desired points in 2D space  
 """
 function generate_xyGrid(n::Int)::AbstractVector
-    grid1d = range(0.0, 1.0, length=n)
+    @assert isqrt(n)^2 == n "n is not square!"
+    m = isqrt(n) 
+    grid1d = range(0.0, 1.0, length=m)
     return vec([[x[1], x[2]] for x in Iterators.product(grid1d, grid1d)])
 end
 
@@ -116,8 +118,11 @@ end
 * `xyGrid` : The desired points in 2D space  
 """
 function generate_safe_xyGrid(n::Int)::AbstractVector
-    len = cld(n, 10)
-    grid1d = range(0.0, len, length=n)
+    @assert isqrt(n)^2 == n "n is not square!"
+    m = isqrt(n) 
+    len = cld(m, 10)
+    
+    grid1d = range(0.0, len, length=m)
     return vec([[x[1], x[2]] for x in Iterators.product(grid1d, grid1d)])
 end
 

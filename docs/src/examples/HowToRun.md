@@ -29,7 +29,7 @@ directly to the user, we allow the generation of samples in the following manner
 ```@example HowToRun
 params = [5.0, 0.2, 2.25, 0.25]
 # This analysis will be done in 2D.
-ptGrid = VecchiaMLE.generate_safe_xyGrid(Int(sqrt(n)))
+ptGrid = VecchiaMLE.generate_safe_xyGrid(n)
 MatCov = VecchiaMLE.generate_MatCov(params, ptGrid)
 samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples)
 ```

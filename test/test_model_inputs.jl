@@ -4,7 +4,7 @@
     k = 3
     Number_of_Samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
-    ptGrid = VecchiaMLE.generate_safe_xyGrid(Int(sqrt(n)))
+    ptGrid = VecchiaMLE.generate_safe_xyGrid(n)
     MatCov = VecchiaMLE.generate_MatCov(params, ptGrid)
     samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples; mode=cpu)
 
@@ -32,6 +32,6 @@
     n = 9
     input.n = 9
     @test_throws AssertionError VecchiaMLE.VecchiaMLE_Run(input)
-    input.ptGrid = VecchiaMLE.generate_safe_xyGrid(Int(sqrt(input.n)))
+    input.ptGrid = VecchiaMLE.generate_safe_xyGrid(input.n)
     @test_nowarn VecchiaMLE_Run(input)
 end

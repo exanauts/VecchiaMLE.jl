@@ -3,7 +3,7 @@
     k = 10
     Number_of_Samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
-    xyGrid = VecchiaMLE.generate_xyGrid(Int(sqrt(n)))
+    xyGrid = VecchiaMLE.generate_xyGrid(n)
     MatCov = VecchiaMLE.generate_MatCov(params, xyGrid)
     samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples; mode=cpu)
     iVecchiaMLE = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 1, 5; ptGrid=xyGrid)
