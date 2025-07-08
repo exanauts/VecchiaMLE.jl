@@ -5,7 +5,7 @@
     Number_of_Samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
     ptGrid = VecchiaMLE.generate_safe_xyGrid(Int(sqrt(n)))
-    MatCov = VecchiaMLE.generate_MatCov(params)
+    MatCov = VecchiaMLE.generate_MatCov(params, ptGrid)
     samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples; mode=cpu)
     
     # Get result from VecchiaMLE cpu
