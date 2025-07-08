@@ -28,14 +28,15 @@ directly to the user, we allow the generation of samples in the following manner
 
 ```@example HowToRun
 params = [5.0, 0.2, 2.25, 0.25]
-MatCov = VecchiaMLE.generate_MatCov(n, params)
-samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples)
+ptGrid = VecchiaMLE.generate_safe_xyGrid(Int(sqrt(n)))
+MatCov = VecchiaMLE.generate_MatCov(params, ptGrid)
+samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples)
 ```
 
 Next, we create and fill in the VecchiaMLEInput struct. This is done below.
 
 ```@example HowToRun
-input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1)
+input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptGrid = ptGrid)
 ```
 
 Here, we set (though not necessary) the optimizer (MadNLP) print level to 5 (ERROR), 
