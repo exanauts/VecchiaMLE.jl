@@ -645,3 +645,24 @@ function nn_to_csc(sparmat::Matrix{Int})::Tuple{Vector{Int}, Vector{Int}, Vector
 
     return rows, cols, colptr
 end
+
+"""
+    print_diagnostics(d::Diagnostics)
+
+    Pretty prints the diagnostics of the VecchiaMLE Algorithm. 
+    
+## Input arguments
+* `d`: The Diagnostics returned by the VecchiaMLE_Run funciton, assuming skip_check wasn't set to true.
+
+"""
+function print_diagnostics(d::Diagnostics)
+    println("========== Diagnostics ==========")
+    println(rpad("Model Creation Time:", 25), d.create_model_time)
+    println(rpad("LinAlg Solve Time:",    25), d.LinAlg_solve_time)
+    println(rpad("Solve Model Time:",     25), d.solve_model_time)
+    println(rpad("Objective Value:",      25), d.objective_value)
+    println(rpad("Normed Constraint:",    25), d.normed_constraint_value)
+    println(rpad("Normed Gradient:",      25), d.normed_grad_value)
+    println(rpad("Optimization Iter:",    25), d.MadNLP_iterations)
+    println("=================================")
+end
