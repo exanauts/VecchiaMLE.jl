@@ -8,7 +8,7 @@ using VecchiaMLE
 using SparseArrays # To show matrix at the end 
 
 # Things for model
-n = 20
+n = 400
 k = 10
 Number_of_Samples = 100
 ```
@@ -28,6 +28,7 @@ directly to the user, we allow the generation of samples in the following manner
 
 ```@example HowToRun
 params = [5.0, 0.2, 2.25, 0.25]
+# This analysis will be done in 2D.
 ptGrid = VecchiaMLE.generate_safe_xyGrid(Int(sqrt(n)))
 MatCov = VecchiaMLE.generate_MatCov(params, ptGrid)
 samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples)
@@ -36,7 +37,7 @@ samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples)
 Next, we create and fill in the VecchiaMLEInput struct. This is done below.
 
 ```@example HowToRun
-input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptGrid = ptGrid)
+input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptGrid=ptGrid)
 ```
 
 Here, we set (though not necessary) the optimizer (MadNLP) print level to 5 (ERROR), 
