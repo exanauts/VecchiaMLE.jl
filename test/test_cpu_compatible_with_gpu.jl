@@ -9,10 +9,10 @@
     samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples; mode=cpu)
     
     # Get result from VecchiaMLE cpu
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptGrid=ptGrid)
     _, L_cpu = VecchiaMLE_Run(input)
 
-    input = VecchiaMLE.VecchiaMLEInput(n, k, CuMatrix(samples), Number_of_Samples, 5, 2)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, CuMatrix(samples), Number_of_Samples, 5, 2; ptGrid=ptGrid)
     _, L_gpu = VecchiaMLE_Run(input)
 
     errors_cpu = [VecchiaMLE.KLDivergence(MatCov, L_cpu), VecchiaMLE.Uni_Error(MatCov, L_cpu)]
