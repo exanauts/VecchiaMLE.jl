@@ -1,12 +1,12 @@
 @testset "Row_Compatible_CPU" begin
     # Things for model
-    n = 3
+    n = 9
     k = 3
     Number_of_Samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
-    MatCov = VecchiaMLE.generate_MatCov(n, params)
-    samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples; mode=cpu)
-    xyGrid = VecchiaMLE.generate_xyGrid(n)
+    xyGrid = VecchiaMLE.generate_xyGrid(Int(sqrt(n)))
+    MatCov = VecchiaMLE.generate_MatCov(params, xyGrid)
+    samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples; mode=cpu)
     Sparsity = VecchiaMLE.SparsityPattern(xyGrid, k)
 
     L_row = VecchiaMLE_models(n, k, samples, Number_of_Samples, Sparsity, "Row")

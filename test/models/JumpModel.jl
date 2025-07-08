@@ -45,14 +45,14 @@ function obj_vecchia(w::AbstractVector, cache::VecchiaCacheJump)
 end
 
 function grad_vecchia(g::AbstractVector, w::AbstractVector, cache::VecchiaCacheJump)
-    g[1:n^2] = Vec_from_LowerTriangular(cache.samples_outerprod * L, cache.n)
+    g[1:n] = Vec_from_LowerTriangular(cache.samples_outerprod * L, cache.n)
     println("Geez")
     display(g)
     return g
 end
 
 function hess_vecchia(H::AbstractMatrix, w::AbstractVector, cache::VecchiaCacheJump)
-    H[1:cache.n^2, 1:cache.n^2] = cache.samples_outerprod
+    H[1:cache.n, 1:cache.n] = cache.samples_outerprod
     return H
 end
 

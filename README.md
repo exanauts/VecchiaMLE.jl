@@ -32,7 +32,7 @@ Before you start, make sure you have the following:
 The struct `VecchiaMLEInput` needs to be properly filled out in order for the analysis to be run. The components of said structure is as follows:
 
 ```
-n::Integer                           # Square root of the size of the problem (e.g., sqrt dimension of the covariance matrix). 
+n::Integer                           # The size of the problem (e.g., dimension of the covariance matrix). 
 k::Integer                           # Number of conditioning points per point for the Vecchia Approximation.
 samples::Matrix{Float64}             # Matrix of samples (each row is a sample).
 Number_of_Samples::Integer           # Number of samples to generate (if samples_given=false).
@@ -52,7 +52,7 @@ I will describe here how to properly use this package. Some functions used are n
 n = 10                                         # or any positive integer
 Number_of_Samples = 100                        # or however many you want
 params = [5.0, 0.2, 2.25, 0.25]                # Follow the procedure for matern in BesselK.jl
-MatCov = VecchiaMLE.generate_MatCov(n, params) # size n^2 x n^2
+MatCov = VecchiaMLE.generate_MatCov(n, params) # size n x n
 samples = VecchiaMLE.generate_Samples(MatCov, n, Number_of_Samples)
 ```
 
@@ -75,7 +75,7 @@ We can get the error for the approximation (assuming you have the true covarianc
 uni_error = VecchiaMLE.Uni_Error(True_Covariance, Approximate_Cholesky_Factor)
 kl_error = VecchiaMLE.KLDivergence(True_Covariance, Approximate_Cholesky_Factor)
 ```
-Note the KL-Divergence error is very computationally heavy, thus takes a long time for large `n` values! Also, we assue mean-zero distributions. 
+Note the KL-Divergence error is computationally heavy, thus takes a long time for large `n` values! Also, we assue mean-zero distributions. 
 
 ## Contribution
 Although the bulk of the project has been written, there are sure to be problems that arise from errors in logic. As such, please feel free to open an issue;

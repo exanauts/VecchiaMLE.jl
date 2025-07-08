@@ -43,7 +43,7 @@ VecchiaModelGPU(samples::CuMatrix{Float64, B}, iVecchiaMLE::VecchiaMLEInput; lam
 function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaCache where {S <: AbstractVector}
     Msamples::Int = size(iVecchiaMLE.samples, 1)
     Lsamples::Int = size(iVecchiaMLE.samples, 2)
-    n::Int = iVecchiaMLE.n^2
+    n::Int = iVecchiaMLE.n
     T = eltype(S)
 
     # SPARSITY PATTERN OF L IN CSC FORMAT.

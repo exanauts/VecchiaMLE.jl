@@ -25,7 +25,7 @@ end
 
 function VecchiaMLE_Row(n, k, samples, Number_of_Samples, Sparsity)
 
-    L = spzeros(n^2, n^2)
+    L = spzeros(n, n)
     model_sum = Vector{AffExpr}(undef, Number_of_Samples)
 
     model = Model(()->MadNLP.Optimizer(print_level=MadNLP.ERROR, max_iter=100))
@@ -34,7 +34,7 @@ function VecchiaMLE_Row(n, k, samples, Number_of_Samples, Sparsity)
     set_start_value(ys[1], 1.0)
 
     # rows are independent -> parallelization, but gpu or cpu?
-    for row_idx in 1:n^2    
+    for row_idx in 1:n    
         model_sum = sum(dot(ys[1:length(Sparsity[row_idx])], samples[i, Sparsity[row_idx]]).^2 for i in 1:Number_of_Samples)
         
         @objective(model, Min,
@@ -61,9 +61,9 @@ function VecchiaMLE_Matrix_Sparse(n, k, samples, Number_of_Samples, xyGrid)
     sol = madnlp(exa_model, print_level=MadNLP.ERROR).solution
     
     # Can be easily parallelized
-    L = spzeros(n^2, n^2)
+    L = spzeros(n, n)
     carry = 1
-    for j in 1:n^2
+    for j in 1:n
         L[j, Sparsity_pattern[j]] = sol[carry:carry+length(Sparsity_pattern[j])-1]
         carry += length(Sparsity_pattern[j])
     end
@@ -84,10 +84,10 @@ cleanly iterates on the rows of L^T.
 =#
 
 function get_idx_pattern(n, k, nneighbors)
-    Iterate_arr = Vector{Vector{Int}}(undef, n^2) 
-    diag_arr = Vector{Int}(undef, n^2)
+    Iterate_arr = Vector{Vector{Int}}(undef, n) 
+    diag_arr = Vector{Int}(undef, n)
     diag_arr[1] = 1
-    for i in 1:n^2
+    for i in 1:n
         it_row = []
         for (j, row) in enumerate(nneighbors)
             if i in row
@@ -95,7 +95,7 @@ function get_idx_pattern(n, k, nneighbors)
             end
         end
         Iterate_arr[i] = it_row
-        if i < n^2 diag_arr[i+1] = diag_arr[i] + length(it_row) end
+        if i < n diag_arr[i+1] = diag_arr[i] + length(it_row) end
     end
     return diag_arr, Iterate_arr
 end
@@ -108,7 +108,7 @@ end
 function VecchiaMLE_Matrix_JuMP_Model(n, k, samples, Number_of_Samples, Sparsity_pattern)
     model = JuMP.Model()
     # one vector variable input, just a big vector. 
-    @variable(model, ys[1:Int(0.5 * (k+1) * (2*n^2 - k))])
+    @variable(model, ys[1:Int(0.5 * (k+1) * (2*n - k))])
 
     # Setting initial value for diagonal
     diag_arr = accumulate(+, [1; length.(Sparsity_pattern)])[1:end-1]
@@ -121,7 +121,7 @@ function VecchiaMLE_Matrix_JuMP_Model(n, k, samples, Number_of_Samples, Sparsity
     model_sum = QuadExpr()
     cumulative_indices = cumsum(length.(Sparsity_pattern))
     
-    for j in 1:n^2
+    for j in 1:n
         for i in 1:Number_of_Samples
             start_idx = j == 1 ? 1 : cumulative_indices[j-1] + 1
             end_idx = cumulative_indices[j]
