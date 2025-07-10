@@ -506,7 +506,7 @@ function SparsityPattern_NN(data, k, metric::Distances.Metric=Distances.Euclidea
     view(Sparsity, :, 1) .= 1:n
     inds = Vector{Int}(undef, k)
     
-    if k < 2 return nn_to_csc(Sparsity)
+    if k < 2 return nn_to_csc(Sparsity) end
     
     # only weird part
     data = hcat(data...)
