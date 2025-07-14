@@ -608,6 +608,68 @@ function sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
     end
 end
 
+<<<<<<< HEAD:src/utils.jl
+=======
+"""
+    rows, cols, colptr = nn_to_csc(sparmat::Matrix{Float64})
+
+    A helper funciton to generate the sparsity pattern of the vecchia approximation (inverse cholesky) based 
+    on each point's nearest neighbors. If there are n points, each with k nearest neighbors, then the matrix
+    sparmat should be of size n x k. 
+    
+    NOTE: The Nearest Neighbors algorithm should only consider points which appear before the given point. If
+    you do standard nearest neighbors and hack off the indices greater than the row number, it will not work. 
+
+    TODO: Can be parallelized. GPU kernel?
+    
+## Input arguments
+* `sparmat`: The n x k matrix which for each row holds the indices of the nearest neighbors in the ptGrid.
+
+## Output arguments
+* `rows`: A vector of row indices of the sparsity pattern for L, in CSC format.
+* `cols`: A vector of column indices of the sparsity pattern for L, in CSC format.
+* `colptr`: A vector of incides which determine where new columns start. 
+
+"""
+function nn_to_csc(sparmat::Matrix{Int})::Tuple{Vector{Int}, Vector{Int}, Vector{Int}}
+    n, k = size(sparmat)
+    
+    # Preprocess the counts
+    count_vec = zeros(Int, n)
+    for i in 1:n
+        k_nn = min(i, k)
+        view(count_vec, view(sparmat, i, 1:k_nn)) .+= 1
+    end
+
+    # Preallocate spar_i
+    spar_i = zeros(maximum(count_vec))
+    rows = ones(Int, Int(0.5 * k * (2*n - k + 1)))
+    cols = copy(rows)  
+    idx = 0
+    colptr = ones(Int, n+1)
+    for i in 1:n
+        k_nn = min(i, k)
+        # Find all rows that contain i in it. TODO: Could be better?
+        spar_i_idx = 1
+        for j in i:n
+            if i in view(sparmat, j, :)
+                spar_i[spar_i_idx] = j
+                spar_i_idx+=1
+            end
+        end
+
+        len = count_vec[i]
+        cols[(1:len).+idx] .= i
+        rows[(1:len).+idx] .= view(spar_i, 1:len)
+        idx += len
+
+    end
+    count_vec .= cumsum(count_vec)
+    view(colptr, 2:n+1) .+= count_vec
+
+    return rows, cols, colptr
+end
+
 """
     print_diagnostics(d::Diagnostics)
 
