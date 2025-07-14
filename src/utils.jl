@@ -608,8 +608,6 @@ function sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
     end
 end
 
-<<<<<<< HEAD:src/utils.jl
-=======
 """
     rows, cols, colptr = nn_to_csc(sparmat::Matrix{Float64})
 
