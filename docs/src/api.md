@@ -7,6 +7,7 @@ VecchiaMLE.VecchiaCache
 VecchiaMLE.Diagnostics
 VecchiaMLE.VecchiaModel
 VecchiaMLE.VecchiaMLEInput
+VecchiaMLE.SparsityPatternGeneration
 ```
 
 ## VecchiaMLE input
