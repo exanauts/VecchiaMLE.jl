@@ -14,6 +14,12 @@ determine the print level of both VecchiaMLE and MadNLP.
 
 
 """
+Specification for the Sparsity Pattern generation algorithm. 
+"""
+@enum SparsityPatternGeneration NN=1 HNSW=2
+
+
+"""
 Internal struct from which to fetch persisting objects in the optimization function.
 There is no need for the user to mess with this!
 """
@@ -103,6 +109,7 @@ mutable struct VecchiaMLEInput{M, V, V1}
     colptrL::V1
     skip_check::Bool
     metric::Distances.Metric
+    sparsityGeneration::SparsityPatternGeneration
 
     function VecchiaMLEInput(
         n::Int, k::Int, 
@@ -114,7 +121,8 @@ mutable struct VecchiaMLEInput{M, V, V1}
         colsL::V1=nothing,
         colptrL::V1=nothing,
         skip_check::Bool=false,
-        metric::Distances.Metric=Distances.Euclidean()
+        metric::Distances.Metric=Distances.Euclidean(),
+        sparsityGeneration::SparsityPatternGeneration=NN
     ) where
         {M <:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}, V <: Union{Nothing, AbstractVector},
         V1 <: Union{Nothing, AbstractVector}}
@@ -136,7 +144,8 @@ mutable struct VecchiaMLEInput{M, V, V1}
             colsL,
             colptrL,
             skip_check,
-            metric
+            metric,
+            sparsityGeneration
         )
     end
 end

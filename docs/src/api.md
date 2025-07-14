@@ -7,6 +7,7 @@ VecchiaMLE.VecchiaCache
 VecchiaMLE.Diagnostics
 VecchiaMLE.VecchiaModel
 VecchiaMLE.VecchiaMLEInput
+VecchiaMLE.SparsityPatternGeneration
 ```
 
 ## VecchiaMLE input
@@ -35,7 +36,7 @@ VecchiaMLE.dist_from_set
 VecchiaMLE.IndexRandom
 VecchiaMLE.KLDivergence
 VecchiaMLE.SparsityPattern
-VecchiaMLE.SparsityPattern_Experimental
+VecchiaMLE.SparsityPattern_HNSW
 VecchiaMLE.SparsityPattern_NN
 VecchiaMLE.sanitize_input!
 VecchiaMLE.PRINT_LEVEL_TO_MADNLP

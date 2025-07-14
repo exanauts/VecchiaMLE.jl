@@ -484,12 +484,11 @@ end
 * `colptr`: A vector of incides which determine where new columns start. 
 
 """
-function SparsityPattern(data, k::Int, metric::Distances.Metric=Distances.Euclidean(), method::String="NN")
-    if method == "NN"
+function SparsityPattern(data, k::Int, metric::Distances.Metric=Distances.Euclidean(), method::SparsityPatternGeneration=NN)
+    if method == NN
         return SparsityPattern_NN(data, k, metric) # NearestNeighbors.jl
-    elseif method == "Experimental"
-        # In place for HNSW.jl
-        return SparsityPattern_Experimental(data, k, metric) 
+    elseif method == HNSW
+        return SparsityPattern_HNSW(data, k, metric) 
     else
         println("Sparsity Pattern: Bad method. Gave ", method)
         return nothing
@@ -526,8 +525,29 @@ end
 """
 See SparsityPattern(). In place for HNSW.jl
 """
-function SparsityPattern_Experimental(data, k, metric::Distances.Metric=Distances.Euclidean())
-    return nothing
+function SparsityPattern_HNSW(data, k, metric::Distances.Metric=Distances.Euclidean())
+    n = size(data, 1)
+    Sparsity = Matrix{Int}(undef, n, k)
+    fill!(Sparsity, -1)
+    view(Sparsity, :, 1) .= 1:n
+    inds = Vector{Int}(undef, k)
+
+    if k < 2 return nn_to_csc(Sparsity) end
+
+    #Intialize HNSW struct
+    hnsw = HierarchicalNSW(data; efConstruction=100, M=16, ef=50)
+    add_to_graph!(hnsw, 1)
+
+    for i in 2:n    
+        k_nn = min(i, k)
+
+        add_to_graph!(hnsw, i)
+        view(inds, 1:k_nn) .= knn_search(hnsw, i, k_nn)[1]        
+        view(Sparsity, i, 2:k_nn) .= view(inds, 2:k_nn)
+        
+    end
+
+    return nn_to_csc(Sparsity)
 end
 
 """
@@ -590,7 +610,6 @@ function sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
     end
 end
 
-
 """
     rows, cols, colptr = nn_to_csc(sparmat::Matrix{Float64})
 
@@ -650,7 +669,6 @@ function nn_to_csc(sparmat::Matrix{Int})::Tuple{Vector{Int}, Vector{Int}, Vector
 
     return rows, cols, colptr
 end
-
 
 """
     print_diagnostics(d::Diagnostics)

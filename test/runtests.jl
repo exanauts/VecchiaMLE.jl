@@ -22,6 +22,7 @@ include("test_memory_allocation_cpu.jl")
 include("test_different_metrics.jl")
 
 if CUDA.has_cuda()
+    include("test_sparsity_pattern_hnsw.jl")
     include("test_gpu_compatible_with_jump.jl")
     include("test_gpu_diagnostics.jl")
     include("test_cpu_compatible_with_gpu.jl")
