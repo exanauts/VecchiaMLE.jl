@@ -14,11 +14,11 @@ using KernelAbstractions
 const KA = KernelAbstractions
 
 # Includes
-include("VecchiaMLE_defines.jl")
-include("VecchiaMLE_utils.jl")
-include("VecchiaMLE_input.jl")
-include("VecchiaMLE_kernels.jl")
-include("models/VecchiaMLE_NLPModel.jl")
+include("defines.jl")
+include("utils.jl")
+include("input.jl")
+include("kernels.jl")
+include("models/NLPModel.jl")
 
 # Exports
 export VecchiaMLE_Run, VecchiaMLEInput
