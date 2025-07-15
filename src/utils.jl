@@ -535,7 +535,7 @@ function SparsityPattern_HNSW(data, k, metric::Distances.Metric=Distances.Euclid
     if k < 2 return nn_to_csc(Sparsity) end
 
     #Intialize HNSW struct
-    hnsw = HierarchicalNSW(data; efConstruction=100, M=16, ef=50)
+    hnsw = HierarchicalNSW(data; metric=metric, efConstruction=100, M=16, ef=50)
     add_to_graph!(hnsw, 1)
 
     for i in 2:n    
