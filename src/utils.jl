@@ -554,8 +554,8 @@ end
     Checks csc format. A user can call this, but not advised. 
 """
 function is_csc_format(iVecchiaMLE::VecchiaMLEInput)::Bool
-    rowsL = view(iVecchiaMLE.rowsL)
-    colsL = view(iVecchiaMLE.colsL)
+    rowsL = iVecchiaMLE.rowsL
+    colsL = iVecchiaMLE.colsL
 
     # check lengths
     (length(rowsL) != length(colsL)) || return false
@@ -605,7 +605,7 @@ function sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
     # Check is not relevant rn since rowsL and colsL are stored as the same type.
     @assert (isnothing(iVecchiaMLE.rowsL) == isnothing(iVecchiaMLE.colsL)) "Both rowsL and colsL must be given!"
 
-    if !isnothing(iVecchiaMLE.rowsL)
+    if !isnothing(iVecchiaMLE.rowsL) && !isnothing(iVecchiaMLE.colsL)
         @assert is_csc_format(iVecchiaMLE) "rowsL and colsL are not in CSC format!"
     end
 end
