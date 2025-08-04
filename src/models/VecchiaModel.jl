@@ -6,7 +6,7 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput; lambda::Real=1e-8
     
     # The initial condition is for L to be the identity. 
     x0_::S = fill!(S(undef, nvar_), zero(T))
-    x0_[cache.diagL] .= one(T)
+    #x0_[cache.colptrL] .= one(T)
 
     # calculate nnzh
     ncon::Int = length(cache.colptrL) - 1
