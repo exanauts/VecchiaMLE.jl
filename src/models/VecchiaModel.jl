@@ -38,7 +38,6 @@ end
 VecchiaModelCPU(samples::Matrix{T}, iVecchiaMLE::VecchiaMLEInput; lambda::Real=1e-8) where {T <: AbstractFloat} = VecchiaModel(Vector{Float64}, iVecchiaMLE; lambda)
 VecchiaModelGPU(samples::CuMatrix{Float64, B}, iVecchiaMLE::VecchiaMLEInput; lambda::Real=1e-8) where {B} = VecchiaModel(CuVector{Float64,B}, iVecchiaMLE; lambda)
 
-
 # Constructing the vecchia cache used everywhere in the code below.
 function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaCache where {S <: AbstractVector}
     Msamples::Int = size(iVecchiaMLE.samples, 1)

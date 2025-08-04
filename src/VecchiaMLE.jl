@@ -19,7 +19,7 @@ include("defines.jl")
 include("utils.jl")
 include("input.jl")
 include("kernels.jl")
-include("models/NLPModel.jl")
+include("models/VecchiaModel.jl")
 
 # Exports
 export VecchiaMLE_Run, VecchiaMLEInput
