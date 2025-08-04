@@ -4,9 +4,9 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput; lambda::Real=1e-8
     cache::VecchiaCache = create_vecchia_cache(S, iVecchiaMLE)
     nvar_::Int = length(cache.rowsL) + length(cache.colptrL) - 1
     
-    # The initial condition is for L to be the identity. 
-    x0_::S = fill!(S(undef, nvar_), zero(T))
-    #x0_[cache.colptrL] .= one(T)
+    # The initial condition is for L to be 0.
+    x0_::S = S(undef, nvar_)
+    fill!(x0_, 0.0)
 
     # calculate nnzh
     ncon::Int = length(cache.colptrL) - 1
