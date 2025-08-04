@@ -1,4 +1,4 @@
-function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput; lambda::Real=1e-8) where {S<:AbstractArray}
+function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:AbstractArray}
     T = eltype(S)
 
     cache::VecchiaCache = create_vecchia_cache(S, iVecchiaMLE)
@@ -30,12 +30,12 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput; lambda::Real=1e-8
         lin_nnzj = 0
     )
     
-    return VecchiaModel(meta, Counters(), cache, lambda)
+    return VecchiaModel(meta, Counters(), cache, iVecchiaMLE.lambda)
 end
 
 # Only two modes instantiated!!
-VecchiaModelCPU(samples::Matrix{T}, iVecchiaMLE::VecchiaMLEInput; lambda::Real=1e-8) where {T <: AbstractFloat} = VecchiaModel(Vector{Float64}, iVecchiaMLE; lambda)
-VecchiaModelGPU(samples::CuMatrix{Float64, B}, iVecchiaMLE::VecchiaMLEInput; lambda::Real=1e-8) where {B} = VecchiaModel(CuVector{Float64,B}, iVecchiaMLE; lambda)
+VecchiaModelCPU(samples::Matrix{T}, iVecchiaMLE::VecchiaMLEInput) where {T <: AbstractFloat} = VecchiaModel(Vector{Float64}, iVecchiaMLE)
+VecchiaModelGPU(samples::CuMatrix{Float64, B}, iVecchiaMLE::VecchiaMLEInput) where {B} = VecchiaModel(CuVector{Float64,B}, iVecchiaMLE)
 
 # Constructing the vecchia cache used everywhere in the code below.
 function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaCache where {S <: AbstractVector}
