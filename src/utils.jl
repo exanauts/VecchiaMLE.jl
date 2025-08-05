@@ -608,6 +608,8 @@ function sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
     if !isnothing(iVecchiaMLE.rowsL) && !isnothing(iVecchiaMLE.colsL)
         @assert is_csc_format(iVecchiaMLE) "rowsL and colsL are not in CSC format!"
     end
+
+    @assert iVecchiaMLE.lambda >= 0 "lambda must be positive!"
 end
 
 """

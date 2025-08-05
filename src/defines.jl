@@ -72,7 +72,6 @@ mutable struct VecchiaModel{T, S, VI, M} <: AbstractNLPModel{T, S}
     meta::NLPModelMeta{T, S}
     counters::Counters
     cache::VecchiaCache{T, S, VI, M}
-    lambda::T
 end
 
 """
@@ -93,9 +92,10 @@ The fields to the struct are as follows:\n
 - `uvar_diag::AbstractVector`: Upper bounds on the diagonal of the sparse Vecchia approximation.
 - `rowsL::AbstractVector`: The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT! 
 - `colsL::AbstractVector`: The sparsity pattern cols of L if the user gives one. MUST BE IN CSC FORMAT!
-- `colptrL::AbstractVector`: The column pointer of L if the user gives one. MUST BE IN CSC FORMAT! 
-- `skip_check::Bool`: Whether or not to skip the sanitize_input! funciton. 
+- `colptrL::AbstractVector`: The column pointer of L if the user gives one. MUST BE IN CSC FORMAT!
+- `skip_check::Bool`: Whether or not to skip the `sanitize_input!` function.
 - `metric`: The metric by which nearest neighbors are determined. Defaults to Euclidean
+- `lambda`: The regularization term scalar for the ridge term `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
 """
 mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
     n::Int
@@ -114,6 +114,7 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
     skip_check::Bool
     metric::Distances.Metric
     sparsityGeneration::SparsityPatternGeneration
+    lambda::Float64
 
     function VecchiaMLEInput(
         n::Int, k::Int, 
@@ -128,7 +129,8 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
         colptrL::V1=nothing,
         skip_check::Bool=false,
         metric::Distances.Metric=Distances.Euclidean(),
-        sparsityGeneration::SparsityPatternGeneration=NN
+        sparsityGeneration::SparsityPatternGeneration=NN,
+        lambda::Real = 0.0
     ) where
         {M <:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}, V <: Union{Nothing, AbstractVector},
         V1 <: Union{Nothing, AbstractVector}, Vl <: Union{Nothing, AbstractVector}, Vu <: Union{Nothing, AbstractVector}}
@@ -153,7 +155,8 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
             colptrL,
             skip_check,
             metric,
-            sparsityGeneration
+            sparsityGeneration,
+            lambda
         )
     end
 end
