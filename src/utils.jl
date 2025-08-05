@@ -692,3 +692,11 @@ function print_diagnostics(d::Diagnostics)
     println(rpad("Optimization Iter:",    25), d.MadNLP_iterations)
     println("=================================")
 end
+
+function vecchia_solver(solver::Val{<:Symbol}, args..., kwargs...)
+    error("The solver $solver is not available.")
+end
+
+function vecchia_solver(solver::Val{:madnlp}, args..., kwargs...)
+    madnlp(args..., kwargs...)
+end
