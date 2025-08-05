@@ -43,7 +43,7 @@ MadNLP_Print_level::Integer          # Print level of MadNLP. Expects an int wit
 ## Usage
 Once `VecchiaMLEInput` has been filled appropriately, pass it to VecchiaMLE_Run() for the analysis to start. Note that some arguments have default values, such as mode (cpu), and MadNLP_Print_level (5). After the analysis has been completed, the function outputs diagnostics - that would be difficult other wise to acquire - and the resulting Lm factor in sparse, LowerTriangular format. 
 
-> If the user desires to input their own location grid, then it must be passed as a keyword argument to VecchiaMLE_Run(). That is, `VecchiaMLE_Run(iVecchiaMLE::VecchiaMLEInput; ptGrid::AbstractVector)`. 
+> If the user desires to input their own location grid, then it must be passed as a keyword argument to VecchiaMLE_Run(). That is, `VecchiaMLE_Run(iVecchiaMLE::VecchiaMLEInput; ptSet::AbstractVector)`. 
 
 ## Getting Samples from a Covariance Matrix
 I will describe here how to properly use this package. Some functions used are not exported since there is no need for the user to realistically use them. The only major work to do is to generate the samples (if this isn't done by another means). In production, I generated the samples via first creating a Covariance Matrix via the martern covariance kernel, then feeding it into a Multivariate normal distribution to create the samples. The code to do this, using functions defined in VecchiaMLE, is as follows:
@@ -52,16 +52,16 @@ I will describe here how to properly use this package. Some functions used are n
 n = 10                                         # or any positive integer
 Number_of_Samples = 100                        # or however many you want
 params = [5.0, 0.2, 2.25, 0.25]                # Follow the procedure for matern in BesselK.jl
-ptGrid = VecchiaMLE.generate_safe_xyGrid(n)
-MatCov = VecchiaMLE.generate_MatCov(params, ptGrid) # size n x n
+ptSet = VecchiaMLE.generate_safe_xyGrid(n)
+MatCov = VecchiaMLE.generate_MatCov(params, ptSet) # size n x n
 samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples)
 ```
 
 You can easily skip the Covariance generation if you already have one. To give insight as to why the covariance matrix is of that size, the creation of the covariance matrix requires a set of points in space to generate the matrix entries. This is done by generating a 2D grid, on the postive unit square. That is, we use the following function:
 
 ```
-function covariance2D(ptGrid::AbstractVector, params::AbstractVector)::AbstractMatrix
-    return Symmetric([BesselK.matern(x, y, params) for x in ptGrid, y in ptGrid])
+function covariance2D(ptSet::AbstractVector, params::AbstractVector)::AbstractMatrix
+    return Symmetric([BesselK.matern(x, y, params) for x in ptSet, y in ptSet])
 end
 ```
 The matern function (provided by BesselK, credit to Chris Geoga) generates the entries of the covariance matrix via the given prarmeters, and returns the symmetric form.

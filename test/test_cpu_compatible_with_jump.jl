@@ -27,7 +27,7 @@
     L_jump = LowerTriangular(L_jump)
 
     # Get result from VecchiaMLE
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptGrid = xyGrid)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptSet = xyGrid)
     d, L_mle = VecchiaMLE_Run(input)
 
     errors_jump = [VecchiaMLE.KLDivergence(MatCov, L_jump), VecchiaMLE.Uni_Error(MatCov, L_jump)]

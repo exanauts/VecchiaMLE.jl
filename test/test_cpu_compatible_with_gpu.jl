@@ -4,15 +4,15 @@
     k = 3
     Number_of_Samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
-    ptGrid = VecchiaMLE.generate_safe_xyGrid(n)
-    MatCov = VecchiaMLE.generate_MatCov(params, ptGrid)
+    ptSet = VecchiaMLE.generate_safe_xyGrid(n)
+    MatCov = VecchiaMLE.generate_MatCov(params, ptSet)
     samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples; mode=cpu)
     
     # Get result from VecchiaMLE cpu
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptGrid=ptGrid)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptSet=ptSet)
     _, L_cpu = VecchiaMLE_Run(input)
 
-    input = VecchiaMLE.VecchiaMLEInput(n, k, CuMatrix(samples), Number_of_Samples, 5, 2; ptGrid=ptGrid)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, CuMatrix(samples), Number_of_Samples, 5, 2; ptSet=ptSet)
     _, L_gpu = VecchiaMLE_Run(input)
 
     errors_cpu = [VecchiaMLE.KLDivergence(MatCov, L_cpu), VecchiaMLE.Uni_Error(MatCov, L_cpu)]

@@ -1,7 +1,7 @@
 export generate_Samples, generate_MatCov, generate_xyGrid
 
 """
-    Covariance_Matrix = covariance2D(ptGrid::AbstractVector, 
+    Covariance_Matrix = covariance2D(ptSet::AbstractVector, 
                                      params::AbstractVector)
 
     Generate a Matern-Like Covariance Matrix for the parameters and locations given.
@@ -10,15 +10,15 @@ export generate_Samples, generate_MatCov, generate_xyGrid
 
 ## Input arguments
 
-* `ptGrid`: A set of points in 2D space upon which we determine the indices of the Covariance matrix;
+* `ptSet`: A set of points in 2D space upon which we determine the indices of the Covariance matrix;
 * `params`: An array of length 3 (or 4) that holds the parameters to the matern covariance kernel (σ, ρ, ν).
 
 ## Output arguments
 
-* `Covariance_Matrix` : An n × n Matern matrix, where n is the length of the ptGrid 
+* `Covariance_Matrix` : An n × n Matern matrix, where n is the length of the ptSet 
 """
-function covariance2D(ptGrid::AbstractVector, params::AbstractVector)::AbstractMatrix
-    return Symmetric([BesselK.matern(x, y, params) for x in ptGrid, y in ptGrid])
+function covariance2D(ptSet::AbstractVector, params::AbstractVector)::AbstractMatrix
+    return Symmetric([BesselK.matern(x, y, params) for x in ptSet, y in ptSet])
 end
 
 
@@ -64,21 +64,21 @@ end
 
 """
     Covariance_Matrix = generate_MatCov(params::AbstractArray,
-                                        ptGrid::AbstractVector)
+                                        ptSet::AbstractVector)
 
-    Generates a Matern Covariance Matrix determined via the given paramters (params) and ptGrid.
+    Generates a Matern Covariance Matrix determined via the given paramters (params) and ptSet.
 
 ## Input arguments
 
 * `params`: An array of length 3 (or 4) that holds the parameters to the matern covariance kernel (σ, ρ, ν);
-* `ptGrid`: A set of points in 2D space upon which we determine the indices of the Covariance matrix;
+* `ptSet`: A set of points in 2D space upon which we determine the indices of the Covariance matrix;
 
 ## Output arguments
 
 * `Covariance_Matrix` : An n × n Symmetric Matern matrix 
 """
-function generate_MatCov(params::AbstractArray, ptGrid::AbstractVector)::Symmetric{Float64}
-    return covariance2D(ptGrid, params)
+function generate_MatCov(params::AbstractArray, ptSet::AbstractVector)::Symmetric{Float64}
+    return covariance2D(ptSet, params)
 end
 
 generate_MatCov(n::Int, params::AbstractVector) = generate_MatCov(params::AbstractVector, generate_xyGrid(n::Integer))
@@ -473,7 +473,7 @@ end
     determined by nearest neighbors of the previous points in data.
 
 ## Input arguments
-* `data`: The point grid that was used to either generate the covariance matrix, or any custom ptGrid.
+* `data`: The point grid that was used to either generate the covariance matrix, or any custom ptSet.
 * `k`: The number of nearest neighbors for each point (Including the point itself)
 * `method`: How the sparsity pattern is generated. Either NN (NearestNeighbors.jl) or Experimental (HNSW.jl) 
 * `metric`: The metric for determining nearest neighbors. 
@@ -571,14 +571,14 @@ function is_csc_format(iVecchiaMLE::VecchiaMLEInput)::Bool
 end
 
 """
-    sanitize_input!(iVecchiaMLE::VecchiaMLEInput, ptGrid::Union{AbstractVector, Nothing})
+    sanitize_input!(iVecchiaMLE::VecchiaMLEInput, ptSet::Union{AbstractVector, Nothing})
 
 A helper function to catch any inconsistencies in the input given by the user. 
-Note that if ptGrid is set as nothing, then the ptGrid is set as an equispaced mesh of grid points in [0, 1] x [0, 1]. 
+Note that if ptSet is set as nothing, then the ptSet is set as an equispaced mesh of grid points in [0, 1] x [0, 1]. 
 
 The current checks are:\n
     * Ensuring n > 0.
-    * Ensuring k <= n (Makes sense considering the ptGrid and SparsityPattern sizes).
+    * Ensuring k <= n (Makes sense considering the ptSet and SparsityPattern sizes).
     * Ensuring the sample matrix, if the user gives one, is nonempty and is the same size as n.
     * Ensuring the pLevel in 1:5. See MadNLP_Print_Level().
     * Ensuring the mode in 1:2. See Int_to_Mode().
@@ -597,9 +597,9 @@ function sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
         iVecchiaMLE.samples = CuMatrix{Float64}(iVecchiaMLE.samples)
     end
 
-    @assert length(iVecchiaMLE.ptGrid) == iVecchiaMLE.n  "The ptGrid given does not have n elements!"
-    for (i, pt) in enumerate(iVecchiaMLE.ptGrid)
-        @assert length(pt) == 2 "Position $(i) in ptGrid is not 2 dimensional!"
+    @assert length(iVecchiaMLE.ptSet) == iVecchiaMLE.n  "The ptSet given does not have n elements!"
+    for (i, pt) in enumerate(iVecchiaMLE.ptSet)
+        @assert length(pt) == 2 "Position $(i) in ptSet is not 2 dimensional!"
     end
 
     # Check is not relevant rn since rowsL and colsL are stored as the same type.
@@ -633,7 +633,7 @@ end
     TODO: Can be parallelized. GPU kernel?
     
 ## Input arguments
-* `sparmat`: The n x k matrix which for each row holds the indices of the nearest neighbors in the ptGrid.
+* `sparmat`: The n x k matrix which for each row holds the indices of the nearest neighbors in the ptSet.
 
 ## Output arguments
 * `rows`: A vector of row indices of the sparsity pattern for L, in CSC format.

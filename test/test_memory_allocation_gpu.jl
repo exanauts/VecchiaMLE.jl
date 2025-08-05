@@ -191,7 +191,7 @@ end
     xyGrid = VecchiaMLE.generate_xyGrid(n)
     MatCov = VecchiaMLE.generate_MatCov(params, xyGrid)
     samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples; mode=gpu)
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptGrid=xyGrid)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptSet=xyGrid)
     model = VecchiaMLE.VecchiaModelGPU(samples, input)
     mems = test_allocs_nlpmodels_gpu(model)
 

@@ -81,13 +81,13 @@ The fields to the struct are as follows:\n
 
 #### Fields
 
-- `n::Int`: Square root size of the problem, i.e., the length of one side of `ptGrid`.
+- `n::Int`: Square root size of the problem, i.e., the length of one side of `ptSet`.
 - `k::Int`: Number of neighbors, representing the number of conditioning points in the Vecchia Approximation.
 - `samples::M`: Samples to generate the output. Each sample should match the length of the `observed_pts` vector. If no samples are available, consult the documentation.
 - `Number_of_Samples::Int`: Number of samples provided as input to the program.
 - `MadNLP_print_level::MadNLP.LogLevels`: Print level for the optimizer. Defaults to `ERROR` if ignored.
 - `mode::ComputeMode`: Operating mode for the analysis. Either `gpu` or `cpu`. Defaults to `cpu`.
-- `ptGrid::AbstractVector`: The locations from which the samples reveal their value.
+- `ptSet::AbstractVector`: The locations from which the samples reveal their value.
 - `lvar_diag::AbstractVector`: Lower bounds on the diagonal of the sparse Vecchia approximation.
 - `uvar_diag::AbstractVector`: Upper bounds on the diagonal of the sparse Vecchia approximation.
 - `rowsL::AbstractVector`: The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT! 
@@ -105,7 +105,7 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
     Number_of_Samples::Int
     pLevel::MadNLP.LogLevels
     mode::ComputeMode
-    ptGrid::V
+    ptSet::V
     lvar_diag::Vl
     uvar_diag::Vu
     diagnostics::Bool
@@ -122,7 +122,7 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
         n::Int, k::Int, 
         samples::M, Number_of_Samples::Int, 
         pLevel::PL=5, mode::CM=1;
-        ptGrid::V=nothing,
+        ptSet::V=nothing,
         lvar_diag::Vl=nothing,
         uvar_diag::Vu=nothing,
         diagnostics::Bool=false,
@@ -138,10 +138,10 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
         {M <:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}, V <: Union{Nothing, AbstractVector},
         V1 <: Union{Nothing, AbstractVector}, Vl <: Union{Nothing, AbstractVector}, Vu <: Union{Nothing, AbstractVector}}
         m = n
-        if isnothing(ptGrid)
-            ptGrid = generate_safe_xyGrid(n)
+        if isnothing(ptSet)
+            ptSet = generate_safe_xyGrid(n)
         end
-        m = length(ptGrid)
+        m = length(ptSet)
         return new{M, AbstractVector, V1, Vl, Vu}(
             m,
             k,
@@ -149,7 +149,7 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
             Number_of_Samples,
             _printlevel(pLevel),
             _computemode(mode),
-            ptGrid,
+            ptSet,
             lvar_diag,
             uvar_diag,
             diagnostics,

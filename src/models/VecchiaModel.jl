@@ -59,7 +59,7 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
     if !isnothing(iVecchiaMLE.rowsL)
         rowsL, colsL, colptrL = iVecchiaMLE.rowsL, iVecchiaMLE.colsL, iVecchiaMLE.colptrL
     else
-        rowsL, colsL, colptrL = SparsityPattern(iVecchiaMLE.ptGrid, iVecchiaMLE.k, iVecchiaMLE.metric, iVecchiaMLE.sparsityGeneration)
+        rowsL, colsL, colptrL = SparsityPattern(iVecchiaMLE.ptSet, iVecchiaMLE.k, iVecchiaMLE.metric, iVecchiaMLE.sparsityGeneration)
     end
 
     nnzL::Int = length(rowsL)
