@@ -71,7 +71,7 @@ end
 =#
 
 # Front-end
-function vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix{T}, rowsL::CuVector{Int},
+function vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix{T}, lambda::T, rowsL::CuVector{Int},
     colptrL::CuVector{Int}, hess_obj_vals::CuVector{T}, n::Int, m::CuVector{Int}) where T <: AbstractFloat
     
     # TODO: Is there a CUDA dictionary? This is for the mapping from samples to ptGrid size
@@ -80,13 +80,13 @@ function vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix{T}, rowsL:
     backend = KA.get_backend(samples)
     r = size(samples, 1)
     kernel = vecchia_build_B_kernel!(backend)
-    kernel(hess_obj_vals, samples, rowsL, colptrL, m, r, ndrange=n)
+    kernel(hess_obj_vals, samples, lambda, rowsL, colptrL, m, r, ndrange=n)
     KA.synchronize(backend)
     return nothing
 end
 
 # kernel
-@kernel function vecchia_build_B_kernel!(hess_obj_vals, @Const(samples), @Const(rowsL), @Const(colptrL), @Const(m), @Const(r))
+@kernel function vecchia_build_B_kernel!(hess_obj_vals, @Const(samples), @Const(lambda), @Const(rowsL), @Const(colptrL), @Const(m), @Const(r))
     index = @index(Global)
     pos = colptrL[index]
     mj = m[index]
@@ -104,21 +104,34 @@ end
             end
             k = k + 1
             hess_obj_vals[pos2+k] = acc
+            if (lambda != 0) && (s == t) && (s != 1)
+                hess_obj_vals[pos2+k] += lambda
+            end
         end
     end
     nothing
 end
 
 # cpu implementation
-function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, rowsL::Vector{Int},
+function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, lambda::T, rowsL::Vector{Int},
                           colptrL::Vector{Int}, hess_obj_vals::Vector{T}, n::Int, m::Vector{Int}) where T <: AbstractFloat
     pos = 0
     for j in 1:n
         for s in 1:m[j]
             for t in 1:m[j]
-                    vt = view(samples, :, rowsL[colptrL[j] + t - 1])
-                    vs = view(samples, :, rowsL[colptrL[j] + s - 1])
-                    B[j][t, s] = dot(vt, vs)
+                vt = view(samples, :, rowsL[colptrL[j] + t - 1])
+                vs = view(samples, :, rowsL[colptrL[j] + s - 1])
+                B[j][t, s] = dot(vt, vs)
+                # Ridge regularization
+                if (lambda != 0) && (s == t) && (s != 1)
+                    # s == 1 means that we treat the variable related to the diagonal coefficient of column j
+                    # of the sparse Cholesky factor.
+                    #
+                    # Only update diagonal coefficient of the Hessian that are
+                    # related to the variables that represent the off-diagonal terms
+                    # of the sparse Cholesky factor.
+                    B[j][t, s] += lambda
+                end
                 # Lower triangular part of the block Bⱼ
                 if s ≤ t
                     pos = pos + 1
