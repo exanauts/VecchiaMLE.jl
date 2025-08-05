@@ -708,3 +708,9 @@ end
 function vecchia_solver(::Val{:madnlp}, args...; kwargs...)
     madnlp(args...; kwargs...)
 end
+
+
+function tovector(A::AbstractMatrix)::AbstractVector
+    return size(A, 1) > size(A, 2) ? [row for row in eachrow(A)] :
+                                     [col for col in eachcol(A)]
+end
