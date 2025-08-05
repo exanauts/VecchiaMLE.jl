@@ -15,7 +15,7 @@
 
 
     # Get result from VecchiaMLE
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 2; ptGrid = ptGrid)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 2; ptSet = ptSet)
     d, L_mle = VecchiaMLE_Run(input)
 
     errors_row = [VecchiaMLE.KLDivergence(MatCov, L_row), VecchiaMLE.Uni_Error(MatCov, L_row)]

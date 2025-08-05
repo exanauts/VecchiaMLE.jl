@@ -4,12 +4,12 @@
     k = 10
     Number_of_Samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
-    ptGrid = VecchiaMLE.generate_safe_xyGrid(n)
-    MatCov = VecchiaMLE.generate_MatCov(params, ptGrid)
+    ptSet = VecchiaMLE.generate_safe_xyGrid(n)
+    MatCov = VecchiaMLE.generate_MatCov(params, ptSet)
     samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples; mode=cpu)
     
     # Get result from VecchiaMLE NearestNeighbors
-    inputNN = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptGrid = ptGrid, sparsityGeneration=VecchiaMLE.NN)
+    inputNN = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptSet = ptSet, sparsityGeneration=VecchiaMLE.NN)
     D, L_NN = VecchiaMLE_Run(inputNN)
 
     @test (D.MadNLP_iterations ≥ 0)
@@ -20,7 +20,7 @@
     @test (D.create_model_time > 0.0)
 
     # Get result from VecchiaMLE HNSW
-    inputHNSW = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptGrid = ptGrid, sparsityGeneration=VecchiaMLE.HNSW)
+    inputHNSW = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptSet = ptSet, sparsityGeneration=VecchiaMLE.HNSW)
     D, L_HNSW = VecchiaMLE_Run(inputNN)
 
     @test (D.MadNLP_iterations ≥ 0)

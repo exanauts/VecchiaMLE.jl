@@ -29,7 +29,7 @@
 
     
     # Get result from VecchiaMLE
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptGrid = xyGrid)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptSet = xyGrid)
     d, L_mle = VecchiaMLE_Run(input)
 
     L_mle = LowerTriangular(L_mle)

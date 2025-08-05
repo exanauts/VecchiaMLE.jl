@@ -31,7 +31,7 @@ if CUDA.has_cuda()
 end
 
 include("test_model_inputs.jl")
-include("test_abnormal_ptGrid.jl")
+include("test_abnormal_ptSet.jl")
 
 using HSL, MadNLPHSL
 
