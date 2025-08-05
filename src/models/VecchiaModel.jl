@@ -10,10 +10,11 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
     x0::S = fill!(S(undef, nvar), zero(T))
     y0::S = fill!(S(undef, ncon), zero(T))
     lcon::S = fill!(S(undef, ncon), zero(T))
-    ucon::S = fill!(S(undef, ncon), zero(T))
+    ucon::S = fill!(S(undef, ncon), zero(T))    
     lvar::S = fill!(S(undef, nvar), -Inf)
     uvar::S = fill!(S(undef, nvar), Inf)
 
+    #TODO: Add checks to sanitize_input, also provide bounds if none were given in VecchiaMLEInput constructor
     if !isnothing(iVecchiaMLE.lvar_diag)
         view(lvar, cache.diagL) .= iVecchiaMLE.lvar_diag
         view(uvar, cache.nnzL+1:nvar) .= log.(iVecchiaMLE.lvar_diag)
@@ -23,6 +24,7 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
         view(uvar, cache.diagL) .= iVecchiaMLE.uvar_diag
         view(uvar, cache.nnzL+1:nvar) .= log.(iVecchiaMLE.uvar_diag)
     end
+    #TODO: End TODO
 
     meta = NLPModelMeta{T, S}(
         nvar,
@@ -59,7 +61,7 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
     if !isnothing(iVecchiaMLE.rowsL)
         rowsL, colsL, colptrL = iVecchiaMLE.rowsL, iVecchiaMLE.colsL, iVecchiaMLE.colptrL
     else
-        rowsL, colsL, colptrL = SparsityPattern(iVecchiaMLE.ptSet, iVecchiaMLE.k, iVecchiaMLE.metric, iVecchiaMLE.sparsityGeneration)
+        rowsL, colsL, colptrL = sparsitypattern(iVecchiaMLE.ptset, iVecchiaMLE.k, iVecchiaMLE.metric, iVecchiaMLE.sparsitygen)
     end
 
     nnzL::Int = length(rowsL)
@@ -83,8 +85,6 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
     end
     hess_obj_vals::S = S(undef, nnzh_tri_obj)
 
-    #println("m:\n", m)
-    # For n here, you want the length of a sample (pass Lsamples or n?)
     vecchia_build_B!(B, iVecchiaMLE.samples, iVecchiaMLE.lambda, rowsL, colptrL, hess_obj_vals, n, m)
 
     diagL = view(colptrL, 1:n)

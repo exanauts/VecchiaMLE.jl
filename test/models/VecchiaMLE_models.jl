@@ -6,13 +6,13 @@
 =#
 
 
-function VecchiaMLE_models(n, k, samples, Number_of_Samples, Sparsity, estimationString)
+function VecchiaMLE_models(n, k, samples, number_of_samples, Sparsity, estimationString)
     if estimationString == "Row"
-        return VecchiaMLE_Row(n, k, samples, Number_of_Samples, Sparsity)
+        return VecchiaMLE_Row(n, k, samples, number_of_samples, Sparsity)
     elseif estimationString == "Matrix_Sparse" 
-        return VecchiaMLE_Matrix_Sparse(n, k, samples, Number_of_Samples, Sparsity)
+        return VecchiaMLE_Matrix_Sparse(n, k, samples, number_of_samples, Sparsity)
     elseif estimationString == "MadNLPGPU"
-        return VecchiaMLE_Row_Right_MadNLPGPU(n, k, samples, Number_of_Samples, Sparsity)
+        return VecchiaMLE_Row_Right_MadNLPGPU(n, k, samples, number_of_samples, Sparsity)
     else
         println("estimationString incorrect. called ", estimationString)
         return nothing
@@ -23,10 +23,10 @@ end
     These functions perform the best in their category (by row or matrix). 
 =#
 
-function VecchiaMLE_Row(n, k, samples, Number_of_Samples, Sparsity)
+function VecchiaMLE_Row(n, k, samples, number_of_samples, Sparsity)
 
     L = spzeros(n, n)
-    model_sum = Vector{AffExpr}(undef, Number_of_Samples)
+    model_sum = Vector{AffExpr}(undef, number_of_samples)
 
     model = Model(()->MadNLP.Optimizer(print_level=MadNLP.ERROR, max_iter=100))
 
@@ -35,11 +35,11 @@ function VecchiaMLE_Row(n, k, samples, Number_of_Samples, Sparsity)
 
     # rows are independent -> parallelization, but gpu or cpu?
     for row_idx in 1:n    
-        model_sum = sum(dot(ys[1:length(Sparsity[row_idx])], samples[i, Sparsity[row_idx]]).^2 for i in 1:Number_of_Samples)
+        model_sum = sum(dot(ys[1:length(Sparsity[row_idx])], samples[i, Sparsity[row_idx]]).^2 for i in 1:number_of_samples)
         
         @objective(model, Min,
-            -Number_of_Samples * (log(ys[1]) - 
-            1.0/(2*Number_of_Samples) * model_sum)
+            -number_of_samples * (log(ys[1]) - 
+            1.0/(2*number_of_samples) * model_sum)
         )
 
         optimize!(model)
@@ -52,10 +52,10 @@ end
 Big issue with this is transferring to ExaModel and gpu compilation speeds
 kill it.  
 =#
-function VecchiaMLE_Matrix_Sparse(n, k, samples, Number_of_Samples, xyGrid)
+function VecchiaMLE_Matrix_Sparse(n, k, samples, number_of_samples, xyGrid)
 
-    Sparsity_pattern = SparsityPattern(xyGrid, k)
-    model = VecchiaMLE_Matrix_JuMP_Model(n, k, samples, Number_of_Samples, Sparsity_pattern)
+    Sparsity_pattern = sparsitypattern(xyGrid, k)
+    model = VecchiaMLE_Matrix_JuMP_Model(n, k, samples, number_of_samples, Sparsity_pattern)
     
     exa_model = ExaModel(model; backend = nothing #= CUDABackend() =#) # model_sum not CUDABackend friendly
     sol = madnlp(exa_model, print_level=MadNLP.ERROR).solution
@@ -105,7 +105,7 @@ end
     Making a JuMP model to be ported to ExaModels -> gpu.
     Hence no Optimizer.
 =#
-function VecchiaMLE_Matrix_JuMP_Model(n, k, samples, Number_of_Samples, Sparsity_pattern)
+function VecchiaMLE_Matrix_JuMP_Model(n, k, samples, number_of_samples, Sparsity_pattern)
     model = JuMP.Model()
     # one vector variable input, just a big vector. 
     @variable(model, ys[1:Int(0.5 * (k+1) * (2*n - k))])
@@ -122,7 +122,7 @@ function VecchiaMLE_Matrix_JuMP_Model(n, k, samples, Number_of_Samples, Sparsity
     cumulative_indices = cumsum(length.(Sparsity_pattern))
     
     for j in 1:n
-        for i in 1:Number_of_Samples
+        for i in 1:number_of_samples
             start_idx = j == 1 ? 1 : cumulative_indices[j-1] + 1
             end_idx = cumulative_indices[j]
             term = dot(ys[start_idx:end_idx], samples[i, Sparsity_pattern[j]])^2
@@ -131,7 +131,7 @@ function VecchiaMLE_Matrix_JuMP_Model(n, k, samples, Number_of_Samples, Sparsity
     end
 
     @objective(model, Min,
-        -Number_of_Samples * sum(log(ys[x]) for x in diag_arr) + 
+        -number_of_samples * sum(log(ys[x]) for x in diag_arr) + 
         0.5 * model_sum
     )
     return model

@@ -74,7 +74,7 @@ end
 function vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix{T}, lambda::T, rowsL::CuVector{Int},
     colptrL::CuVector{Int}, hess_obj_vals::CuVector{T}, n::Int, m::CuVector{Int}) where T <: AbstractFloat
     
-    # TODO: Is there a CUDA dictionary? This is for the mapping from samples to ptSet size
+    # TODO: Is there a CUDA dictionary? This is for the mapping from samples to ptset size
     
     # Launch the kernel
     backend = KA.get_backend(samples)
