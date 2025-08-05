@@ -10,11 +10,11 @@ using SparseArrays # To show matrix at the end
 # Things for model
 n = 400
 k = 10
-Number_of_Samples = 100
+number_of_samples = 100
 ```
 
 These are the three major parameters: n (dimension), k (conditioning for Vecchia), 
-and the Number_of_Samples. they should be self-explanatory, but the 
+and the number_of_samples. they should be self-explanatory, but the 
 documentation for the VecchiaMLEInput should clear things up. Next, we should 
 generate the samples. At the moment, the code has only been verified to run for
 generated samples by the program, but there should be no difficulty in inputting
@@ -29,15 +29,15 @@ directly to the user, we allow the generation of samples in the following manner
 ```@example HowToRun
 params = [5.0, 0.2, 2.25, 0.25]
 # This analysis will be done in 2D.
-ptSet = VecchiaMLE.generate_safe_xyGrid(n)
-MatCov = VecchiaMLE.generate_MatCov(params, ptSet)
-samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples)
+ptset = VecchiaMLE.generate_safe_xyGrid(n)
+MatCov = VecchiaMLE.generate_MatCov(params, ptset)
+samples = VecchiaMLE.generate_samples(MatCov, number_of_samples)
 ```
 
 Next, we create and fill in the VecchiaMLEInput struct. This is done below.
 
 ```@example HowToRun
-input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptSet=ptSet)
+input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; ptset=ptset)
 ```
 
 Here, we set (though not necessary) the optimizer (MadNLP) print level to 5 (ERROR), 

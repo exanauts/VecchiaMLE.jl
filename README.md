@@ -35,7 +35,7 @@ The struct `VecchiaMLEInput` needs to be properly filled out in order for the an
 n::Integer                           # The size of the problem (e.g., dimension of the covariance matrix). 
 k::Integer                           # Number of conditioning points per point for the Vecchia Approximation.
 samples::Matrix{Float64}             # Matrix of samples (each row is a sample).
-Number_of_Samples::Integer           # Number of samples to generate (if samples_given=false).
+number_of_samples::Integer           # Number of samples to generate (if samples_given=false).
 mode::Integer                        # Operation mode. Expects an int [1: cpu, 2: gpu].
 MadNLP_Print_level::Integer          # Print level of MadNLP. Expects an int with the corresponding flag [1: TRACE, 2: DEBUG, 3: INFO, 4: WARN, 5: ERROR].
 ```
@@ -43,25 +43,25 @@ MadNLP_Print_level::Integer          # Print level of MadNLP. Expects an int wit
 ## Usage
 Once `VecchiaMLEInput` has been filled appropriately, pass it to VecchiaMLE_Run() for the analysis to start. Note that some arguments have default values, such as mode (cpu), and MadNLP_Print_level (5). After the analysis has been completed, the function outputs diagnostics - that would be difficult other wise to acquire - and the resulting Lm factor in sparse, LowerTriangular format. 
 
-> If the user desires to input their own location grid, then it must be passed as a keyword argument to VecchiaMLE_Run(). That is, `VecchiaMLE_Run(iVecchiaMLE::VecchiaMLEInput; ptSet::AbstractVector)`. 
+> If the user desires to input their own location grid, then it must be passed as a keyword argument to VecchiaMLE_Run(). That is, `VecchiaMLE_Run(iVecchiaMLE::VecchiaMLEInput; ptset::AbstractVector)`. 
 
 ## Getting Samples from a Covariance Matrix
 I will describe here how to properly use this package. Some functions used are not exported since there is no need for the user to realistically use them. The only major work to do is to generate the samples (if this isn't done by another means). In production, I generated the samples via first creating a Covariance Matrix via the martern covariance kernel, then feeding it into a Multivariate normal distribution to create the samples. The code to do this, using functions defined in VecchiaMLE, is as follows:
 
 ```
 n = 10                                         # or any positive integer
-Number_of_Samples = 100                        # or however many you want
+number_of_samples = 100                        # or however many you want
 params = [5.0, 0.2, 2.25, 0.25]                # Follow the procedure for matern in BesselK.jl
-ptSet = VecchiaMLE.generate_safe_xyGrid(n)
-MatCov = VecchiaMLE.generate_MatCov(params, ptSet) # size n x n
-samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples)
+ptset = VecchiaMLE.generate_safe_xyGrid(n)
+MatCov = VecchiaMLE.generate_MatCov(params, ptset) # size n x n
+samples = VecchiaMLE.generate_samples(MatCov, number_of_samples)
 ```
 
 You can easily skip the Covariance generation if you already have one. To give insight as to why the covariance matrix is of that size, the creation of the covariance matrix requires a set of points in space to generate the matrix entries. This is done by generating a 2D grid, on the postive unit square. That is, we use the following function:
 
 ```
-function covariance2D(ptSet::AbstractVector, params::AbstractVector)::AbstractMatrix
-    return Symmetric([BesselK.matern(x, y, params) for x in ptSet, y in ptSet])
+function covariance2D(ptset::AbstractVector, params::AbstractVector)::AbstractMatrix
+    return Symmetric([BesselK.matern(x, y, params) for x in ptset, y in ptset])
 end
 ```
 The matern function (provided by BesselK, credit to Chris Geoga) generates the entries of the covariance matrix via the given prarmeters, and returns the symmetric form.
@@ -73,7 +73,7 @@ After the samples have been generated, they can simply be stored in the VecchiaM
 We can get the error for the approximation (assuming you have the true covariance matrix), via the KL-Divergence formula. This, along with its univariate cousin, can be queryed respectively by the following VecchiaMLE functions:
 
 ```
-uni_error = VecchiaMLE.Uni_Error(True_Covariance, Approximate_Cholesky_Factor)
+uni_error = VecchiaMLE.uni_error(True_Covariance, Approximate_Cholesky_Factor)
 kl_error = VecchiaMLE.KLDivergence(True_Covariance, Approximate_Cholesky_Factor)
 ```
 Note the KL-Divergence error is computationally heavy, thus takes a long time for large `n` values! Also, we assue mean-zero distributions. 

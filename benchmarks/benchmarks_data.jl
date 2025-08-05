@@ -10,7 +10,7 @@ function main()
     # Fist 100 samples.
     samples = samples[1:100, 1:round(Int, sqrt(size(samples, 2)))^2]
 
-    Number_of_Samples = size(samples, 1)
+    number_of_samples = size(samples, 1)
     ens = 2:size(samples, 2)
     ns = [x for x in ens if x == round(Int, (sqrt(x)))^2]
 
@@ -19,7 +19,7 @@ function main()
     write(time_memory_io_file, "time, memory\n")
 
     for (i, n) in enumerate(ns)
-        input = VecchiaMLE.VecchiaMLEInput(n, min(n, k), samples[:, 1:n], Number_of_Samples, 5, 1)
+        input = VecchiaMLE.VecchiaMLEInput(n, min(n, k), samples[:, 1:n], number_of_samples, 5, 1)
         diagsnostics = @timed VecchiaMLE_Run(input)
         
         write(time_memory_io_file, "$(diagsnostics[2]), $(diagsnostics[3])\n")
@@ -39,7 +39,7 @@ function main()
 
     for (i, n) in enumerate(ns)
         sample_slice = view(samples, :, 1:n)
-        input = VecchiaMLE.VecchiaMLEInput(n, min(n, k), sample_slice, Number_of_Samples, 5, 2)
+        input = VecchiaMLE.VecchiaMLEInput(n, min(n, k), sample_slice, number_of_samples, 5, 2)
         diagsnostics = @timed VecchiaMLE_Run(input)
 
         write(time_memory_io_file, "$(diagsnostics[2]), $(diagsnostics[3])\n")

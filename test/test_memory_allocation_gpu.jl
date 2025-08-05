@@ -186,12 +186,12 @@ end
 @testset "GPU_memory_allocations" begin
     n = 100
     k = 10
-    Number_of_Samples = 100
+    number_of_samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
     xyGrid = VecchiaMLE.generate_xyGrid(n)
     MatCov = VecchiaMLE.generate_MatCov(params, xyGrid)
-    samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples; mode=gpu)
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptSet=xyGrid)
+    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; mode=gpu)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; ptset=xyGrid)
     model = VecchiaMLE.VecchiaModelGPU(samples, input)
     mems = test_allocs_nlpmodels_gpu(model)
 

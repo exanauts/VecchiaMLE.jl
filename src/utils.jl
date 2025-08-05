@@ -1,7 +1,7 @@
-export generate_Samples, generate_MatCov, generate_xyGrid
+export generate_samples, generate_MatCov, generate_xyGrid
 
 """
-    Covariance_Matrix = covariance2D(ptSet::AbstractVector, 
+    Covariance_Matrix = covariance2D(ptset::AbstractVector, 
                                      params::AbstractVector)
 
     Generate a Matern-Like Covariance Matrix for the parameters and locations given.
@@ -10,21 +10,21 @@ export generate_Samples, generate_MatCov, generate_xyGrid
 
 ## Input arguments
 
-* `ptSet`: A set of points in 2D space upon which we determine the indices of the Covariance matrix;
+* `ptset`: A set of points in 2D space upon which we determine the indices of the Covariance matrix;
 * `params`: An array of length 3 (or 4) that holds the parameters to the matern covariance kernel (σ, ρ, ν).
 
 ## Output arguments
 
-* `Covariance_Matrix` : An n × n Matern matrix, where n is the length of the ptSet 
+* `Covariance_Matrix` : An n × n Matern matrix, where n is the length of the ptset 
 """
-function covariance2D(ptSet::AbstractVector, params::AbstractVector)::AbstractMatrix
-    return Symmetric([BesselK.matern(x, y, params) for x in ptSet, y in ptSet])
+function covariance2D(ptset::AbstractVector, params::AbstractVector)::AbstractMatrix
+    return Symmetric([BesselK.matern(x, y, params) for x in ptset, y in ptset])
 end
 
 
 """
-    Samples_Matrix = generate_Samples(MatCov::AbstractMatrix, 
-                                      Number_of_Samples::Int;
+    Samples_Matrix = generate_samples(MatCov::AbstractMatrix, 
+                                      number_of_samples::Int;
                                       mode::VecchiaMLE.ComputeMode )
 
     Generate a number of samples according to the given Covariance Matrix MatCov.
@@ -36,22 +36,22 @@ end
 
 * `MatCov`: A Covariance Matrix, presumably positive definite;
 * `n`: The length of one side of the Covariance matrix;
-* `Number_of_Samples`: How many samples to return.
+* `number_of_samples`: How many samples to return.
 
 ## Keyword Arguments
 * `mode`: Either generate samples on gpu or cpu
 
 ## Output arguments
 
-* `Samples_Matrix` : A matrix of size (Number_of_Samples × n), where the rows are the i.i.d samples  
+* `Samples_Matrix` : A matrix of size (number_of_samples × n), where the rows are the i.i.d samples  
 """
-function generate_Samples(MatCov::AbstractMatrix, Number_of_Samples::Int; mode::ComputeMode=cpu)::AbstractMatrix
+function generate_samples(MatCov::AbstractMatrix, number_of_samples::Int; mode::ComputeMode=cpu)::AbstractMatrix
     n = size(MatCov, 1)
     if mode == gpu
-        V = CUDA.randn(Float64, Number_of_Samples, n)
+        V = CUDA.randn(Float64, number_of_samples, n)
         S = CuArray{Float64}(MatCov)
     elseif mode == cpu 
-        V = randn(Number_of_Samples, n)
+        V = randn(number_of_samples, n)
         S = Matrix{Float64}(MatCov)
     else
         error("Unsupported compute mode!")
@@ -64,21 +64,21 @@ end
 
 """
     Covariance_Matrix = generate_MatCov(params::AbstractArray,
-                                        ptSet::AbstractVector)
+                                        ptset::AbstractVector)
 
-    Generates a Matern Covariance Matrix determined via the given paramters (params) and ptSet.
+    Generates a Matern Covariance Matrix determined via the given paramters (params) and ptset.
 
 ## Input arguments
 
 * `params`: An array of length 3 (or 4) that holds the parameters to the matern covariance kernel (σ, ρ, ν);
-* `ptSet`: A set of points in 2D space upon which we determine the indices of the Covariance matrix;
+* `ptset`: A set of points in 2D space upon which we determine the indices of the Covariance matrix;
 
 ## Output arguments
 
 * `Covariance_Matrix` : An n × n Symmetric Matern matrix 
 """
-function generate_MatCov(params::AbstractArray, ptSet::AbstractVector)::Symmetric{Float64}
-    return covariance2D(ptSet, params)
+function generate_MatCov(params::AbstractArray, ptset::AbstractVector)::Symmetric{Float64}
+    return covariance2D(ptset, params)
 end
 
 generate_MatCov(n::Int, params::AbstractVector) = generate_MatCov(params::AbstractVector, generate_xyGrid(n::Integer))
@@ -139,7 +139,6 @@ end
 """
 function get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)::VecchiaModel
 
-
     if iVecchiaMLE.mode == gpu
        return VecchiaModelGPU(iVecchiaMLE.samples, iVecchiaMLE)
     else 
@@ -148,39 +147,21 @@ function get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)::VecchiaModel
 end
 
 """
-    log_level = _printlevel(pLevel::Union{Int, PrintLevel})
+    log_level = _printlevel(plevel::Union{Int, PrintLevel})
 
     A helper function to convert an Int to a MadNLP LogLevel.
     The mapping is [1: 'TRACE', 2: 'DEBUG', 3: 'INFO', 4: 'WARN', 5: 'ERROR'].
     Any other Int given is converted to MadNLP.Fatal. 
 ## Input arguments
 
-* `pLevel`: The given log level;
+* `plevel`: The given log level;
 ## Output arguments
 
 * `log_level` : The coded MadNLP.LogLevel.   
 """
-function _printlevel(pLevel::PL) where {PL <: Union{Int, PrintLevel}}
-    get(PRINT_LEVEL_TO_MADNLP, pLevel, MadNLP.ERROR)
+function _printlevel(plevel::PL) where {PL <: Union{Int, PrintLevel}}
+    get(PRINT_LEVEL_TO_MADNLP, plevel, MadNLP.ERROR)
 end
-
-"""
-    Dict to map VecchiaMLE Loglevel to MadNLP LogLevel. Also for Ints. 
-"""
-const PRINT_LEVEL_TO_MADNLP = Dict(
-    VTRACE => MadNLP.TRACE,
-    VDEBUG => MadNLP.DEBUG,
-    VINFO  => MadNLP.INFO,
-    VWARN  => MadNLP.WARN,
-    VERROR => MadNLP.ERROR,
-    VFATAL => MadNLP.ERROR,
-    1      => MadNLP.TRACE,
-    2      => MadNLP.DEBUG,
-    3      => MadNLP.INFO,
-    4      => MadNLP.WARN,
-    5      => MadNLP.ERROR
-)
-
 
 """
     cpu_mode = Int_to_Mode(n::Int)
@@ -197,20 +178,14 @@ const PRINT_LEVEL_TO_MADNLP = Dict(
 * `cpu_mode` : The coded ComputeMode.   
 """
 function _computemode(n::CM)::ComputeMode where {CM <: Union{ComputeMode, Int}}
-    if isa(n, ComputeMode)
-        return n
-    end
+    if isa(n, ComputeMode) return n end
 
-    if n == 1
-        return cpu
-    elseif n == 2
-        return gpu
-    end
+    if n == 2 return gpu end
     return cpu
 end
 
 """
-    Error = Uni_Error(TCov::AbstractMatrix,
+    Error = uni_error(TCov::AbstractMatrix,
                       L::AbstractMatrix)
     Generates the "Univariate KL Divergence" from the Given True Covariane matrix 
     and Approximate Covariance matrix. The output is the result of the following 
@@ -228,17 +203,15 @@ end
 
 * `f(μ)` : the result of the function f(μ) detailed above.   
 """
-function Uni_Error(TCov::AbstractMatrix, L::AbstractMatrix)    
-    mu_val = clamp.([eigmin(L*L'*TCov), eigmax(L*L'*TCov)], 1e-9, Inf)
+function uni_error(TCov::AbstractMatrix, L::AbstractMatrix)    
+    mu_val = clamp.([eigmin(L*L'*TCov), eigmax(L*L'*TCov)], 1e-12, Inf)
     return maximum([0.5*(log(mu) + 1.0 / mu - 1.0) for mu in mu_val])
 end
 
-
 """
-
-    indx_perm, dist_set = IndexReorder(Cond_set::AbstractVector,
+    permutation, dists = IndexReorder(condset::AbstractVector,
                                        data::AbstractVector,
-                                       mean_mu::AbstractVector,
+                                       mu::AbstractVector,
                                        method::String = "standard", 
                                        reverse_ordering::Bool = true)
 
@@ -246,27 +219,26 @@ end
     At the moment, only random, and maxmin are implemented.    
 
     I BELIEVE the intention is to permute the coordinates of the samples with it, e.g.,
-    samples = samples[:, indx_perm]. Note for small conditioning sets per point (extremely sparse L),
+    samples = samples[:, permutation]. Note for small conditioning sets per point (extremely sparse L),
     this is not worth while!.
 
 ## Input arguments
-
-* `Cond_set`: A set of points from which to neglect from the index permutation;
+* `condset`: A set of points from which to neglect from the index permutation;
 * `data`: The data to determine said permutation;
-* `mean_mu`: The theoretical mean of the data, not mean(data)!
+* `mu`: The theoretical mean of the data, not mean(data)!
 * `method`: Either permuting based on maxmin, or random.
 * `reverse_ordering`: permutation is generated either in reverse or not.   
-## Output arguments
 
-* `indx_perm`: The index set which permutes the given data.
-* `dist_set`: The array of maximum distances to iterating conditioning sets.    
+## Output arguments
+* `permutation`: The index set which permutes the given data.
+* `dists`: The array of maximum distances to iterating conditioning sets.    
 """
-function IndexReorder(Cond_set::AbstractVector, data::AbstractVector, mean_mu::AbstractVector, method::String="standard", reverse_ordering::Bool=true)
+function IndexReorder(condset::AbstractVector, data::AbstractVector, mu::AbstractVector, method::String="standard", reverse_ordering::Bool=true)
     
     if method == "random"
-        return IndexRandom(Cond_set, data, reverse_ordering)
+        return IndexRandom(condset, data, reverse_ordering)
     elseif method == "maxmin"
-        return IndexMaxMin(Cond_set, data, mean_mu, reverse_ordering)
+        return IndexMaxMin(condset, data, mu, reverse_ordering)
     elseif method == "standard"
         len = length(data)
         return 1:len, []    
@@ -293,7 +265,7 @@ end
 """
 See IndexReorder().
 """
-function IndexMaxMin(Cond_set::AbstractVector, data::AbstractVector, mean_mu::AbstractVector, reverse_ordering::Bool=true)
+function IndexMaxMin(condset::AbstractVector, data::AbstractVector, mu::AbstractVector, reverse_ordering::Bool=true)
     n = size(data, 1)
     
     # distance array
@@ -304,13 +276,13 @@ function IndexMaxMin(Cond_set::AbstractVector, data::AbstractVector, mean_mu::Ab
     idx = reverse_ordering ? n : 1
 
     # Finding last index
-    if isempty(Cond_set)
+    if isempty(condset)
         # Set the last entry arbitrarily, try to place in center
         # This means set it to data sample closest to the mean. 
         last_idx = 0
         min_norm = Inf64
         for i in 1:n
-            data_norm = norm(mean_mu - data[i, :][1])
+            data_norm = norm(mu - data[i, :][1])
             if data_norm < min_norm
                 min_norm = data_norm
                 last_idx = i
@@ -322,9 +294,9 @@ function IndexMaxMin(Cond_set::AbstractVector, data::AbstractVector, mean_mu::Ab
         ind_max = 1
         distance = Inf64
         for i in 1:n
-            data_pt = data[i, :]
+            loc = data[i, :]
             
-            mindistance = dist_from_set(data_pt, Cond_set, data)
+            mindistance = dist_from_set(loc, condset, data)
         
             # check for max
             if mindistance > distance
@@ -342,15 +314,15 @@ function IndexMaxMin(Cond_set::AbstractVector, data::AbstractVector, mean_mu::Ab
     
     # backfill index set
     # Create array with already chosen indices
-    chosen_inds = union(Cond_set, index_arr[reverse_ordering ? end : 1])
+    chosen_inds = union(condset, index_arr[reverse_ordering ? end : 1])
     remaining_inds = setdiff(1:n, chosen_inds)
 
     while(!isempty(remaining_inds))
         dist_max = 0.0
         idx_max = 0
         for j in remaining_inds
-            data_pt = data[j, :]
-            distance = dist_from_set(data_pt, chosen_inds, data)
+            loc = data[j, :]
+            distance = dist_from_set(loc, chosen_inds, data)
             if dist_max < distance
                 dist_max = distance
                 idx_max = j
@@ -372,12 +344,12 @@ end #function
 """
 Helper function. See IndexReorder().
 """
-function dist_from_set(data_pt, set_idx, data)
+function dist_from_set(loc, setidxs, data)
 
     mindistance = Inf64
     # Find distance from conditioning set
-    for j in set_idx
-        dist = norm(data_pt - data[j, :])
+    for j in setidxs
+        dist = norm(loc - data[j, :])
         if mindistance > dist
             mindistance = dist
         end
@@ -394,7 +366,7 @@ end
 """
 See IndexReorder().
 """
-function IndexRandom(Cond_set::AbstractVector, data::AbstractVector, reverse_ordering::Bool)
+function IndexRandom(condset::AbstractVector, data::AbstractVector, reverse_ordering::Bool)
     
     n = size(data, 1)    
     return Random.randperm(n), []
@@ -464,7 +436,7 @@ end
 
 
 """
-    rows, cols, colptr = SparsityPattern(data::AbstractVector,
+    rows, cols, colptr = sparsitypattern(data::AbstractVector,
                                          k::Int,
                                          method::String="NN")
 
@@ -473,7 +445,7 @@ end
     determined by nearest neighbors of the previous points in data.
 
 ## Input arguments
-* `data`: The point grid that was used to either generate the covariance matrix, or any custom ptSet.
+* `data`: The point grid that was used to either generate the covariance matrix, or any custom ptset.
 * `k`: The number of nearest neighbors for each point (Including the point itself)
 * `method`: How the sparsity pattern is generated. Either NN (NearestNeighbors.jl) or Experimental (HNSW.jl) 
 * `metric`: The metric for determining nearest neighbors. 
@@ -484,11 +456,11 @@ end
 * `colptr`: A vector of incides which determine where new columns start. 
 
 """
-function SparsityPattern(data, k::Int, metric::Distances.Metric=Distances.Euclidean(), method::SparsityPatternGeneration=NN)
+function sparsitypattern(data, k::Int, metric::Distances.Metric=Distances.Euclidean(), method::SparsityPatternGeneration=NN)
     if method == NN
-        return SparsityPattern_NN(data, k, metric) # NearestNeighbors.jl
+        return sparsitypattern_NN(data, k, metric) # NearestNeighbors.jl
     elseif method == HNSW
-        return SparsityPattern_HNSW(data, k, metric) 
+        return sparsitypattern_HNSW(data, k, metric) 
     else
         println("Sparsity Pattern: Bad method. Gave ", method)
         return nothing
@@ -496,58 +468,58 @@ function SparsityPattern(data, k::Int, metric::Distances.Metric=Distances.Euclid
 end
 
 """
-See SparsityPattern(). Uses NearestNeighbors library. In case of tie, opt for larger index. 
+See sparsitypattern(). Uses NearestNeighbors library. In case of tie, opt for larger index. 
 """
-function SparsityPattern_NN(data, k, metric::Distances.Metric=Distances.Euclidean())::Tuple{Vector{Int}, Vector{Int}, Vector{Int}}
+function sparsitypattern_NN(data, k, metric::Distances.Metric=Distances.Euclidean())::Tuple{Vector{Int}, Vector{Int}, Vector{Int}}
     n = size(data, 1)
-    Sparsity = Matrix{Int}(undef, n, k)
-    fill!(Sparsity, -1)
-    view(Sparsity, :, 1) .= 1:n
+    sparsity = Matrix{Int}(undef, n, k)
+    fill!(sparsity, -1)
+    view(sparsity, :, 1) .= 1:n
     inds = Vector{Int}(undef, k)
     
-    if k < 2 return nn_to_csc(Sparsity) end
+    if k < 2 return nn_to_csc(sparsity) end
     
     # only weird part
     data = hcat(data...)
 
     for i in 2:n    
-        k_nn = min(i-1, k-1)
+        knn = min(i-1, k-1)
     
         # Reform balltree.  
         balltree = NearestNeighbors.BallTree(data[:, 1:i-1], metric; leafsize = 1)
 
-        view(inds, 1:k_nn) .= NearestNeighbors.knn(balltree, data[:, i], k_nn)[1]
-        view(Sparsity, i, 2:k_nn+1) .= view(inds, k_nn:-1:1)
+        view(inds, 1:knn) .= NearestNeighbors.knn(balltree, data[:, i], knn)[1]
+        view(sparsity, i, 2:knn+1) .= view(inds, knn:-1:1)
     end
-    return nn_to_csc(Sparsity)
+    return nn_to_csc(sparsity)
 end
 
 """
-See SparsityPattern(). In place for HNSW.jl
+See sparsitypattern(). In place for HNSW.jl
 """
-function SparsityPattern_HNSW(data, k, metric::Distances.Metric=Distances.Euclidean())
+function sparsitypattern_HNSW(data, k, metric::Distances.Metric=Distances.Euclidean())
     n = size(data, 1)
-    Sparsity = Matrix{Int}(undef, n, k)
-    fill!(Sparsity, -1)
-    view(Sparsity, :, 1) .= 1:n
+    sparsity = Matrix{Int}(undef, n, k)
+    fill!(sparsity, -1)
+    view(sparsity, :, 1) .= 1:n
     inds = Vector{Int}(undef, k)
 
-    if k < 2 return nn_to_csc(Sparsity) end
+    if k < 2 return nn_to_csc(sparsity) end
 
     #Intialize HNSW struct
     hnsw = HierarchicalNSW(data; metric=metric, efConstruction=100, M=16, ef=50)
     add_to_graph!(hnsw, 1)
 
     for i in 2:n    
-        k_nn = min(i, k)
+        knn = min(i, k)
 
         add_to_graph!(hnsw, i)
-        view(inds, 1:k_nn) .= knn_search(hnsw, i, k_nn)[1]        
-        view(Sparsity, i, 2:k_nn) .= view(inds, 2:k_nn)
+        view(inds, 1:knn) .= knn_search(hnsw, i, knn)[1]        
+        view(sparsity, i, 2:knn) .= view(inds, 2:knn)
         
     end
 
-    return nn_to_csc(Sparsity)
+    return nn_to_csc(sparsity)
 end
 
 """
@@ -571,35 +543,28 @@ function is_csc_format(iVecchiaMLE::VecchiaMLEInput)::Bool
 end
 
 """
-    sanitize_input!(iVecchiaMLE::VecchiaMLEInput, ptSet::Union{AbstractVector, Nothing})
+    validate_input(iVecchiaMLE::VecchiaMLEInput, ptset::Union{AbstractVector, Nothing})
 
-A helper function to catch any inconsistencies in the input given by the user. 
-Note that if ptSet is set as nothing, then the ptSet is set as an equispaced mesh of grid points in [0, 1] x [0, 1]. 
-
-The current checks are:\n
-    * Ensuring n > 0.
-    * Ensuring k <= n (Makes sense considering the ptSet and SparsityPattern sizes).
-    * Ensuring the sample matrix, if the user gives one, is nonempty and is the same size as n.
-    * Ensuring the pLevel in 1:5. See MadNLP_Print_Level().
-    * Ensuring the mode in 1:2. See Int_to_Mode().
+A helper function to catch any inconsistencies in the input given by the user.
 
 ## Input arguments
 * `iVecchiaMLE`: The filled-out VecchiaMLEInput struct. See VecchiaMLEInput struct for more details. 
 """
-function sanitize_input!(iVecchiaMLE::VecchiaMLEInput) 
+function validate_input(iVecchiaMLE::VecchiaMLEInput) 
     @assert iVecchiaMLE.n > 0 "The dimension n must be strictly positive!"
-    @assert iVecchiaMLE.k <= iVecchiaMLE.n "The number of conditioning neighbors must be less than n !"
-    @assert size(iVecchiaMLE.samples, 1) > 0 "Samples must be nonempty!"
-    @assert size(iVecchiaMLE.samples, 2) == iVecchiaMLE.n "samples must be of size Number_of_Samples x n!"
-    @assert size(iVecchiaMLE.samples, 1) == iVecchiaMLE.Number_of_Samples "samples must be of size Number_of_Samples x n!"
+    @assert iVecchiaMLE.k <= iVecchiaMLE.n "The number of conditioning neighbors must be less than n!"
+    @assert size(iVecchiaMLE.samples, 1) > 0 "samples must be nonempty!"
+    @assert size(iVecchiaMLE.samples, 2) == iVecchiaMLE.n "samples must be of size number_of_samples x n!"
+    @assert size(iVecchiaMLE.samples, 1) == iVecchiaMLE.number_of_samples "samples must be of size number_of_samples x n!"
     
     if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.mode == gpu
+        @warn "mode given is gpu, but samples are on cpu. Transferring samples to gpu."
         iVecchiaMLE.samples = CuMatrix{Float64}(iVecchiaMLE.samples)
     end
 
-    @assert length(iVecchiaMLE.ptSet) == iVecchiaMLE.n  "The ptSet given does not have n elements!"
-    for (i, pt) in enumerate(iVecchiaMLE.ptSet)
-        @assert length(pt) == 2 "Position $(i) in ptSet is not 2 dimensional!"
+    @assert length(iVecchiaMLE.ptset) == iVecchiaMLE.n  "The ptset given does not have n elements!"
+    for (i, pt) in enumerate(iVecchiaMLE.ptset)
+        @assert length(pt) == 2 "Position $(i) in ptset is not 2 dimensional!"
     end
 
     # Check is not relevant rn since rowsL and colsL are stored as the same type.
@@ -623,7 +588,7 @@ end
 """
     rows, cols, colptr = nn_to_csc(sparmat::Matrix{Float64})
 
-    A helper funciton to generate the sparsity pattern of the vecchia approximation (inverse cholesky) based 
+    A helper function to generate the sparsity pattern of the vecchia approximation (inverse cholesky) based 
     on each point's nearest neighbors. If there are n points, each with k nearest neighbors, then the matrix
     sparmat should be of size n x k. 
     
@@ -633,7 +598,7 @@ end
     TODO: Can be parallelized. GPU kernel?
     
 ## Input arguments
-* `sparmat`: The n x k matrix which for each row holds the indices of the nearest neighbors in the ptSet.
+* `sparmat`: The n x k matrix which for each row holds the indices of the nearest neighbors in the ptset.
 
 ## Output arguments
 * `rows`: A vector of row indices of the sparsity pattern for L, in CSC format.
@@ -645,37 +610,37 @@ function nn_to_csc(sparmat::Matrix{Int})::Tuple{Vector{Int}, Vector{Int}, Vector
     n, k = size(sparmat)
     
     # Preprocess the counts
-    count_vec = zeros(Int, n)
+    counts = zeros(Int, n)
     for i in 1:n
-        k_nn = min(i, k)
-        view(count_vec, view(sparmat, i, 1:k_nn)) .+= 1
+        knn = min(i, k)
+        view(counts, view(sparmat, i, 1:knn)) .+= 1
     end
 
-    # Preallocate spar_i
-    spar_i = zeros(maximum(count_vec))
+    # Preallocate spari
+    spari = zeros(maximum(counts))
     rows = ones(Int, Int(0.5 * k * (2*n - k + 1)))
     cols = copy(rows)  
     idx = 0
     colptr = ones(Int, n+1)
     for i in 1:n
-        k_nn = min(i, k)
+        knn = min(i, k)
         # Find all rows that contain i in it. TODO: Could be better?
-        spar_i_idx = 1
+        spari_idx = 1
         for j in i:n
             if i in view(sparmat, j, :)
-                spar_i[spar_i_idx] = j
-                spar_i_idx+=1
+                spari[spari_idx] = j
+                spari_idx+=1
             end
         end
 
-        len = count_vec[i]
+        len = counts[i]
         cols[(1:len).+idx] .= i
-        rows[(1:len).+idx] .= view(spar_i, 1:len)
+        rows[(1:len).+idx] .= view(spari, 1:len)
         idx += len
 
     end
-    count_vec .= cumsum(count_vec)
-    view(colptr, 2:n+1) .+= count_vec
+    counts .= cumsum(counts)
+    view(colptr, 2:n+1) .+= counts
 
     return rows, cols, colptr
 end
@@ -686,18 +651,18 @@ end
     Pretty prints the diagnostics of the VecchiaMLE Algorithm. 
     
 ## Input arguments
-* `d`: The Diagnostics returned by the VecchiaMLE_Run funciton, assuming skip_check wasn't set to true.
+* `d`: The Diagnostics returned by the VecchiaMLE_Run function, assuming skip_check wasn't set to true.
 
 """
 function print_diagnostics(d::Diagnostics)
     println("========== Diagnostics ==========")
     println(rpad("Model Creation Time:", 25), d.create_model_time)
-    println(rpad("LinAlg Solve Time:",    25), d.LinAlg_solve_time)
+    println(rpad("LinAlg Solve Time:",    25), d.linalg_solve_time)
     println(rpad("Solve Model Time:",     25), d.solve_model_time)
     println(rpad("Objective Value:",      25), d.objective_value)
     println(rpad("Normed Constraint:",    25), d.normed_constraint_value)
     println(rpad("Normed Gradient:",      25), d.normed_grad_value)
-    println(rpad("Optimization Iter:",    25), d.MadNLP_iterations)
+    println(rpad("Optimization Iter:",    25), d.iterations)
     println("=================================")
 end
 

@@ -13,7 +13,7 @@ using NLPModels, NLPModelsTest
 using .VecchiaMLE
 using VecchiaMLE: cpu, gpu
 
-include("models/JumpModel.jl")
+include("models/Jump_models.jl")
 include("models/VecchiaMLE_models.jl")
 
 include("test_output.jl")
@@ -31,7 +31,7 @@ if CUDA.has_cuda()
 end
 
 include("test_model_inputs.jl")
-include("test_abnormal_ptSet.jl")
+include("test_abnormal_ptset.jl")
 
 using HSL, MadNLPHSL
 

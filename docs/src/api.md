@@ -7,14 +7,14 @@ VecchiaMLE.VecchiaCache
 VecchiaMLE.Diagnostics
 VecchiaMLE.VecchiaModel
 VecchiaMLE.VecchiaMLEInput
-VecchiaMLE.SparsityPatternGeneration
+VecchiaMLE.sparsitypatternGeneration
 ```
 
 ## VecchiaMLE input
 
 ```@docs
 VecchiaMLE.VecchiaMLE_Run
-VecchiaMLE.VecchiaMLE_Run_Analysis!
+VecchiaMLE.VecchiaMLERunAnalysis!
 VecchiaMLE.ExecuteModel!
 VecchiaMLE.RetrieveDiagnostics!
 ```
@@ -23,22 +23,22 @@ VecchiaMLE.RetrieveDiagnostics!
 ```@docs
 VecchiaMLE.covariance2D
 VecchiaMLE.get_vecchia_model 
-VecchiaMLE.generate_Samples
+VecchiaMLE.generate_samples
 VecchiaMLE.generate_MatCov
 VecchiaMLE.generate_xyGrid
 VecchiaMLE.generate_safe_xyGrid
 VecchiaMLE._printlevel
 VecchiaMLE._computemode
-VecchiaMLE.Uni_Error
+VecchiaMLE.uni_error
 VecchiaMLE.IndexReorder
 VecchiaMLE.IndexMaxMin
 VecchiaMLE.dist_from_set
 VecchiaMLE.IndexRandom
 VecchiaMLE.KLDivergence
-VecchiaMLE.SparsityPattern
-VecchiaMLE.SparsityPattern_HNSW
-VecchiaMLE.SparsityPattern_NN
-VecchiaMLE.sanitize_input!
+VecchiaMLE.sparsitypattern
+VecchiaMLE.sparsitypattern_HNSW
+VecchiaMLE.sparsitypattern_NN
+VecchiaMLE.validate_input
 VecchiaMLE.PRINT_LEVEL_TO_MADNLP
 VecchiaMLE.nn_to_csc
 VecchiaMLE.is_csc_format

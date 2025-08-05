@@ -3,19 +3,19 @@
     # Things for model
     n = 100
     k = 10
-    Number_of_Samples = 100
+    number_of_samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
-    ptSet = VecchiaMLE.generate_safe_xyGrid(n)
-    MatCov = VecchiaMLE.generate_MatCov(params, ptSet)
-    samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples)
+    ptset = VecchiaMLE.generate_safe_xyGrid(n)
+    MatCov = VecchiaMLE.generate_MatCov(params, ptset)
+    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples)
 
-    input = VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptSet = ptSet)
+    input = VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; ptset = ptset)
     linear_solver = solver == :ma27 ? MadNLPHSL.Ma27Solver : MadNLPHSL.Ma57Solver
 
     model = VecchiaMLE.get_vecchia_model(input)
     output = madnlp(model,
         linear_solver=linear_solver,
-        print_level=input.pLevel
+        print_level=input.plevel
     )
 
     valsL = Vector{Float64}(output.solution[1:model.cache.nnzL])
@@ -27,7 +27,7 @@
     model = VecchiaMLE.get_vecchia_model(input)
     output = madnlp(model,
         linear_solver=MadNLP.UmfpackSolver,
-        print_level=input.pLevel
+        print_level=input.plevel
     )
 
     valsL = Vector{Float64}(output.solution[1:model.cache.nnzL])

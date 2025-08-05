@@ -2,13 +2,13 @@
     # Things for model
     n = 9
     k = 3
-    Number_of_Samples = 100
+    number_of_samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
     xyGrid = VecchiaMLE.generate_xyGrid(n)
     MatCov = VecchiaMLE.generate_MatCov(params, xyGrid)
-    samples = VecchiaMLE.generate_Samples(MatCov, Number_of_Samples; mode=cpu)
+    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; mode=cpu)
     
-    Sparsity = VecchiaMLE.SparsityPattern(xyGrid, k)
+    Sparsity = VecchiaMLE.sparsitypattern(xyGrid, k)
 
     # Model itself
     model = Model(()->MadNLP.Optimizer(max_iter=100, print_level=MadNLP.ERROR))
@@ -29,11 +29,11 @@
 
     # Get result from VecchiaMLE
     samples = CuMatrix{Float64}(samples)
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 2; ptSet = xyGrid)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 2; ptset = xyGrid)
     d, L_mle = VecchiaMLE_Run(input)
 
-    errors_jump = [VecchiaMLE.KLDivergence(MatCov, L_jump), VecchiaMLE.Uni_Error(MatCov, L_jump)]
-    errors_mle = [VecchiaMLE.KLDivergence(MatCov, L_mle), VecchiaMLE.Uni_Error(MatCov, L_mle)]
+    errors_jump = [VecchiaMLE.KLDivergence(MatCov, L_jump), VecchiaMLE.uni_error(MatCov, L_jump)]
+    errors_mle = [VecchiaMLE.KLDivergence(MatCov, L_mle), VecchiaMLE.uni_error(MatCov, L_mle)]
 
     for i in eachindex(errors_mle)
         @test (abs(errors_jump[i] - errors_mle[i]) < 0.01)
