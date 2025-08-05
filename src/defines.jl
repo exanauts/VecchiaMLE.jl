@@ -113,8 +113,9 @@ The fields to the struct are as follows:\n
 - `skip_check::Bool`: Whether or not to skip the `validate_input` function.
 - `metric`: The metric by which nearest neighbors are determined. Defaults to Euclidean
 - `lambda`: The regularization term scalar for the ridge term `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
+- `x0`: The user may give an inital condition, but it is limiting if you do not have the sparsity pattern. 
 """
-mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
+mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu, Vx0}
     n::Int
     k::Int
     samples::M
@@ -133,6 +134,7 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
     metric::Distances.Metric
     sparsitygen::SparsityPatternGeneration
     lambda::Float64
+    x0::Vx0
 
     function VecchiaMLEInput(
         n::Int, k::Int, 
@@ -149,10 +151,11 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
         skip_check::Bool=false,
         metric::Distances.Metric=Distances.Euclidean(),
         sparsitygen::SparsityPatternGeneration=NN,
-        lambda::Real=0.0
+        lambda::Real=0.0,
+        x0::Vx0=nothing
     ) where
         {M <:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}, V <: Union{Nothing, AbstractVector, AbstractMatrix},
-        V1 <: Union{Nothing, AbstractVector}, Vl <: Union{Nothing, AbstractVector}, Vu <: Union{Nothing, AbstractVector}}
+        V1 <: Union{Nothing, AbstractVector}, Vl <: Union{Nothing, AbstractVector}, Vu <: Union{Nothing, AbstractVector}, Vx0 <: Union{Nothing, AbstractVector}}
         m = n
         if isnothing(ptset)
             ptset_ = generate_safe_xyGrid(n)
@@ -163,8 +166,7 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
         end
         m = length(ptset_)
 
-
-        return new{M, AbstractVector, V1, Vl, Vu}(
+        return new{M, AbstractVector, V1, Vl, Vu, Vx0}(
             m,
             k,
             samples,
@@ -182,7 +184,8 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
             skip_check,
             metric,
             sparsitygen,
-            lambda
+            lambda,
+            x0
         )
     end
 end
