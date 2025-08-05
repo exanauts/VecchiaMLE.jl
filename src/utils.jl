@@ -438,7 +438,7 @@ end
 """
     rows, cols, colptr = sparsitypattern(data::AbstractVector,
                                          k::Int,
-                                         method::String="NN")
+                                         method::SparsityPatternGeneration=NN)
 
     Front end to generate the sparsity pattern of the approximate 
     precision's cholesky factor, L, in CSC format. The pattern is 
