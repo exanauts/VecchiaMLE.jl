@@ -18,7 +18,7 @@
         set_start_value(w[i], 1.0)  
     end
     # Apply constraints and objective
-    @constraint(model, cons_vecchia(w, cache) .==0)
+    @constraint(model, cons_vecchia(w, cache) .== 0)
     @objective(model, Min, obj_vecchia(w, cache))
 
     optimize!(model)
