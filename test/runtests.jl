@@ -16,6 +16,7 @@ using VecchiaMLE: cpu, gpu
 include("models/JumpModel.jl")
 include("models/VecchiaMLE_models.jl")
 
+include("test_output.jl")
 include("test_cpu_compatible_with_jump.jl")
 include("test_cpu_diagnostics.jl")
 include("test_memory_allocation_cpu.jl")
