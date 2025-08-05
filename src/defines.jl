@@ -130,7 +130,7 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
         skip_check::Bool=false,
         metric::Distances.Metric=Distances.Euclidean(),
         sparsityGeneration::SparsityPatternGeneration=NN,
-        lambda::Real = 0.0
+        lambda::Real=0.0
     ) where
         {M <:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}, V <: Union{Nothing, AbstractVector},
         V1 <: Union{Nothing, AbstractVector}, Vl <: Union{Nothing, AbstractVector}, Vu <: Union{Nothing, AbstractVector}}

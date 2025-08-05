@@ -609,6 +609,14 @@ function sanitize_input!(iVecchiaMLE::VecchiaMLEInput)
         @assert is_csc_format(iVecchiaMLE) "rowsL and colsL are not in CSC format!"
     end
 
+    if !isnothing(iVecchiaMLE.lvar_diag)    
+        @assert length(iVecchiaMLE.lvar_diag) == cache.n "lvar_diag given not proper length. expected $(cache.n), given $(length(lvar_diag))."
+    end
+    
+    if !isnothing(iVecchiaMLE.uvar_diag)
+        @assert length(iVecchiaMLE.uvar_diag) == cache.n "uvar_diag given not proper length. expected $(cache.n), given $(length(uvar_diag))."
+    end
+    
     @assert iVecchiaMLE.lambda >= 0 "lambda must be positive!"
 end
 

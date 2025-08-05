@@ -15,15 +15,11 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
     uvar::S = fill!(S(undef, nvar), Inf)
 
     if !isnothing(iVecchiaMLE.lvar_diag)
-        # Caleb: you can move the assert outside of the model
-        @assert length(iVecchiaMLE.lvar_diag) == cache.n
         view(lvar, cache.diagL) .= iVecchiaMLE.lvar_diag
         view(uvar, cache.nnzL+1:nvar) .= log.(iVecchiaMLE.lvar_diag)
     end
 
     if !isnothing(iVecchiaMLE.uvar_diag)
-        # Caleb: you can move the assert outside of the model
-        @assert length(iVecchiaMLE.uvar_diag) == cache.n
         view(uvar, cache.diagL) .= iVecchiaMLE.uvar_diag
         view(uvar, cache.nnzL+1:nvar) .= log.(iVecchiaMLE.uvar_diag)
     end
