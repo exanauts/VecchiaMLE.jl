@@ -16,4 +16,14 @@
     # Get result from VecchiaMLE cpu
     input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptSet=ptSet)
     @test_nowarn VecchiaMLE_Run(input)
+
+
+    ptSet = hcat(ptSet...)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptSet=ptSet)
+    @test_nowarn VecchiaMLE_Run(input)
+
+    ptSet = Matrix{Float64}(ptSet')
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; ptSet=ptSet)
+    @test_nowarn VecchiaMLE_Run(input)
+
 end

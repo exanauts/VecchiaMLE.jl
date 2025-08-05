@@ -135,13 +135,19 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
         sparsityGeneration::SparsityPatternGeneration=NN,
         lambda::Real=0.0
     ) where
-        {M <:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}, V <: Union{Nothing, AbstractVector},
+        {M <:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}, V <: Union{Nothing, AbstractVector, AbstractMatrix},
         V1 <: Union{Nothing, AbstractVector}, Vl <: Union{Nothing, AbstractVector}, Vu <: Union{Nothing, AbstractVector}}
         m = n
         if isnothing(ptSet)
-            ptSet = generate_safe_xyGrid(n)
+            ptSet_ = generate_safe_xyGrid(n)
+        elseif isa(ptSet, AbstractMatrix)
+            ptSet_ = tovector(ptSet)            
+        else
+            ptSet_ = ptSet
         end
-        m = length(ptSet)
+        m = length(ptSet_)
+
+
         return new{M, AbstractVector, V1, Vl, Vu}(
             m,
             k,
@@ -149,7 +155,7 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
             Number_of_Samples,
             _printlevel(pLevel),
             _computemode(mode),
-            ptSet,
+            ptSet_,
             lvar_diag,
             uvar_diag,
             diagnostics,
