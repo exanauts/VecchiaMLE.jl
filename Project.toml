@@ -23,8 +23,8 @@ SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [weakdeps]
-NLPModelsIpopt = "21141c5a-9bdb-4563-92ae-f87d6854732e"
-NLPModelsKnitro = "052768ef-5323-5732-b1bb-66c8b64840ba"
+NLPModelsIpopt = "f4238b75-b362-5c4c-b852-0801c9a21d71"
+NLPModelsKnitro = "bec4dd0d-7755-52d5-9a02-22f0ffc7efcb"
 
 [extensions]
 VecchiaMLENLPModelsIpoptExt = "NLPModelsIpopt"
