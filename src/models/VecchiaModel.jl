@@ -2,29 +2,40 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
     T = eltype(S)
 
     cache::VecchiaCache = create_vecchia_cache(S, iVecchiaMLE)
-    nvar_::Int = length(cache.rowsL) + length(cache.colptrL) - 1
-    
-    # The initial condition is for L to be 0.
-    x0_::S = S(undef, nvar_)
-    fill!(x0_, 0.0)
+    nvar::Int = length(cache.rowsL) + length(cache.colptrL) - 1
 
     # calculate nnzh
     ncon::Int = length(cache.colptrL) - 1
 
+    x0::S = fill!(S(undef, nvar), zero(T))
     y0::S = fill!(S(undef, ncon), zero(T))
-    ucon::S = fill!(S(undef, ncon), zero(T))
     lcon::S = fill!(S(undef, ncon), zero(T))
+    ucon::S = fill!(S(undef, ncon), zero(T))
+    lvar::S = fill!(S(undef, nvar), -Inf)
+    uvar::S = fill!(S(undef, nvar), Inf)
+
+    if !isnothing(iVecchiaMLE.lvar_diag)
+        view(lvar, cache.diagL) .= iVecchiaMLE.lvar_diag
+        view(uvar, cache.nnzL+1:nvar) .= log.(iVecchiaMLE.lvar_diag)
+    end
+
+    if !isnothing(iVecchiaMLE.uvar_diag)
+        view(uvar, cache.diagL) .= iVecchiaMLE.uvar_diag
+        view(uvar, cache.nnzL+1:nvar) .= log.(iVecchiaMLE.uvar_diag)
+    end
 
     meta = NLPModelMeta{T, S}(
-        nvar_,
+        nvar,
         ncon = ncon,
-        x0 = x0_,
+        x0 = x0,
         name = "Vecchia_manual",
         nnzj = 2*cache.n,
         nnzh = cache.nnzh_tri_lag,
         y0 = y0,
-        ucon = ucon,
         lcon = lcon,
+        ucon = ucon,
+        lvar = lvar,
+        uvar = uvar,
         minimize=true,
         islp=false,
         lin_nnzj = 0

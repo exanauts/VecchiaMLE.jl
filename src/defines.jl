@@ -88,14 +88,16 @@ The fields to the struct are as follows:\n
 - `MadNLP_print_level::MadNLP.LogLevels`: Print level for the optimizer. Defaults to `ERROR` if ignored.
 - `mode::ComputeMode`: Operating mode for the analysis. Either `gpu` or `cpu`. Defaults to `cpu`.
 - `ptGrid::AbstractVector`: The locations from which the samples reveal their value.
-- `rowsL::AbstractVector`: The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT!
+- `lvar_diag::AbstractVector`: Lower bounds on the diagonal of the sparse Vecchia approximation.
+- `uvar_diag::AbstractVector`: Upper bounds on the diagonal of the sparse Vecchia approximation.
+- `rowsL::AbstractVector`: The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT! 
 - `colsL::AbstractVector`: The sparsity pattern cols of L if the user gives one. MUST BE IN CSC FORMAT!
 - `colptrL::AbstractVector`: The column pointer of L if the user gives one. MUST BE IN CSC FORMAT!
 - `skip_check::Bool`: Whether or not to skip the `sanitize_input!` function.
 - `metric`: The metric by which nearest neighbors are determined. Defaults to Euclidean
 - `lambda`: The regularization term scalar for the ridge term `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
 """
-mutable struct VecchiaMLEInput{M, V, V1}
+mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
     n::Int
     k::Int
     samples::M
@@ -103,6 +105,8 @@ mutable struct VecchiaMLEInput{M, V, V1}
     pLevel::MadNLP.LogLevels
     mode::ComputeMode
     ptGrid::V
+    lvar_diag::Vl
+    uvar_diag::Vu
     diagnostics::Bool
     rowsL::V1
     colsL::V1
@@ -115,8 +119,10 @@ mutable struct VecchiaMLEInput{M, V, V1}
     function VecchiaMLEInput(
         n::Int, k::Int, 
         samples::M, Number_of_Samples::Int, 
-        pLevel::PL=5, mode::CM=1
-        ; ptGrid::V=nothing, 
+        pLevel::PL=5, mode::CM=1;
+        ptGrid::V=nothing,
+        lvar_diag::Vl=nothing,
+        uvar_diag::Vu=nothing,
         diagnostics::Bool=false,
         rowsL::V1=nothing,
         colsL::V1=nothing,
@@ -124,16 +130,16 @@ mutable struct VecchiaMLEInput{M, V, V1}
         skip_check::Bool=false,
         metric::Distances.Metric=Distances.Euclidean(),
         sparsityGeneration::SparsityPatternGeneration=NN,
-        lambda::Real = 0.0
+        lambda::Real=0.0
     ) where
         {M <:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}, V <: Union{Nothing, AbstractVector},
-        V1 <: Union{Nothing, AbstractVector}}
+        V1 <: Union{Nothing, AbstractVector}, Vl <: Union{Nothing, AbstractVector}, Vu <: Union{Nothing, AbstractVector}}
         m = n
         if isnothing(ptGrid)
             ptGrid = generate_safe_xyGrid(n)
         end
         m = length(ptGrid)
-        return new{M, AbstractVector, V1}(
+        return new{M, AbstractVector, V1, Vl, Vu}(
             m,
             k,
             samples,
@@ -141,6 +147,8 @@ mutable struct VecchiaMLEInput{M, V, V1}
             _printlevel(pLevel),
             _computemode(mode),
             ptGrid,
+            lvar_diag,
+            uvar_diag,
             diagnostics,
             rowsL,
             colsL,
