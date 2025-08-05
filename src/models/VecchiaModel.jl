@@ -6,13 +6,11 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
 
     # calculate nnzh
     ncon::Int = length(cache.colptrL) - 1
-
+    x0_::S = fill!(S(undef, nvar), zero(T))
     # check x0
-    if isnothing(iVecchiaMLE.x0)
-        x0_::S = fill!(S(undef, nvar), zero(T))
-    else 
-        zs::S = log.(view(iVecchiaMLE.x0, cache.diagL))
-        x0_::S = vcat(iVecchiaMLE.x0, zs)
+    if !isnothing(iVecchiaMLE.x0) 
+        view(x0_, 1:cache.nnzL) .= iVecchiaMLE.x0
+        view(x0_, (1:cache.n).+cache.nnzL) .= log.(view(iVecchiaMLE.x0, cache.diagL))
     end 
 
     y0::S = fill!(S(undef, ncon), zero(T))
