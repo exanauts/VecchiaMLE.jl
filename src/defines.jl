@@ -137,7 +137,7 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu}
             ptGrid = generate_safe_xyGrid(n)
         end
         m = length(ptGrid)
-        return new{M, AbstractVector, V1}(
+        return new{M, AbstractVector, V1, Vl, Vu}(
             m,
             k,
             samples,
