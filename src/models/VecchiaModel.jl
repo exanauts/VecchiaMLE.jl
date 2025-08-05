@@ -7,7 +7,7 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput; lambda::Real=1e-8
     # calculate nnzh
     ncon::Int = length(cache.colptrL) - 1
 
-    x0::S = fill!(S(undef, nvar, zero(T))
+    x0::S = fill!(S(undef, nvar), zero(T))
     y0::S = fill!(S(undef, ncon), zero(T))
     lcon::S = fill!(S(undef, ncon), zero(T))
     ucon::S = fill!(S(undef, ncon), zero(T))
