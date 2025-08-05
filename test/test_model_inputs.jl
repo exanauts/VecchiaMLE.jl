@@ -33,5 +33,10 @@
     input.n = 9
     @test_throws AssertionError VecchiaMLE.VecchiaMLE_Run(input)
     input.ptset = VecchiaMLE.generate_safe_xyGrid(input.n)
+    @test_nowarn d, L = VecchiaMLE_Run(input)
+    d, L = VecchiaMLE_Run(input)
+
+    _, _, vals = findnz(L)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; x0= ones(length(vals)))
     @test_nowarn VecchiaMLE_Run(input)
 end
