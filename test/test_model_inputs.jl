@@ -41,5 +41,5 @@
     @test_nowarn VecchiaMLE_Run(input)
 
     input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; x0= zeros(length(vals)))
-    @test_warn "User given x0 is not feasible. setting to zeros." VecchiaMLE_Run(input)
+    @test_warn "User given x0 is not feasible. setting to identity." VecchiaMLE_Run(input)
 end
