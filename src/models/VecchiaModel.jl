@@ -7,14 +7,7 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
     # calculate nnzh
     ncon::Int = length(cache.colptrL) - 1
 
-    # check x0
-    if isnothing(iVecchiaMLE.x0)
-        x0_::S = fill!(S(undef, nvar), zero(T))
-    else 
-        zs::S = log.(view(iVecchiaMLE.x0, cache.diagL))
-        x0_::S = vcat(iVecchiaMLE.x0, zs)
-    end 
-
+    x0::S = fill!(S(undef, nvar), zero(T))
     y0::S = fill!(S(undef, ncon), zero(T))
     lcon::S = fill!(S(undef, ncon), zero(T))
     ucon::S = fill!(S(undef, ncon), zero(T))    
@@ -36,7 +29,7 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
     meta = NLPModelMeta{T, S}(
         nvar,
         ncon = ncon,
-        x0 = x0_,
+        x0 = x0,
         name = "Vecchia_manual",
         nnzj = 2*cache.n,
         nnzh = cache.nnzh_tri_lag,
