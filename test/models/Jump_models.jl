@@ -47,50 +47,7 @@ function obj_vecchia(w::AbstractVector, cache::VecchiaCacheJump, model, lambda::
     return t1 + 0.5 * t2 + (lambda * 0.5) * expr
 end
 
-function grad_vecchia(g::AbstractVector, w::AbstractVector, cache::VecchiaCacheJump)
-    g[1:n] = Vec_from_LowerTriangular(cache.samples_outerprod * L, cache.n)
-    println("Geez")
-    display(g)
-    return g
-end
-
-function hess_vecchia(H::AbstractMatrix, w::AbstractVector, cache::VecchiaCacheJump)
-    H[1:cache.n, 1:cache.n] = cache.samples_outerprod
-    return H
-end
-
 function cons_vecchia(w::AbstractVector, cache::VecchiaCacheJump)
     #return exp.(w[(1:cache.n).+cache.nnzL]) .- w[cache.colptr[1:end-1]]
     return [exp(w[i]) - w[j] for  (i, j) in zip((1:cache.n).+cache.nnzL, cache.colptr[1:end-1])]
-end
-
-function jac_vecchia(grad_c::AbstractVector, w::AbstractVector, cache::VecchiaCacheJump)
-    for (idx, i) in enumerate(cache.colptr[1:end-1])
-        grad_c[i] -= y[idx] - L[idx, idx]
-    end 
-    return grad_c
-end
-
-function cons_hess_vecchia(Hess_c::AbstractMatrix, w::AbstractVector, cache::VecchiaCacheJump)
-
-    # Diagonal term
-    for (idx, i) in enumerate(cache.colptr[1:end-1])
-        Hess_c[i, i] += lambda / (L[idx, idx])^2
-    end
-
-    # Lambda, L term
-    lm_loc = Int(cache.n * (cache.n + 1) / 2) + cache.n
-    for i in 1:cache.n
-        for idx in eachindex(cache.colptr[1:end-1])
-            Hess_c[lm_loc + i, idx] -= 1.0 / (L[idx, idx])
-            Hess_c[idx, lm_loc + i] -= 1.0 / (L[idx, idx])
-        end
-    end
-    
-    # Y term
-    y_loc = lm_loc - cache.n
-    Hess_c[1:cache.n .+ y_loc, 1:cache.n] .+= 1.0
-    Hess_c[1:cache.n, 1:cache.n .+ y_loc] .+= 1.0
-
-    return Hess_c
 end
