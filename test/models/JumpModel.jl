@@ -27,7 +27,7 @@ function create_vecchia_cache_jump(samples::AbstractMatrix, Sparsity)
     return VecchiaCacheJump(samples_outerprod, samples, n, M, colptr, nnz_L, rows, cols)
 end
 
-function obj_vecchia(w::AbstractVector, cache::VecchiaCacheJump)
+function obj_vecchia(w::AbstractVector, cache::VecchiaCacheJump, model, lambda::Real=0.0)
     t1 = -cache.M * sum(w[(cache.nnzL+1):end])
 
     # This looks stupid, but its better than putting it on one line 
@@ -41,13 +41,17 @@ function obj_vecchia(w::AbstractVector, cache::VecchiaCacheJump)
             ) 
             for k in 1:cache.M
         )
-    return t1 + 0.5 * t2
+    
+    expr = @expression(
+        model, 
+        sum((w[i] - (i in view(cache.colptr, 1:cache.n) || i > cache.nnzL ? w[i] : 0.0))^2 for i in eachindex(w))
+    )
+
+    return t1 + 0.5 * t2 + (lambda * 0.5) * expr
 end
 
 function grad_vecchia(g::AbstractVector, w::AbstractVector, cache::VecchiaCacheJump)
     g[1:n] = Vec_from_LowerTriangular(cache.samples_outerprod * L, cache.n)
-    println("Geez")
-    display(g)
     return g
 end
 
