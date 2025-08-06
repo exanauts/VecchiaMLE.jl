@@ -584,7 +584,7 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
     
     @assert iVecchiaMLE.lambda >= 0 "lambda must be positive!"
 
-    nvar = Int(0.5 * iVecchiaMLE.k * ( 2*iVecchiaMLE.n - iVecchiaMLE.k + 1))
+    nvar = Int(0.5 * (iVecchiaMLE.k * ( 2*iVecchiaMLE.n + iVecchiaMLE.k + 1)))
     if !isnothing(iVecchiaMLE.x0)
         @assert length(iVecchiaMLE.x0) == nvar "given x0 not expected size: expected $(nvar), given $(length(iVecchiaMLE.x0))"
     end

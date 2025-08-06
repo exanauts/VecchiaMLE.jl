@@ -9,12 +9,8 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
     x0_::S = fill!(S(undef, nvar), zero(T))
     # check x0
     if !isnothing(iVecchiaMLE.x0) 
-        if mapreduce(x -> x > 0, &, view(iVecchiaMLE.x0, cache.diagL))       
-            view(x0_, 1:cache.nnzL) .= iVecchiaMLE.x0
-            view(x0_, (1:cache.n).+cache.nnzL) .= log.(view(iVecchiaMLE.x0, cache.diagL))
-        else
-            @warn "User given x0 is not feasible. setting to zeros."
-        end
+        view(x0_, 1:cache.nnzL) .= iVecchiaMLE.x0
+        view(x0_, (1:cache.n).+cache.nnzL) .= log.(view(iVecchiaMLE.x0, cache.diagL))
     end 
 
     y0::S = fill!(S(undef, ncon), zero(T))
