@@ -586,7 +586,7 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
 
     nvar = Int(0.5 * (iVecchiaMLE.k * ( 2*iVecchiaMLE.n + iVecchiaMLE.k + 1)))
     if !isnothing(iVecchiaMLE.x0)
-        @assert length(iVecchiaMLE.x0) == nvar "given x0 not expected size: expected $(nvar), given $(length(iVecchiaMLE.x0))"
+        @assert length(iVecchiaMLE.x0) == nvar "given x0 not expected size: expected $(nvar), given $(length(x0))"
     end
 end
 
