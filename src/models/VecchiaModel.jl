@@ -27,7 +27,7 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
     #TODO: Add checks to sanitize_input, also provide bounds if none were given in VecchiaMLEInput constructor
     if !isnothing(iVecchiaMLE.lvar_diag)
         view(lvar, cache.diagL) .= iVecchiaMLE.lvar_diag
-        view(uvar, cache.nnzL+1:nvar) .= log.(iVecchiaMLE.lvar_diag)
+        view(lvar, cache.nnzL+1:nvar) .= log.(iVecchiaMLE.lvar_diag)
     else
         # Always ensure that the diagonal coefficient Lᵢᵢ of the Vecchia approximation are strictly positive
         view(lvar, cache.diagL) .= 1e-16
