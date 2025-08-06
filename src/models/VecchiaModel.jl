@@ -14,7 +14,7 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
             view(x0_, (1:cache.n).+cache.nnzL) .= log.(view(iVecchiaMLE.x0, cache.diagL))
         else
             @warn "User given x0 is not feasible. Setting x0 such that the initial Vecchia approximation is the identity."
-            view(x0_, cache.diagL, one(T))
+            view(x0_, cache.diagL) .= one(T)
         end
     end 
 
