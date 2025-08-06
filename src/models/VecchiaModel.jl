@@ -13,7 +13,8 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
             view(x0_, 1:cache.nnzL) .= iVecchiaMLE.x0
             view(x0_, (1:cache.n).+cache.nnzL) .= log.(view(iVecchiaMLE.x0, cache.diagL))
         else
-            @warn "User given x0 is not feasible. setting to zeros."
+            @warn "User given x0 is not feasible. setting to identity."
+            view(x0_, cache.diagL, one(T))
         end
     end 
 
