@@ -19,7 +19,7 @@
     end
     # Apply constraints and objective
     @constraint(model, cons_vecchia(w, cache) .== 0)
-    @objective(model, Min, obj_vecchia(w, cache))
+    @objective(model, Min, obj_vecchia(w, cache, model))
 
     optimize!(model)
     L_jump = sparse(cache.rowsL, cache.colsL, value.(w)[1:cache.nnzL]) 
