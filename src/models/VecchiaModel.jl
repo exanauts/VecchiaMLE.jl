@@ -31,7 +31,7 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
     else
         # Always ensure that the diagonal coefficient Lᵢᵢ of the Vecchia approximation are strictly positive
         view(lvar, cache.diagL) .= 1e-16
-        view(uvar, cache.nnzL+1:nvar) .= log(1e-16)
+        view(lvar, cache.nnzL+1:nvar) .= log(1e-16)
     end
 
     if !isnothing(iVecchiaMLE.uvar_diag)
