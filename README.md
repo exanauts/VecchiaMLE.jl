@@ -9,10 +9,13 @@
 
 ## Overview
 
-This project computes an approximation of the precision matrix's Cholesky factor for a covariance matrix using a Maximum Likelihood Estimation (MLE) formulation. The computed Cholesky factor, `L`, is generated via the Vecchia Approximation, which has the advantage of being **sparse** and **approximately banded**, making it efficient for large-scale problems. 
+**VecchiaMLE.jl** is a Gaussian Process (GP) Machine Learning library written in Julia, which approximates the inverse cholesky factor of a GPs Covariance 
+matrix via a nonparametric optimization process. The nonzero entries of the inverse cholesky, L, are determined via the Vecchia Approximation - that is, 
+conditional depenencies are determined by local proximity to any given point. The values of L are recovered via optimizing the joint probability distribtuion 
+function (mean zero) to best match the given samples. Other regularization terms are implemented for stability and biasing purposes.
 
-The only parameter which needs serious input is the samples. The samples matrix assumes that the samples are given as **row** vectors, not columns! 
-Note that if the samples matrix is empty or is not given as an input, the analysis cannot be ran. 
+**VecchiaMLE.jl** requires the user to provide at the least the samples matrix; the accuracy of the Vecchia Approximation (number of conditioning points, which manifests as the number of nonzeros per row of L); as well as the computation mode, which can be either on CPU or GPU. 
+
 
 > **Note:** All samples (generated or provided) are assumed to have a zero-mean distribution.
 
@@ -32,12 +35,12 @@ Before you start, make sure you have the following:
 The struct `VecchiaMLEInput` needs to be properly filled out in order for the analysis to be run. The components of said structure is as follows:
 
 ```
-n::Integer                           # The size of the problem (e.g., dimension of the covariance matrix). 
-k::Integer                           # Number of conditioning points per point for the Vecchia Approximation.
+n::Int                           # The size of the problem (e.g., dimension of the covariance matrix). 
+k::Int                           # Number of conditioning points per point for the Vecchia Approximation.
 samples::Matrix{Float64}             # Matrix of samples (each row is a sample).
-number_of_samples::Integer           # Number of samples to generate (if samples_given=false).
-mode::Integer                        # Operation mode. Expects an int [1: cpu, 2: gpu].
-MadNLP_Print_level::Integer          # Print level of MadNLP. Expects an int with the corresponding flag [1: TRACE, 2: DEBUG, 3: INFO, 4: WARN, 5: ERROR].
+number_of_samples::Int           # Number of samples to generate (if samples_given=false).
+mode::Int                        # Operation mode. Expects an int [1: cpu, 2: gpu].
+MadNLP_Print_level::Int          # Print level of MadNLP. Expects an int with the corresponding flag [1: TRACE, 2: DEBUG, 3: INFO, 4: WARN, 5: ERROR].
 ```
 
 ## Usage
@@ -53,8 +56,8 @@ n = 10                                         # or any positive integer
 number_of_samples = 100                        # or however many you want
 params = [5.0, 0.2, 2.25, 0.25]                # Follow the procedure for matern in BesselK.jl
 ptset = VecchiaMLE.generate_safe_xyGrid(n)
-MatCov = VecchiaMLE.generate_MatCov(params, ptset) # size n x n
-samples = VecchiaMLE.generate_samples(MatCov, number_of_samples)
+MatCov = VecchiaMLE.GenerateMatCov(params, ptset) # size n x n
+samples = VecchiaMLE.GenerateSamples(MatCov, number_of_samples)
 ```
 
 You can easily skip the Covariance generation if you already have one. To give insight as to why the covariance matrix is of that size, the creation of the covariance matrix requires a set of points in space to generate the matrix entries. This is done by generating a 2D grid, on the postive unit square. That is, we use the following function:

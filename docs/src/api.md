@@ -23,8 +23,8 @@ VecchiaMLE.RetrieveDiagnostics!
 ```@docs
 VecchiaMLE.covariance2D
 VecchiaMLE.get_vecchia_model 
-VecchiaMLE.generate_samples
-VecchiaMLE.generate_MatCov
+VecchiaMLE.GenerateSamples
+VecchiaMLE.GenerateMatCov
 VecchiaMLE.generate_xyGrid
 VecchiaMLE.generate_safe_xyGrid
 VecchiaMLE._printlevel
@@ -38,8 +38,7 @@ VecchiaMLE.KLDivergence
 VecchiaMLE.sparsitypattern
 VecchiaMLE.sparsitypattern_HNSW
 VecchiaMLE.sparsitypattern_NN
-VecchiaMLE.validate_input
-VecchiaMLE.PRINT_LEVEL_TO_MADNLP
+VecchiaMLE.validate_input!
 VecchiaMLE.nn_to_csc
 VecchiaMLE.is_csc_format
 VecchiaMLE.print_diagnostics

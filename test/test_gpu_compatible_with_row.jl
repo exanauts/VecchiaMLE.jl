@@ -5,8 +5,8 @@
     number_of_samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
     xyGrid = VecchiaMLE.generate_xyGrid(n)
-    MatCov = VecchiaMLE.generate_MatCov(params, xyGrid)
-    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; mode=gpu)
+    MatCov = VecchiaMLE.GenerateMatCov(params, xyGrid)
+    samples = VecchiaMLE.GenerateSamples(MatCov, number_of_samples; mode=gpu)
     
     Sparsity = VecchiaMLE.sparsitypattern(xyGrid, k)
 

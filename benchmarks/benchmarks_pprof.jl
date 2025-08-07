@@ -10,8 +10,8 @@ number_of_samples = 100
 params = [5.0, 0.2, 2.25, 0.25]
 
 @pprof begin
-    MatCov = VecchiaMLE.generate_MatCov(n, params)
-    samples = VecchiaMLE.generate_samples(MatCov, n, number_of_samples; mode=VecchiaMLE.cpu)
+    MatCov = VecchiaMLE.GenerateMatCov(n, params)
+    samples = VecchiaMLE.GenerateSamples(MatCov, n, number_of_samples; mode=VecchiaMLE.cpu)
     input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1)
 
     global diagnostics, L = VecchiaMLE_Run(input)

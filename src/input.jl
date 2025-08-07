@@ -13,7 +13,7 @@
 """
 function VecchiaMLE_Run(iVecchiaMLE::VecchiaMLEInput)
 
-    !iVecchiaMLE.skip_check && validate_input(iVecchiaMLE)
+    !iVecchiaMLE.skip_check && validate_input!(iVecchiaMLE)
     preschol = spzeros(iVecchiaMLE.n, iVecchiaMLE.n)
     diagnostics = Diagnostics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, cpu)
     VecchiaMLERunAnalysis!(iVecchiaMLE, preschol, diagnostics)
@@ -40,8 +40,7 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, preschol::AbstractMatrix, d
     
     diags.solve_model_time = @elapsed begin
         output = vecchia_solver(Val(iVecchiaMLE.solver), model,
-            #linear_solver=MadNLPHSL.Ma57Solver, # Linear Solver should be determined if found on machine! #TODO: Later
-            print_level=iVecchiaMLE.plevel,
+            print_level=convert_plevel(Val(iVecchiaMLE.solver), Val(iVecchiaMLE.plevel)),
             tol=1e-8
         )
     end
@@ -51,7 +50,7 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, preschol::AbstractMatrix, d
     colsL = view(model.cache.colsL, :)
 
     # Casting to CPU matrices
-    if iVecchiaMLE.mode != cpu
+    if iVecchiaMLE.mode.val != :cpu
         valsL = Vector{Float64}(valsL)
         rowsL = Vector{Int}(rowsL)
         colsL = Vector{Int}(colsL)

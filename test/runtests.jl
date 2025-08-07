@@ -10,9 +10,6 @@ using CUDA
 using NLPModels, NLPModelsTest
 # using Random
 
-using .VecchiaMLE
-using VecchiaMLE: cpu, gpu
-
 include("models/Jump_models.jl")
 include("models/VecchiaMLE_models.jl")
 

@@ -6,10 +6,10 @@ using CUDA
 function benchmarks_models(; n::Int=10, k::Int=10, number_of_samples::Int=100, verbose::Bool=true)
   params = [5.0, 0.2, 2.25, 0.25] 
   xyGrid = VecchiaMLE.generate_xyGrid(n)
-  MatCov = VecchiaMLE.generate_MatCov(n, params, xyGrid)
+  MatCov = VecchiaMLE.GenerateMatCov(n, params, xyGrid)
 
-  samples_cpu = VecchiaMLE.generate_samples(MatCov, n, number_of_samples; mode=cpu)
-  samples_gpu = VecchiaMLE.generate_samples(MatCov, n, number_of_samples; mode=gpu)
+  samples_cpu = VecchiaMLE.GenerateSamples(MatCov, n, number_of_samples; mode=cpu)
+  samples_gpu = VecchiaMLE.GenerateSamples(MatCov, n, number_of_samples; mode=gpu)
   model_cpu = VecchiaMLE.VecchiaModelCPU(samples_cpu, k, xyGrid)  # warm up
   model_gpu = VecchiaMLE.VecchiaModelGPU(samples_gpu, k, xyGrid)  # warm up
   timer_model_cpu = @elapsed VecchiaMLE.VecchiaModelCPU(samples_cpu, k, xyGrid)
