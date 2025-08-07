@@ -34,13 +34,11 @@
 
         @testset norm(SparseMatrixCSC(L_mle) - L_jump) ≤ 1e-6
 
-        if lambda == 0.0
-            errors_jump = [VecchiaMLE.KLDivergence(MatCov, L_jump), VecchiaMLE.uni_error(MatCov, L_jump)]
-            errors_mle = [VecchiaMLE.KLDivergence(MatCov, L_mle), VecchiaMLE.uni_error(MatCov, L_mle)]
+        errors_jump = [VecchiaMLE.KLDivergence(MatCov, L_jump), VecchiaMLE.uni_error(MatCov, L_jump)]
+        errors_mle = [VecchiaMLE.KLDivergence(MatCov, L_mle), VecchiaMLE.uni_error(MatCov, L_mle)]
 
-            for i in eachindex(errors_mle)
-                @test (abs(errors_jump[i] - errors_mle[i]) < 0.01)
-            end
+        for i in eachindex(errors_mle)
+            @test (abs(errors_jump[i] - errors_mle[i]) < 0.01)
         end
     end
 end

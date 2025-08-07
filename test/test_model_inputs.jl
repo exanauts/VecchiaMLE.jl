@@ -1,5 +1,5 @@
 @testset "Model_Inputs" begin
-    # Things for model
+    # Parameters for the model
     n = 9
     k = 3
     number_of_samples = 100

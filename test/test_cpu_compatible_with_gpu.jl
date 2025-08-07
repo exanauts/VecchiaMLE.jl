@@ -19,13 +19,11 @@
 
         @testset norm(L_cpu - SparseMatrixCSC(L_gpu)) ≤ 1e-4
 
-        if lambda == 0.0
-            errors_cpu = [VecchiaMLE.KLDivergence(MatCov, L_cpu), VecchiaMLE.uni_error(MatCov, L_cpu)]
-            errors_gpu = [VecchiaMLE.KLDivergence(MatCov, L_gpu), VecchiaMLE.uni_error(MatCov, L_gpu)]
+        errors_cpu = [VecchiaMLE.KLDivergence(MatCov, L_cpu), VecchiaMLE.uni_error(MatCov, L_cpu)]
+        errors_gpu = [VecchiaMLE.KLDivergence(MatCov, L_gpu), VecchiaMLE.uni_error(MatCov, L_gpu)]
 
-            for i in eachindex(errors_gpu)
-                @test (abs(errors_cpu[i] - errors_gpu[i]) < 0.01)
-            end
+        for i in eachindex(errors_gpu)
+            @test (abs(errors_cpu[i] - errors_gpu[i]) < 0.01)
         end
     end
 end
