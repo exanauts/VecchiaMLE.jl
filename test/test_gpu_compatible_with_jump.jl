@@ -1,5 +1,5 @@
 @testset "JuMP_Compatible_GPU" begin
-    @testset "lambda = $lambda" for lambda in (0.0, 1e-8, 100.0)
+    @testset "lambda = $lambda" for lambda in (0.0, 1e-8, 1.0)
         # Parameters for the model
         n = 9
         k = 3
@@ -37,10 +37,9 @@
         errors_jump = [VecchiaMLE.KLDivergence(MatCov, L_jump), VecchiaMLE.uni_error(MatCov, L_jump)]
         errors_mle = [VecchiaMLE.KLDivergence(MatCov, L_mle), VecchiaMLE.uni_error(MatCov, L_mle)]
         
-        if lambda != 100.0 # lambda = 100 might be too much for gpu error comparison.
-            for i in eachindex(errors_mle)
-                @test (abs(errors_jump[i] - errors_mle[i]) < 0.01)
-            end
+        for i in eachindex(errors_mle)
+            @test (abs(errors_jump[i] - errors_mle[i]) < 0.01)
         end
+    
     end
 end

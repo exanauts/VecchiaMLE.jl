@@ -1,5 +1,5 @@
 @testset "JuMP_Compatible_CPU" begin
-    @testset "lambda = $lambda" for lambda in (0.0, 1e-8, 100.0)
+    @testset "lambda = $lambda" for lambda in (0.0, 1e-8, 1.0)
         # Parameters for the model
         n = 9
         k = 3
