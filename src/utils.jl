@@ -671,8 +671,8 @@ function print_diagnostics(d::Diagnostics)
     println("=================================")
 end
 
-function vecchia_solver(solver::Val{<:Symbol}, args...; kwargs...)
-    error("The solver $solver is not available.")
+function vecchia_solver(::Val{s}, args...; kwargs...) where {s}
+    error("The solver $s is not available.")
 end
 
 function vecchia_solver(::Val{:madnlp}, args...; kwargs...)
