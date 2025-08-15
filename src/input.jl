@@ -67,7 +67,9 @@ end
 See VecchiaMLE_Run()
 """
 function RetrieveDiagnostics!(iVecchiaMLE, output, model, diagnostics)
-    diagnostics.linalg_solve_time = output.counters.linear_solver_time
+    if iVecchiaMLE.solver == :madnlp
+        diagnostics.linalg_solve_time = output.counters.linear_solver_time
+    end
     diagnostics.iterations = output.iter
     diagnostics.mode = iVecchiaMLE.mode
 

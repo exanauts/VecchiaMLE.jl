@@ -203,25 +203,28 @@ end
 
 
 # cpu implementation
-function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::Vector{Int}, 
-    hrows::Vector{Int}, hcols::Vector{Int}) 
-    
-    carry = 1
-    idx = 1
-    for i in 1:n
-        m = colptr_diff[i]
-            for j in 1:m
-                view(hrows, (0:(m-j)).+carry) .= (j:m).+(idx-1)
-                fill!(view(hcols, carry:carry+m-j), idx + j - 1)
-                carry += m - j + 1
+for INT in (:Int32, :Int64)
+    @eval begin
+        function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::Vector{Int},
+                                                      hrows::Vector{$INT}, hcols::Vector{$INT})
+            carry = 1
+            idx = 1
+            for i in 1:n
+                m = colptr_diff[i]
+                    for j in 1:m
+                        view(hrows, (0:(m-j)).+carry) .= (j:m).+(idx-1)
+                        fill!(view(hcols, carry:carry+m-j), idx + j - 1)
+                        carry += m - j + 1
+                    end
+                idx += m
             end
-        idx += m
+
+            #Then need the diagonal tail
+            idx_to = idx + nnzh - carry
+            view(hrows, carry:nnzh) .= idx:idx_to
+            view(hcols, carry:nnzh) .= idx:idx_to
+
+            return hrows, hcols
+        end
     end
-
-    #Then need the diagonal tail
-    idx_to = idx + nnzh - carry
-    view(hrows, carry:nnzh) .= idx:idx_to
-    view(hcols, carry:nnzh) .= idx:idx_to
-
-    return hrows, hcols
 end
