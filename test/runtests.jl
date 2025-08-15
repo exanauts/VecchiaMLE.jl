@@ -11,11 +11,13 @@ using NLPModels, NLPModelsTest
 # using Random
 
 using .VecchiaMLE
-using VecchiaMLE: cpu, gpu
 
+# Includes
 include("models/Jump_models.jl")
 include("models/VecchiaMLE_models.jl")
 
+
+# Tests
 include("test_output.jl")
 include("test_cpu_compatible_with_jump.jl")
 include("test_cpu_diagnostics.jl")

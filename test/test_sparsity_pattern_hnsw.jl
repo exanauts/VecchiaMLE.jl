@@ -6,7 +6,7 @@
     params = [5.0, 0.2, 2.25, 0.25]
     ptset = VecchiaMLE.generate_safe_xyGrid(n)
     MatCov = VecchiaMLE.generate_MatCov(params, ptset)
-    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; mode=cpu)
+    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; mode=VecchiaMLE.cpu)
     
     # Get result from VecchiaMLE NearestNeighbors
     inputNN = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; ptset = ptset, sparsitygen=VecchiaMLE.NN)
