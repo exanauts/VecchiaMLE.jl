@@ -42,7 +42,7 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, preschol::AbstractMatrix, d
         output = vecchia_solver(Val(iVecchiaMLE.solver), model,
             #linear_solver=MadNLPHSL.Ma57Solver, # Linear Solver should be determined if found on machine! #TODO: Later
             print_level=iVecchiaMLE.plevel,
-            tol=1e-8
+            tol=iVecchiaMLE.solver_tol,
         )
     end
     

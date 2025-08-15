@@ -110,6 +110,7 @@ The fields to the struct are as follows:\n
 - `colsL::AbstractVector`: The sparsity pattern cols of L if the user gives one. MUST BE IN CSC FORMAT!
 - `colptrL::AbstractVector`: The column pointer of L if the user gives one. MUST BE IN CSC FORMAT!
 - `solver::Symbol`: Optimization solver (:madnlp, :ipopt, :knitro). Defaults to `:madnlp`.
+- `solver_tol::Float64`: Tolerance for the optimization solver. Defaults to `1e-8`.
 - `skip_check::Bool`: Whether or not to skip the `validate_input` function.
 - `metric`: The metric by which nearest neighbors are determined. Defaults to Euclidean
 - `lambda`: The regularization term scalar for the ridge term `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
@@ -130,6 +131,7 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu, Vx0}
     colsL::V1
     colptrL::V1
     solver::Symbol
+    solver_tol::Float64
     skip_check::Bool
     metric::Distances.Metric
     sparsitygen::SparsityPatternGeneration
@@ -148,6 +150,7 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu, Vx0}
         colsL::V1=nothing,
         colptrL::V1=nothing,
         solver::Symbol=:madnlp,
+        solver_tol=1e-8,
         skip_check::Bool=false,
         metric::Distances.Metric=Distances.Euclidean(),
         sparsitygen::SparsityPatternGeneration=NN,
@@ -181,6 +184,7 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu, Vx0}
             colsL,
             colptrL,
             solver,
+            solver_tol,
             skip_check,
             metric,
             sparsitygen,
