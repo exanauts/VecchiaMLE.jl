@@ -40,7 +40,7 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, preschol::AbstractMatrix, d
     
     diags.solve_model_time = @elapsed begin
         output = vecchia_solver(Val(iVecchiaMLE.solver), model,
-            #linear_solver=MadNLPHSL.Ma57Solver, # Linear Solver should be determined if found on machine! #TODO: Later
+            linear_solver=MadNLPHSL.Ma57Solver,
             print_level=iVecchiaMLE.plevel,
             tol=iVecchiaMLE.solver_tol,
         )
