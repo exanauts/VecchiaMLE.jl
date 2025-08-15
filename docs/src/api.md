@@ -8,6 +8,7 @@ VecchiaMLE.Diagnostics
 VecchiaMLE.VecchiaModel
 VecchiaMLE.VecchiaMLEInput
 VecchiaMLE.SparsityPatternGeneration
+VecchiaMLE.SUPPORTED_SOLVERS
 ```
 
 ## VecchiaMLE input
