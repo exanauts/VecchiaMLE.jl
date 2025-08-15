@@ -6,7 +6,7 @@
     params = [5.0, 0.2, 2.25, 0.25]
     ptset = VecchiaMLE.generate_safe_xyGrid(n)
     MatCov = VecchiaMLE.generate_MatCov(params, ptset)
-    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; mode=cpu)
+    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; mode=VecchiaMLE.cpu)
     
     for pt in ptset
         pt[1] += randn(Float64) * 1e-2

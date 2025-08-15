@@ -12,6 +12,10 @@ determine the print level of both VecchiaMLE and MadNLP.
 """
 @enum PrintLevel VTRACE=1 VDEBUG=2 VINFO=3 VWARN=4 VERROR=5 VFATAL=6
 
+"""
+Supported solvers for the optimization problem. 
+"""
+const SUPPORTED_SOLVERS = Set([:madnlp, :ipopt, :knitro])
 
 """
 Specification for the Sparsity Pattern generation algorithm. 
