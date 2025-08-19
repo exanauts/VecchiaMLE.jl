@@ -56,8 +56,8 @@ n = 10                                         # or any positive integer
 number_of_samples = 100                        # or however many you want
 params = [5.0, 0.2, 2.25, 0.25]                # Follow the procedure for matern in BesselK.jl
 ptset = VecchiaMLE.generate_safe_xyGrid(n)
-MatCov = VecchiaMLE.GenerateMatCov(params, ptset) # size n x n
-samples = VecchiaMLE.GenerateSamples(MatCov, number_of_samples)
+MatCov = VecchiaMLE.generate_MatCov(params, ptset) # size n x n
+samples = VecchiaMLE.generate_samples(MatCov, number_of_samples)
 ```
 
 You can easily skip the Covariance generation if you already have one. To give insight as to why the covariance matrix is of that size, the creation of the covariance matrix requires a set of points in space to generate the matrix entries. This is done by generating a 2D grid, on the postive unit square. That is, we use the following function:

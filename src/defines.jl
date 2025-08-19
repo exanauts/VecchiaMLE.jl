@@ -4,27 +4,19 @@ Computation mode for which the analysis to run. Currently
 only defined as cpu or gpu, but in the future could encompass
 different gpu architectures. 
 """
-const ComputeTag = (:cpu, :gpu)
+const COMPUTE_LEVEL = (:cpu, :gpu)
 
 """
 Print level of the program.
 Not implemented yet, but will be given by the user to
 determine the print level of both VecchiaMLE and MadNLP.
 """
-const PrintLevel = (:VTRACE, :VDEBUG, :VINFO, :VWARN, :VERROR, :VFATAL)
+const SUPPORTED_SOLVERS = (:VTRACE, :VDEBUG, :VINFO, :VWARN, :VERROR, :VFATAL)
 
 """
-Table to convert my print level to madnlp's.
+Supported solvers for the optimization problem. 
 """
-const MADNLP_PLEVEL_MAP = Dict(
-    :VTRACE => MadNLP.TRACE,
-    :VDEBUG => MadNLP.DEBUG,
-    :VINFO  => MadNLP.INFO,
-    :VWARN  => MadNLP.WARN,
-    :VERROR => MadNLP.WARN,
-    :VFATAL => MadNLP.WARN # No specific fatal level in MadNLP
-)
-
+const SUPPORTED_SOLVERS = (:madnlp, :ipopt, :knitro)
 
 """
 Specification for the Sparsity Pattern generation algorithm. 
@@ -106,7 +98,8 @@ The fields to the struct are as follows:\n
 - `colsL::AbstractVector`: The sparsity pattern cols of L if the user gives one. MUST BE IN CSC FORMAT!
 - `colptrL::AbstractVector`: The column pointer of L if the user gives one. MUST BE IN CSC FORMAT!
 - `solver::Symbol`: Optimization solver (:madnlp, :ipopt, :knitro). Defaults to `:madnlp`.
-- `skip_check::Bool`: Whether or not to skip the `validate_input!` function.
+- `solver_tol::Float64`: Tolerance for the optimization solver. Defaults to `1e-8`.
+- `skip_check::Bool`: Whether or not to skip the `validate_input` function.
 - `metric`: The metric by which nearest neighbors are determined. Defaults to Euclidean
 - `lambda`: The regularization term scalar for the ridge term `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
 - `x0`: The user may give an inital condition, but it is limiting if you do not have the sparsity pattern. 
@@ -126,6 +119,7 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu, Vx0}
     colsL::V1
     colptrL::V1
     solver::Symbol
+    solver_tol::Float64
     skip_check::Bool
     metric::Distances.Metric
     sparsitygen::Symbol
@@ -147,24 +141,24 @@ function VecchiaMLEInput(
     colsL::V1=nothing,
     colptrL::V1=nothing,
     solver::Symbol=:madnlp,
+    solver_tol::Real=1e-8,
     skip_check::Bool=false,
     metric::Distances.Metric=Distances.Euclidean(),
     sparsitygen::Symbol=:NN,
     lambda::Real=0.0,
     x0::Vx0=nothing
 ) where
-    {M <:AbstractMatrix, V <: Union{Nothing, AbstractVector, AbstractMatrix}, V1 <: Union{Nothing, AbstractVector}, 
-    Vl <: Union{Nothing, AbstractVector}, Vu <: Union{Nothing, AbstractVector}, Vx0 <: Union{Nothing, AbstractVector}}
-    
+    {M <:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}, V <: Union{Nothing, AbstractVector, AbstractMatrix},
+    V1 <: Union{Nothing, AbstractVector}, Vl <: Union{Nothing, AbstractVector}, Vu <: Union{Nothing, AbstractVector}, Vx0 <: Union{Nothing, AbstractVector}}
     ptset_ = resolve_ptset(n, ptset)
 
-    return VecchiaMLEInput{M, AbstractVector, V1, Vl, Vu, Vx0}(
-        length(ptset_),
+    return new{M, AbstractVector, V1, Vl, Vu, Vx0}(
+        m,
         k,
         samples,
         number_of_samples,
-        plevel,
-        mode,
+        _printlevel(plevel),
+        _computemode(mode),
         ptset_,
         lvar_diag,
         uvar_diag,
@@ -175,7 +169,7 @@ function VecchiaMLEInput(
         solver,
         skip_check,
         metric,
-        resolve_sparistygen(V1, Val(sparsitygen)),
+        sparsitygen,
         lambda,
         x0
     )

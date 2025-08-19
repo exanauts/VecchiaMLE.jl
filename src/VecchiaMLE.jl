@@ -16,6 +16,7 @@ const KA = KernelAbstractions
 
 # Includes
 include("defines.jl")
+include("internals.jl")
 include("utils.jl")
 include("input.jl")
 include("kernels.jl")

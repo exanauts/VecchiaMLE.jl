@@ -1,4 +1,4 @@
-export GenerateSamples, GenerateMatCov, generate_xyGrid
+export generate_samples, generate_MatCov, generate_xyGrid
 
 """
     Covariance_Matrix = covariance2D(ptset::AbstractVector, 
@@ -6,7 +6,7 @@ export GenerateSamples, GenerateMatCov, generate_xyGrid
 
     Generate a Matern-Like Covariance Matrix for the parameters and locations given.
     Note: This should not be called by the user. This is the back end for the function
-    GenerateMatCov()!
+    generate_MatCov()!
 
 ## Input arguments
 
@@ -23,7 +23,7 @@ end
 
 
 """
-    Samples_Matrix = GenerateSamples(MatCov::AbstractMatrix, 
+    Samples_Matrix = generate_samples(MatCov::AbstractMatrix, 
                                       number_of_samples::Int;
                                       mode::VecchiaMLE.ComputeMode )
 
@@ -46,7 +46,7 @@ end
 * `Samples_Matrix` : A matrix of size (number_of_samples × n), where the rows are the i.i.d samples  
 """
 
-function GenerateSamples(MatCov::AbstractMatrix{Float64}, number_of_samples::Int)
+function generate_samples(MatCov::AbstractMatrix{Float64}, number_of_samples::Int)
     S = Matrix(MatCov)
     n = size(S, 1)
     V = randn(number_of_samples, n)
@@ -55,7 +55,7 @@ function GenerateSamples(MatCov::AbstractMatrix{Float64}, number_of_samples::Int
     return V
 end
 
-function GenerateSamples(MatCov::CuArray{Float64}, number_of_samples::Int)
+function generate_samples(MatCov::CuArray{Float64}, number_of_samples::Int)
     S = CUDA.CuArray(MatCov)
     n = size(S, 1)
     V = CUDA.randn(Float64, number_of_samples, n)
@@ -65,7 +65,7 @@ function GenerateSamples(MatCov::CuArray{Float64}, number_of_samples::Int)
 end
 
 """
-    Covariance_Matrix = GenerateMatCov(params::AbstractArray,
+    Covariance_Matrix = generate_MatCov(params::AbstractArray,
                                         ptset::AbstractVector)
 
     Generates a Matern Covariance Matrix determined via the given paramters (params) and ptset.
@@ -79,11 +79,11 @@ end
 
 * `Covariance_Matrix` : An n × n Symmetric Matern matrix 
 """
-function GenerateMatCov(params::AbstractArray, ptset::AbstractVector)::Symmetric{Float64}
+function generate_MatCov(params::AbstractArray, ptset::AbstractVector)::Symmetric{Float64}
     return covariance2D(ptset, params)
 end
 
-GenerateMatCov(n::Int, params::AbstractVector) = GenerateMatCov(params::AbstractVector, generate_xyGrid(n::Int))
+generate_MatCov(n::Int, params::AbstractVector) = generate_MatCov(params::AbstractVector, generate_xyGrid(n::Int))
 
 """
     xyGrid = generate_xyGrid(n::Int)
@@ -493,17 +493,29 @@ end
 function is_csc_format(iVecchiaMLE::VecchiaMLEInput)::Bool
     rowsL = iVecchiaMLE.rowsL
     colsL = iVecchiaMLE.colsL
+    colptrL = iVecchiaMLE.colptrL
+    n = iVecchiaMLE.n
+    nnz = length(rowsL)
 
-    # check lengths
-    (length(rowsL) != length(colsL)) || return false
-
-    # check cols
-    !all(in(1:iVecchiaMLE.n), colsL) || return false
-    !all(in((0, 1)), diff(colsL)) || return false 
+    # lengths
+    length(rowsL) != length(colsL) && return false
     
-    # check rows
-    !all(in(1:iVecchiaMLE.n), rowsL) || return false
-    # there should be another check, if the pattern of rowsL is as expected (sorted wrt columns). But not important rn.
+    length(colptrL) != n + 1 && return false
+
+    # colptr should be non-decreasing
+    any(diff(colptrL) .< 0) && return false
+
+    # indices in range
+    !all(1 .<= rowsL .<= n) && return false
+    !all(1 .<= colsL .<= n) && return false
+
+    # check row ordering within each column
+    for col in 1:n
+        start_idx = colptrL[col]
+        end_idx = colptrL[col+1]-1
+        !issorted(rowsL[start_idx:end_idx]) && return false
+    end
+
     return true
 end
 
@@ -515,44 +527,47 @@ A helper function to catch any inconsistencies in the input given by the user.
 ## Input arguments
 * `iVecchiaMLE`: The filled-out VecchiaMLEInput struct. See VecchiaMLEInput struct for more details. 
 """
-function validate_input!(iVecchiaMLE::VecchiaMLEInput) 
-    @assert iVecchiaMLE.n > 0 "The dimension n must be strictly positive!"
-    @assert iVecchiaMLE.k <= iVecchiaMLE.n "The number of conditioning neighbors must be less than n!"
-    @assert size(iVecchiaMLE.samples, 1) > 0 "samples must be nonempty!"
-    @assert size(iVecchiaMLE.samples, 2) == iVecchiaMLE.n "samples must be of size number_of_samples x n!"
-    @assert size(iVecchiaMLE.samples, 1) == iVecchiaMLE.number_of_samples "samples must be of size number_of_samples x n!"
-    
-    if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.mode.val == :gpu
+function validate_input(iVecchiaMLE::VecchiaMLEInput) 
+    @assert_cond iVecchiaMLE.n > 0 iVecchiaMLE.n "be strictly positive"
+    @assert_cond_compare iVecchiaMLE.k <= iVecchiaMLE.n  
+    @assert_cond size(iVecchiaMLE.samples, 1) > 0 iVecchiaMLE.samples "have at least one sample"
+    @assert_eq size(iVecchiaMLE.samples, 2) iVecchiaMLE.n
+    @assert_eq size(iVecchiaMLE.samples, 1) iVecchiaMLE.number_of_samples 
+    @assert eltype(iVecchiaMLE.samples) <: AbstractFloat "samples must have eltype which is a subtype of AbstractFloat"
+
+    if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.mode == gpu
         @warn "mode given is gpu, but samples are on cpu. Transferring samples to gpu."
         iVecchiaMLE.samples = CuMatrix{Float64}(iVecchiaMLE.samples)
     end
 
-    @assert length(iVecchiaMLE.ptset) == iVecchiaMLE.n  "The ptset given does not have n elements!"
+    @assert_eq length(iVecchiaMLE.ptset) iVecchiaMLE.n
     for (i, pt) in enumerate(iVecchiaMLE.ptset)
-        @assert length(pt) == 2 "Position $(i) in ptset is not 2 dimensional!"
+        @assert_eq length(pt) 2 
     end
 
-    # Check is not relevant rn since rowsL and colsL are stored as the same type.
-    @assert (isnothing(iVecchiaMLE.rowsL) == isnothing(iVecchiaMLE.colsL)) "Both rowsL and colsL must be given!"
-
-    if !isnothing(iVecchiaMLE.rowsL) && !isnothing(iVecchiaMLE.colsL)
-        @assert is_csc_format(iVecchiaMLE) "rowsL and colsL are not in CSC format!"
+    if !isnothing(iVecchiaMLE.rowsL) && !isnothing(iVecchiaMLE.colsL) && !isnothing(iVecchiaMLE.colptrL)
+        @assert is_csc_format(iVecchiaMLE) "rowsL and colsL are not in CSC format"
     end
 
     if !isnothing(iVecchiaMLE.lvar_diag)    
-        @assert length(iVecchiaMLE.lvar_diag) == cache.n "lvar_diag given not proper length. expected $(cache.n), given $(length(lvar_diag))."
+        @assert_eq length(iVecchiaMLE.lvar_diag) cache.n
     end
     
     if !isnothing(iVecchiaMLE.uvar_diag)
-        @assert length(iVecchiaMLE.uvar_diag) == cache.n "uvar_diag given not proper length. expected $(cache.n), given $(length(uvar_diag))."
+        @assert_eq length(iVecchiaMLE.uvar_diag) cache.n 
     end
     
-    @assert iVecchiaMLE.lambda >= 0 "lambda must be positive!"
+    @assert_cond iVecchiaMLE.lambda >= 0 iVecchiaMLE.lambda "be positive"
 
     nvar = Int(0.5 * iVecchiaMLE.k * ( 2*iVecchiaMLE.n - iVecchiaMLE.k + 1))
     if !isnothing(iVecchiaMLE.x0)
-        @assert length(iVecchiaMLE.x0) == nvar "given x0 not expected size: expected $(nvar), given $(length(iVecchiaMLE.x0))"
+        @assert_eq length(iVecchiaMLE.x0) nvar 
     end
+
+    @assert_cond iVecchiaMLE.solver_tol > 0.0 iVecchiaMLE.solver_tol "be positive"
+
+    @assert iVecchiaMLE.solver in SUPPORTED_SOLVERS "Unsupported solver given: $(iVecchiaMLE.solver)"
+
 end
 
 """
@@ -636,8 +651,8 @@ function print_diagnostics(d::Diagnostics)
     println("=================================")
 end
 
-function vecchia_solver(solver::Val{<:Symbol}, args...; kwargs...)
-    error("The solver $solver is not available.")
+function vecchia_solver(::Val{s}, args...; kwargs...) where {s}
+    error("The solver $s is not available.")
 end
 
 function vecchia_solver(::Val{:madnlp}, args...; kwargs...)

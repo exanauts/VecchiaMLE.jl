@@ -8,6 +8,7 @@ VecchiaMLE.Diagnostics
 VecchiaMLE.VecchiaModel
 VecchiaMLE.VecchiaMLEInput
 VecchiaMLE.SparsityPatternGeneration
+VecchiaMLE.SUPPORTED_SOLVERS
 ```
 
 ## VecchiaMLE input
@@ -23,8 +24,8 @@ VecchiaMLE.RetrieveDiagnostics!
 ```@docs
 VecchiaMLE.covariance2D
 VecchiaMLE.get_vecchia_model 
-VecchiaMLE.GenerateSamples
-VecchiaMLE.GenerateMatCov
+VecchiaMLE.generate_samples
+VecchiaMLE.generate_MatCov
 VecchiaMLE.generate_xyGrid
 VecchiaMLE.generate_safe_xyGrid
 VecchiaMLE._printlevel

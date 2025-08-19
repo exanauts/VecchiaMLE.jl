@@ -30,8 +30,8 @@ directly to the user, we allow the generation of samples in the following manner
 params = [5.0, 0.2, 2.25, 0.25]
 # This analysis will be done in 2D.
 ptset = VecchiaMLE.generate_safe_xyGrid(n)
-MatCov = VecchiaMLE.GenerateMatCov(params, ptset)
-samples = VecchiaMLE.GenerateSamples(MatCov, number_of_samples)
+MatCov = VecchiaMLE.generate_MatCov(params, ptset)
+samples = VecchiaMLE.generate_samples(MatCov, number_of_samples)
 ```
 
 Next, we create and fill in the VecchiaMLEInput struct. This is done below.
