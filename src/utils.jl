@@ -568,7 +568,7 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
     @assert_cond size(iVecchiaMLE.samples, 1) > 0 iVecchiaMLE.samples "have at least one sample"
     @assert_eq size(iVecchiaMLE.samples, 2) iVecchiaMLE.n
     @assert_eq size(iVecchiaMLE.samples, 1) iVecchiaMLE.number_of_samples 
-    # @assert_cond_compare eltype(iVecchiaMLE.samples) <: AbstractFloat 
+    @assert eltype(iVecchiaMLE.samples) <: AbstractFloat "samples must have eltype which is a subtype of AbstractFloat"
 
     if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.mode == gpu
         @warn "mode given is gpu, but samples are on cpu. Transferring samples to gpu."
