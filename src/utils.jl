@@ -27,7 +27,7 @@ end
 * `Samples_Matrix` : A matrix of size (number_of_samples × n), where the rows are the i.i.d samples  
 """
 function generate_samples(MatCov::AbstractMatrix, number_of_samples::Int, ::Val{:cpu})
-    S = Matrix(MatCov)
+    S = Matrix(copy(MatCov))
     V = randn(number_of_samples, size(S, 1))
     LinearAlgebra.LAPACK.potrf!('U', S)
     rmul!(V, UpperTriangular(S))
@@ -35,25 +35,23 @@ function generate_samples(MatCov::AbstractMatrix, number_of_samples::Int, ::Val{
 end
 
 function generate_samples(MatCov::CUDA.CuMatrix{Float64}, number_of_samples::Int, ::Val{:gpu})
-    S = CUDA.CuArray(MatCov) 
+    S = copy(MatCov)
     V = CUDA.randn(Float64, number_of_samples, size(S, 1))
     F = cholesky!(S)
     rmul!(V, F.U)
     return V
 end
 
-function generate_samples(::AbstractMatrix, ::Int, ::Val{arch}) where {arch}
+function generate_samples(MatCov::AbstractMatrix, ::Int, ::Val{arch}) where {arch}
     error("Unsupported architecture $arch for CPU matrix input.")
 end
 
-function generate_samples(::CUDA.CuMatrix{Float64}, ::Int, ::Val{arch}) where {arch}
+function generate_samples(MatCov::CUDA.CuMatrix{Float64}, ::Int, ::Val{arch}) where {arch}
     error("Unsupported architecture $arch for GPU matrix input.")
 end
 
 generate_samples(MatCov::AbstractMatrix, number_of_samples::Int; arch::Symbol=:cpu) = generate_samples(MatCov, number_of_samples, Val(arch))
-generate_samples(MatCov::CuArray{<:Float64}, number_of_samples::Int; arch::Symbol=:gpu) = generate_samples(MatCov, number_of_samples, Val(arch))
-
-
+generate_samples(MatCov::CUDA.CuMatrix{Float64}, number_of_samples::Int; arch::Symbol=:gpu) = generate_samples(MatCov, number_of_samples, Val(arch))
 
 """
     Covariance_Matrix = generate_MatCov(params::AbstractArray,

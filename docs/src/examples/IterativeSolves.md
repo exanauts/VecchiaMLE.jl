@@ -19,9 +19,9 @@ samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; arch=:cpu)
 
 niter = 5
 
-rowsL = nothing
-colptrL = nothing
-colsL = nothing
+rowsL = ones(Int, Int(0.5 * k * (2*n - k + 1)))
+colsL = similar(rowsL)
+colptrL = ones(Int, n+1)
 
 for i in 1:niter
     if i == 1
@@ -36,9 +36,9 @@ for i in 1:niter
     # save sparsity pattern
     if i == 1
         L_csc = SparseMatrixCSC(L)
-        rowsL = L_csc.rowval
-        colptrL = L_csc.colptr
-        colsL = similar(rowsL)
+        global rowsL = L_csc.rowval
+        global colptrL = L_csc.colptr
+        global colsL = similar(rowsL)
         for j in 1:length(colptrL)-1
             idx_range = colptrL[j]:(colptrL[j+1]-1)
             colsL[idx_range] .= j
