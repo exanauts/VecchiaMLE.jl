@@ -7,7 +7,7 @@
     ptset = VecchiaMLE.generate_safe_xyGrid(n)
 
     MatCov = VecchiaMLE.generate_MatCov(params, ptset)
-    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; mode=:gpu)
+    samples = VecchiaMLE.generate_samples(CuMatrix{Float64}(MatCov), number_of_samples; mode=:gpu)
     
     # Get result from VecchiaMLE gpu
     input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 2; ptset = ptset)

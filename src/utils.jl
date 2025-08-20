@@ -46,7 +46,7 @@ end
 * `Samples_Matrix` : A matrix of size (number_of_samples × n), where the rows are the i.i.d samples  
 """
 
-function generate_samples(MatCov::AbstractMatrix{Float64}, number_of_samples::Int)
+function generate_samples(MatCov::AbstractMatrix, number_of_samples::Int, ::Val{:cpu})
     S = Matrix(MatCov)
     n = size(S, 1)
     V = randn(number_of_samples, n)
@@ -55,14 +55,27 @@ function generate_samples(MatCov::AbstractMatrix{Float64}, number_of_samples::In
     return V
 end
 
-function generate_samples(MatCov::CuArray{Float64}, number_of_samples::Int)
+function generate_samples(MatCov::CuArray{Float64}, number_of_samples::Int, ::Val{:gpu})
     S = CUDA.CuArray(MatCov)
     n = size(S, 1)
     V = CUDA.randn(Float64, number_of_samples, n)
     F = cholesky!(S)
-    rmul!(V, UpperTriangular(F))
+    rmul!(V, F.U)
     return V
 end
+
+function generate_samples(::AbstractMatrix, ::Int, ::Val{mode}) where {mode}
+    error("Unsupported mode $mode for CPU matrix input.")
+end
+
+function generate_samples(::CuArray, ::Int, ::Val{mode}) where {mode}
+    error("Unsupported mode $mode for GPU matrix input.")
+end
+
+generate_samples(MatCov::AbstractMatrix, number_of_samples::Int; mode::Symbol=:cpu) = generate_samples(MatCov, number_of_samples, Val(mode))
+generate_samples(MatCov::CuArray{<:Float64}, number_of_samples::Int; mode::Symbol=:gpu) = generate_samples(MatCov, number_of_samples, Val(mode))
+
+
 
 """
     Covariance_Matrix = generate_MatCov(params::AbstractArray,
@@ -140,14 +153,14 @@ end
 * `model`: The Vecchia model based on the VecchiaMLEInput  
 """
 function get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)::VecchiaModel
-
-    if iVecchiaMLE.mode.val === :gpu
-       return VecchiaModelGPU(iVecchiaMLE.samples, iVecchiaMLE)
-    else 
-       return VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE)
-    end
+    return get_vecchia_model(iVecchiaMLE, Val(iVecchiaMLE.mode))
 end
 
+get_vecchia_model(iVecchiaMLE::VecchiaMLEInput, ::Val{:cpu}) = VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE)
+get_vecchia_model(iVecchiaMLE::VecchiaMLEInput, ::Val{:gpu}) = VecchiaModelGPU(iVecchiaMLE.samples, iVecchiaMLE)
+
+
+# TODO: Move error to own file. call it errors.jl
 """
     Error = uni_error(TCov::AbstractMatrix,
                       L::AbstractMatrix)
@@ -172,6 +185,8 @@ function uni_error(TCov::AbstractMatrix, L::AbstractMatrix)
     return maximum([0.5*(log(mu) + 1.0 / mu - 1.0) for mu in mu_val])
 end
 
+
+# TODO: Move permutations to own file. call it permutations.jl
 """
     permutation, dists = IndexReorder(condset::AbstractVector,
                                        data::AbstractVector,
@@ -329,6 +344,7 @@ function IndexRandom(condset::AbstractVector, data::AbstractVector, reverse_orde
     return Random.randperm(n), []
 end
 
+# TODO: Move errors to own file. Call it errors.jl
 """
     KL_Divergence = KLDivergence(TCov::Symmetric{Float64},
                                  AL::AbstractMatrix)
@@ -382,6 +398,7 @@ function KLDivergence(TChol::T, AChol::T) where {T <: AbstractMatrix}
     return 0.5*sum(terms)
 end
 
+# TODO: Move sparsity pattern stuff to own file. Call it sparsitypattern.jl
 """
     rows, cols, colptr = sparsitypattern(
         ::Val{<:Symbol}, 
@@ -407,11 +424,11 @@ end
 
 """
 function sparsitypattern(::Val{:NN}, iVecchiaMLE::VecchiaMLEInput)
-    return sparsitypattern_NN(iVecchiaMLE.data, iVecchiaMLE.k, iVecchiaMLE.metric)
+    return sparsitypattern_NN(iVecchiaMLE.ptset, iVecchiaMLE.k, iVecchiaMLE.metric)
 end
 
 function sparsitypattern(::Val{:HNSW}, iVecchiaMLE::VecchiaMLEInput)
-    return sparsitypattern_HNSW(iVecchiaMLE.data, iVecchiaMLE.k, iVecchiaMLE.metric)
+    return sparsitypattern_HNSW(iVecchiaMLE.ptset, iVecchiaMLE.k, iVecchiaMLE.metric)
 end
 
 function sparsitypattern(::Val{:USERGIVEN}, iVecchiaMLE::VecchiaMLEInput)
@@ -430,7 +447,7 @@ function sparsitypattern(::Val{:HNSW}, ptset::AbstractVector, k::Int, metric::Di
     return sparsitypattern_HNSW(ptset, k, metric)
 end
 
-sparsitypattern(ptset::AbstractVector, k::Int) = sparsitypattern(Val:NN), ptset, k)
+sparsitypattern(ptset::AbstractVector, k::Int) = sparsitypattern(Val(:NN), ptset, k)
 
 """
 See sparsitypattern(). Uses NearestNeighbors library. In case of tie, opt for larger index. 
@@ -487,6 +504,7 @@ function sparsitypattern_HNSW(data, k, metric::Distances.Metric=Distances.Euclid
     return nn_to_csc(sparsity)
 end
 
+# TODO: Move to internals
 """
     Checks csc format. A user can call this, but not advised. 
 """
@@ -519,8 +537,9 @@ function is_csc_format(iVecchiaMLE::VecchiaMLEInput)::Bool
     return true
 end
 
+# TODO: Move validate_input to internals
 """
-    validate_input!(iVecchiaMLE::VecchiaMLEInput, ptset::Union{AbstractVector, Nothing})
+    validate_input(iVecchiaMLE::VecchiaMLEInput, ptset::Union{AbstractVector, Nothing})
 
 A helper function to catch any inconsistencies in the input given by the user.
 
@@ -535,7 +554,7 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
     @assert_eq size(iVecchiaMLE.samples, 1) iVecchiaMLE.number_of_samples 
     @assert eltype(iVecchiaMLE.samples) <: AbstractFloat "samples must have eltype which is a subtype of AbstractFloat"
 
-    if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.mode == gpu
+    if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.mode == :gpu
         @warn "mode given is gpu, but samples are on cpu. Transferring samples to gpu."
         iVecchiaMLE.samples = CuMatrix{Float64}(iVecchiaMLE.samples)
     end
@@ -651,6 +670,7 @@ function print_diagnostics(d::Diagnostics)
     println("=================================")
 end
 
+# TODO: Move functions below to internals.jl
 function vecchia_solver(::Val{s}, args...; kwargs...) where {s}
     error("The solver $s is not available.")
 end
@@ -659,19 +679,59 @@ function vecchia_solver(::Val{:madnlp}, args...; kwargs...)
     madnlp(args...; kwargs...)
 end
 
-function convert_plevel(::Val{:madnlp}, plevel::Val{T}) where {T <: Symbol}
-    return get(MADNLP_PLEVEL_MAP, plevel, MadNLP.ERROR)
+
+# MadNLP Conversions
+
+function resolve_plevel(::Val{:madnlp}, plevel::Val{T}) where {T}
+    error("Unsupported print level $(T) for solver :madnlp.")
 end
 
-function convert_plevel(solver::Val{<:Symbol}, plevel::Val{T}) where {T <: Symbol}
-    error("The solver $(solver) is not available.")
+function resolve_plevel(solver::Val{<:Symbol}, ::Val{T}) where {T}
+    error("The solver $(solver) does not have defined print level $(T).")
 end
+
+resolve_plevel(::Val{:madnlp}, ::Val{:VTRACE}) = MadNLP.TRACE
+resolve_plevel(::Val{:madnlp}, ::Val{:VDEBUG}) = MadNLP.DEBUG
+resolve_plevel(::Val{:madnlp}, ::Val{:VINFO})  = MadNLP.INFO
+resolve_plevel(::Val{:madnlp}, ::Val{:VWARN})  = MadNLP.WARN
+resolve_plevel(::Val{:madnlp}, ::Val{:VERROR}) = MadNLP.ERROR
+resolve_plevel(::Val{:madnlp}, ::Val{:VFATAL}) = MadNLP.ERROR
+
+function convert_plevel(::Val{T}) where {T}
+    error("Unsupported print level $T")
+end
+
+convert_plevel(::Val{:VTRACE}) = :VTRACE
+convert_plevel(::Val{1}) = :VTRACE
+
+convert_plevel(::Val{:VDEBUG}) = :VDEBUG
+convert_plevel(::Val{2}) = :VDEBUG
+
+convert_plevel(::Val{:INFO}) = :VINFO
+convert_plevel(::Val{3}) = :VINFO
+
+convert_plevel(::Val{:VWARN}) = :VWARN
+convert_plevel(::Val{4}) = :VWARN
+
+convert_plevel(::Val{:VERROR}) = :VERROR
+convert_plevel(::Val{5}) = :VERROR
+
+
+function convert_computemode(::Val{mode}) where {mode}
+    error("Unsupported compute mode: $mode")
+end
+
+convert_computemode(::Val{:cpu}) = :cpu
+convert_computemode(::Val{1})    = :cpu
+
+convert_computemode(::Val{:gpu}) = :gpu
+convert_computemode(::Val{2})    = :gpu
+
 
 function tovector(A::AbstractMatrix)::AbstractVector
     return size(A, 1) > size(A, 2) ? [row for row in eachrow(A)] :
                                      [col for col in eachcol(A)]
 end
-
 
 function check_x0!(x0_::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::VecchiaCache)
     if !isnothing(iVecchiaMLE.x0) 
@@ -680,7 +740,7 @@ function check_x0!(x0_::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::Vec
             view(x0_, (1:cache.n).+cache.nnzL) .= log.(view(iVecchiaMLE.x0, cache.diagL))
         else
             @warn "User given x0 is not feasible. Setting x0 such that the initial Vecchia approximation is the identity."
-            view(x0_, cache.diagL) .= one(T)
+            view(x0_, cache.diagL) .= one(eltype(x0_))
         end
     end 
 end
@@ -688,30 +748,24 @@ end
 function check_lvar!(lvar::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::VecchiaCache)
     if !isnothing(iVecchiaMLE.lvar_diag)
         view(lvar, cache.diagL) .= iVecchiaMLE.lvar_diag
-        view(lvar, cache.nnzL+1:nvar) .= log.(iVecchiaMLE.lvar_diag)
+        view(lvar, (1:cache.n).+cache.nnzL) .= log.(iVecchiaMLE.lvar_diag)
     else
         # Always ensure that the diagonal coefficient Lᵢᵢ of the Vecchia approximation are strictly positive
         view(lvar, cache.diagL) .= 1e-16
-        view(lvar, cache.nnzL+1:nvar) .= log(1e-16)
+        view(lvar, (1:cache.n).+cache.nnzL) .= log(1e-16)
     end
 end
 
 function check_uvar!(uvar::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::VecchiaCache)    
     if !isnothing(iVecchiaMLE.uvar_diag)
         view(uvar, cache.diagL) .= iVecchiaMLE.uvar_diag
-        view(uvar, cache.nnzL+1:nvar) .= log.(iVecchiaMLE.uvar_diag)
+        view(uvar, (1:cache.n).+cache.nnzL) .= log.(iVecchiaMLE.uvar_diag)
     end
 end
 
-function resolve_ptset(n::Int, ptset::V) where {V <: Union{AbstractVector, Nothing}}
-    if isnothing(ptset)
-        return generate_safe_xyGrid(n)
-    elseif isa(ptset, AbstractMatrix)
-        return tovector(ptset)            
-    else
-        return ptset
-    end
-end
+resolve_ptset(n::Int, ::Nothing) = generate_safe_xyGrid(n)
+resolve_ptset(::Int, ptset::AbstractMatrix) = tovector(ptset)
+resolve_ptset(::Int, ptset::AbstractVector) = ptset
 
 function resolve_sparistygen(V1::V, sparsitygen::Val{:SparsityGen}) where {V <: Union{AbstractVector, Nothing}} 
     if isnothing(V1) return sparsitygen end 

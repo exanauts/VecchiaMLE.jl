@@ -11,7 +11,7 @@ Print level of the program.
 Not implemented yet, but will be given by the user to
 determine the print level of both VecchiaMLE and MadNLP.
 """
-const SUPPORTED_SOLVERS = (:VTRACE, :VDEBUG, :VINFO, :VWARN, :VERROR, :VFATAL)
+const PRINT_LEVEL = (:VTRACE, :VDEBUG, :VINFO, :VWARN, :VERROR, :VFATAL)
 
 """
 Supported solvers for the optimization problem. 
@@ -21,7 +21,7 @@ const SUPPORTED_SOLVERS = (:madnlp, :ipopt, :knitro)
 """
 Specification for the Sparsity Pattern generation algorithm. 
 """
-const SparsityGen = (:NN, :HNSW, :USERGIVEN)
+const SPARSITY_GEN = (:NN, :HNSW, :USERGIVEN)
 
 """
 Internal struct from which to fetch persisting objects in the optimization function.
@@ -105,8 +105,8 @@ The fields to the struct are as follows:\n
 - `x0`: The user may give an inital condition, but it is limiting if you do not have the sparsity pattern. 
 """
 mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu, Vx0}
-    n::Int
-    k::Int
+    n::Int 
+    k::Int 
     samples::M
     number_of_samples::Int
     plevel::Symbol
@@ -127,12 +127,11 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu, Vx0}
     x0::Vx0
 end
 
-
 function VecchiaMLEInput(
     n::Int, k::Int, 
     samples::M, number_of_samples::Int, 
-    plevel::Symbol=:VERROR, 
-    mode::Symbol=:cpu;
+    plevel::Union{Nothing, Symbol, Int} = :VERROR, 
+    mode::Union{Nothing, Symbol, Int} = :cpu;
     ptset::V=nothing,
     lvar_diag::Vl=nothing,
     uvar_diag::Vu=nothing,
@@ -148,17 +147,24 @@ function VecchiaMLEInput(
     lambda::Real=0.0,
     x0::Vx0=nothing
 ) where
-    {M <:AbstractMatrix, PL <: Union{PrintLevel, Int}, CM <: Union{ComputeMode, Int}, V <: Union{Nothing, AbstractVector, AbstractMatrix},
-    V1 <: Union{Nothing, AbstractVector}, Vl <: Union{Nothing, AbstractVector}, Vu <: Union{Nothing, AbstractVector}, Vx0 <: Union{Nothing, AbstractVector}}
-    ptset_ = resolve_ptset(n, ptset)
+    {
+        M   <: AbstractMatrix, 
+        V   <: Union{Nothing, AbstractVector, AbstractMatrix},
+        V1  <: Union{Nothing, AbstractVector}, 
+        Vl  <: Union{Nothing, AbstractVector}, 
+        Vu  <: Union{Nothing, AbstractVector}, 
+        Vx0 <: Union{Nothing, AbstractVector}
+    }
+    ptset_::AbstractVector = resolve_ptset(n, ptset)
+    n_::Int = length(ptset_)
 
-    return new{M, AbstractVector, V1, Vl, Vu, Vx0}(
-        m,
+    return VecchiaMLEInput{M, AbstractVector, V1, Vl, Vu, Vx0}(
+        n_,
         k,
         samples,
         number_of_samples,
-        _printlevel(plevel),
-        _computemode(mode),
+        convert_plevel(Val(plevel)),
+        convert_computemode(Val(mode)),
         ptset_,
         lvar_diag,
         uvar_diag,
@@ -167,10 +173,11 @@ function VecchiaMLEInput(
         colsL,
         colptrL,
         solver,
+        Float64(solver_tol),
         skip_check,
         metric,
         sparsitygen,
-        lambda,
+        Float64(lambda),
         x0
     )
 end

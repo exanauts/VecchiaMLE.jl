@@ -1,14 +1,14 @@
 
 ## VecchiaMLE Defines
 ```@docs
-VecchiaMLE.ComputeMode
-VecchiaMLE.PrintLevel
+VecchiaMLE.COMPUTE_MODE
+VecchiaMLE.PRINT_LEVEL
+VecchiaMLE.SPARSITY_GEN
+VecchiaMLE.SUPPORTED_SOLVERS
 VecchiaMLE.VecchiaCache
 VecchiaMLE.Diagnostics
 VecchiaMLE.VecchiaModel
 VecchiaMLE.VecchiaMLEInput
-VecchiaMLE.SparsityPatternGeneration
-VecchiaMLE.SUPPORTED_SOLVERS
 ```
 
 ## VecchiaMLE input
@@ -39,7 +39,7 @@ VecchiaMLE.KLDivergence
 VecchiaMLE.sparsitypattern
 VecchiaMLE.sparsitypattern_HNSW
 VecchiaMLE.sparsitypattern_NN
-VecchiaMLE.validate_input!
+VecchiaMLE.validate_input
 VecchiaMLE.nn_to_csc
 VecchiaMLE.is_csc_format
 VecchiaMLE.print_diagnostics
