@@ -1,7 +1,7 @@
 
 ## VecchiaMLE Defines
 ```@docs
-VecchiaMLE.COMPUTE_MODE
+VecchiaMLE.COMPUTE_LEVEL
 VecchiaMLE.PRINT_LEVEL
 VecchiaMLE.SPARSITY_GEN
 VecchiaMLE.SUPPORTED_SOLVERS
