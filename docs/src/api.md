@@ -22,12 +22,12 @@ VecchiaMLE.RetrieveDiagnostics!
 
 ## VecchiaMLE utils
 ```@docs
-VecchiaMLE.covariance2D
 VecchiaMLE.get_vecchia_model 
 VecchiaMLE.generate_samples
 VecchiaMLE.generate_MatCov
 VecchiaMLE.generate_xyGrid
 VecchiaMLE.generate_safe_xyGrid
+VecchiaMLE.generate_rectGrid
 VecchiaMLE._printlevel
 VecchiaMLE._computemode
 VecchiaMLE.uni_error

@@ -1,22 +1,5 @@
 export generate_samples, generate_MatCov, generate_xyGrid
 
-"""
-    Covariance_Matrix = covariance2D(ptset::AbstractVector, 
-                                     params::AbstractVector)
-
-    Generate a Matern-Like Covariance Matrix for the parameters and locations given.
-    Note: This should not be called by the user. This is the back end for the function
-    generate_MatCov()!
-
-## Input arguments
-
-* `ptset`: A set of points in 2D space upon which we determine the indices of the Covariance matrix;
-* `params`: An array of length 3 (or 4) that holds the parameters to the matern covariance kernel (σ, ρ, ν).
-
-## Output arguments
-
-* `Covariance_Matrix` : An n × n Matern matrix, where n is the length of the ptset 
-"""
 function covariance2D(ptset::AbstractVector, params::AbstractVector)::AbstractMatrix
     return Symmetric([BesselK.matern(x, y, params) for x in ptset, y in ptset])
 end
@@ -25,40 +8,35 @@ end
 """
     Samples_Matrix = generate_samples(MatCov::AbstractMatrix, 
                                       number_of_samples::Int;
-                                      arch::VecchiaMLE.ComputeMode )
+                                      arch::Symbol)
 
     Generate a number of samples according to the given Covariance Matrix MatCov.
     Note the samples are given as mean zero. 
-    If a CUDA compatible device is detected, the samples are generated on the gpu
-    and transferred back to the cpu. 
 
 ## Input arguments
 
-* `MatCov`: A Covariance Matrix, presumably positive definite;
+* `MatCov`: A Covariance Matrix, assumed positive definite;
 * `n`: The length of one side of the Covariance matrix;
 * `number_of_samples`: How many samples to return.
 
 ## Keyword Arguments
-* `arch`: Either generate samples on gpu or cpu
+* `arch`: Either to perform the linear algebra on cpu or gpu. See ARCHITECTURES. Defaults to `:cpu`.
 
 ## Output arguments
 
 * `Samples_Matrix` : A matrix of size (number_of_samples × n), where the rows are the i.i.d samples  
 """
-
 function generate_samples(MatCov::AbstractMatrix, number_of_samples::Int, ::Val{:cpu})
     S = Matrix(MatCov)
-    n = size(S, 1)
-    V = randn(number_of_samples, n)
+    V = randn(number_of_samples, size(S, 1))
     LinearAlgebra.LAPACK.potrf!('U', S)
     rmul!(V, UpperTriangular(S))
     return V
 end
 
 function generate_samples(MatCov::CuArray{Float64}, number_of_samples::Int, ::Val{:gpu})
-    S = CUDA.CuArray(MatCov)
-    n = size(S, 1)
-    V = CUDA.randn(Float64, number_of_samples, n)
+    S = CUDA.CuArray(MatCov) 
+    V = CUDA.randn(Float64, number_of_samples, size(S, 1))
     F = cholesky!(S)
     rmul!(V, F.U)
     return V
@@ -81,22 +59,56 @@ generate_samples(MatCov::CuArray{<:Float64}, number_of_samples::Int; arch::Symbo
     Covariance_Matrix = generate_MatCov(params::AbstractArray,
                                         ptset::AbstractVector)
 
-    Generates a Matern Covariance Matrix determined via the given paramters (params) and ptset.
-
+    Generates a matern-like Covariance Matrix determined via the given paramters (params) and ptset. 
+    See https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function. 
 ## Input arguments
 
-* `params`: An array of length 3 (or 4) that holds the parameters to the matern covariance kernel (σ, ρ, ν);
+* `params`: An array of length 3 that holds the parameters to the matern covariance kernel (σ, ρ, ν);
 * `ptset`: A set of points in 2D space upon which we determine the indices of the Covariance matrix;
 
 ## Output arguments
 
-* `Covariance_Matrix` : An n × n Symmetric Matern matrix 
+* `Covariance_Matrix` : An n × n Symmetric Matern matrix, where n = length(ptset).
 """
 function generate_MatCov(params::AbstractArray, ptset::AbstractVector)::Symmetric{Float64}
     return covariance2D(ptset, params)
 end
 
+"""
+    Covariance_Matrix = generate_MatCov(n::Int, 
+                                        params::AbstractArray)
+
+    Generates a 2D matern-like Covariance Matrix determined via the given paramters (params). 
+    A square grid with `n` elements will be generated and used in lieu of a given location set.
+    See https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function. 
+## Input arguments
+
+* `n`: The dimension of the desired MatCov;
+* `params`: An array of length 3 that holds the parameters to the matern covariance kernel (σ, ρ, ν);
+
+## Output arguments
+
+* `Covariance_Matrix` : An n × n Symmetric Matern matrix 
+"""
 generate_MatCov(n::Int, params::AbstractVector) = generate_MatCov(params::AbstractVector, generate_xyGrid(n::Int))
+
+"""
+    Covariance_Matrix = generate_MatCov(params::AbstractArray,
+                                        ptset::AbstractMatrix)
+
+    Generates a matern-like Covariance Matrix determined via the given paramters (params). 
+    The matrix of locations will be parsed as a vector of vectors, where each location is a row vector. 
+    See https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function. 
+## Input arguments
+
+* `params`: An array of length 3 that holds the parameters to the matern covariance kernel (σ, ρ, ν);
+* `ptset` : A matrix filled with row vectors of locations. 
+
+## Output arguments
+
+* `Covariance_Matrix` : An n × n Symmetric Matern matrix, where n = size(ptset, 1).
+"""
+generate_MatCov(params::AbstractVector, ptset::AbstractMatrix) = generate_MatCov(params::AbstractVector, tovector(ptset))
 
 """
     xyGrid = generate_xyGrid(n::Int)
@@ -142,9 +154,31 @@ function generate_safe_xyGrid(n::Int)::AbstractVector
 end
 
 """
+    rect = generate_rectGrid(dims::Tuple)
+
+A helper function to generate a point grid which partitions the positive square [0, 1] × [0, 1] by dims[1] and dims[2]. 
+
+## Input arguments
+
+* `dims`: A tuple of dimensions `(nx, ny)`;
+## Output arguments
+
+* `rectGrid` : The desired points in 2D space as a vector of 2-element arrays
+"""
+function generate_rectGrid(dims::Tuple{Int, Int})::AbstractVector
+    nx, ny = dims
+    @assert_cond nx > 0 "be positive"
+    @assert_cond ny > 0 "be positive"
+
+    grid_x = range(0.0, 1.0, length=nx)
+    grid_y = range(0.0, 1.0, length=ny)
+    return vec([[x, y] for x in grid_x, y in grid_y])
+end
+
+"""
     model = get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)
 
-    creates and returns a vecchia model based on the VecchiaMLEInput and point grid. 
+    Creates and returns a vecchia model based on the VecchiaMLEInput and point grid. 
 ## Input arguments
 
 * `iVecchiaMLE`: The filled out VecchiaMLEInput struct
@@ -414,8 +448,8 @@ end
 ## Input arguments
 * `data`: The point grid that was used to either generate the covariance matrix, or any custom ptset.
 * `k`: The number of nearest neighbors for each point (Including the point itself)
-* `method`: How the sparsity pattern is generated. Either NN (NearestNeighbors.jl) or Experimental (HNSW.jl) 
-* `metric`: The metric for determining nearest neighbors. 
+* `method`: How the sparsity pattern is generated. See SPARSITY_GEN
+* `metric`: The metric for determining nearest neighbors.
 
 ## Output arguments
 * `rows`: A vector of row indices of the sparsity pattern for L, in CSC format.
@@ -513,7 +547,6 @@ function is_csc_format(iVecchiaMLE::VecchiaMLEInput)::Bool
     colsL = iVecchiaMLE.colsL
     colptrL = iVecchiaMLE.colptrL
     n = iVecchiaMLE.n
-    nnz = length(rowsL)
 
     # lengths
     length(rowsL) != length(colsL) && return false
