@@ -49,7 +49,7 @@ This is due to the underlying assumption of the Vecchia Approximation where loca
 eachother when conditioned on its k nearest neighbors. 
 
 ```@example HowToRun
-sparse(o)
+sparse(L)
 ```  
 
 The function `VecchiaMLE_Run` returns a tuple, respectively containing the diagnostics of the solver, and the inverse cholesky factor L.
