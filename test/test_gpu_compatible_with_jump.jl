@@ -30,7 +30,7 @@
 
         # Get result from VecchiaMLE
         samples = CuMatrix{Float64}(samples)
-        input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 2; ptset=xyGrid)
+        input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; arch=:gpu, ptset=xyGrid)
         d, L_mle = VecchiaMLE_Run(input)
 
         @testset norm(SparseMatrixCSC(L_mle) - L_jump) ≤ 1e-6

@@ -10,7 +10,7 @@
     samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; arch=:cpu)
     
     # Get result from VecchiaMLE cpu
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; ptset = ptset)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset)
     D, L_cpu = VecchiaMLE_Run(input)
 
     @test (D.iterations ≥ 0)

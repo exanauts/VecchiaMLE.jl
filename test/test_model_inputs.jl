@@ -45,7 +45,7 @@
     rowsL = L_csc.rowval
     colptr = L_csc.colptr
     vals = L_csc.nzval
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; x0= zeros(length(vals)))
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; x0= zeros(length(vals)))
     @test_warn "User given x0 is not feasible. Setting x0 such that the initial Vecchia approximation is the identity." VecchiaMLE_Run(input)
     
     colsL = similar(rowsL)
@@ -55,11 +55,11 @@
     end
 
     # rows, columns
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; rowsL = rowsL, colsL = colsL, colptrL = colptr)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; rowsL = rowsL, colsL = colsL, colptrL = colptr)
     @test_nowarn VecchiaMLE_Run(input)
 
     # columns swapped with rows (will run technically, just worse than other)
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; rowsL = colsL, colsL = rowsL, colptrL = colptr)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; rowsL = colsL, colsL = rowsL, colptrL = colptr)
     VecchiaMLE_Run(input)
 
     # test solver_tol
@@ -71,17 +71,17 @@
     VecchiaMLE_Run(input)
 
     # Check print level
-    @test_throws ErrorException VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, :BLANK, :cpu)
+    @test_throws ErrorException VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; plevel=:BLANK)
 
     # Check architecture
-    @test_throws ErrorException VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, :VERROR, :BLANK)
+    @test_throws ErrorException VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; arch=:BLANK)
 
     # check solvers
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, :VERROR, :cpu; solver=:BLANK)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; solver=:BLANK)
     @test_throws AssertionError VecchiaMLE_Run(input) 
 
     # check sparsity gen
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, :VERROR, :cpu; sparsitygen=:BLANK)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; sparsitygen=:BLANK)
     @test_throws AssertionError VecchiaMLE_Run(input) 
 
 end

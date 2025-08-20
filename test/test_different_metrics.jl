@@ -10,7 +10,7 @@
     samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; arch=:cpu)
     
     # Get result from VecchiaMLE cpu
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; metric = Distances.Euclidean(), ptset = ptset)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; metric = Distances.Euclidean(), ptset = ptset)
     D, L_cpu = VecchiaMLE_Run(input)
 
     @test (D.iterations ≥ 0)
@@ -20,8 +20,8 @@
     @test (D.solve_model_time > 0.0)
     @test (D.create_model_time > 0.0)
 
-        # Get result from VecchiaMLE cpu
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; metric = Distances.Haversine(), ptset = ptset)
+    # Get result from VecchiaMLE cpu
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; metric = Distances.Haversine(), ptset = ptset)
     D, L_cpu = VecchiaMLE_Run(input)
 
     @test (D.iterations ≥ 0)

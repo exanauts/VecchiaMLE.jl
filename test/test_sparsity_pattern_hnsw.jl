@@ -11,7 +11,7 @@
 
     
     # Get result from VecchiaMLE NearestNeighbors
-    inputNN = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; ptset = ptset, sparsitygen=:NN)
+    inputNN = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset, sparsitygen=:NN)
     D, L_NN = VecchiaMLE_Run(inputNN)
 
     @test (D.iterations ≥ 0)
@@ -22,7 +22,7 @@
     @test (D.create_model_time > 0.0)
 
     # Get result from VecchiaMLE HNSW
-    inputHNSW = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; ptset = ptset, sparsitygen=:HNSW)
+    inputHNSW = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset, sparsitygen=:HNSW)
     D, L_HNSW = VecchiaMLE_Run(inputNN)
 
     @test (D.iterations ≥ 0)

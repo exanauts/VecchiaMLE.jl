@@ -10,7 +10,7 @@
     samples = VecchiaMLE.generate_samples(CuMatrix{Float64}(MatCov), number_of_samples; arch=:gpu)
     
     # Get result from VecchiaMLE gpu
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 2; ptset = ptset)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; arch=:gpu, ptset = ptset)
     D, L_cpu = VecchiaMLE_Run(input)
 
     @test (D.iterations ≥ 0)

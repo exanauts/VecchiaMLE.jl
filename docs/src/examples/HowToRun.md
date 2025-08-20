@@ -37,7 +37,7 @@ samples = VecchiaMLE.generate_samples(MatCov, number_of_samples)
 Next, we create and fill in the VecchiaMLEInput struct. This is done below.
 
 ```@example HowToRun
-input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; ptset=ptset)
+input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; 5, 1, ptset=ptset)
 ```
 
 Here, we set (though not necessary) the optimizer (MadNLP) print level to 5 (ERROR), 

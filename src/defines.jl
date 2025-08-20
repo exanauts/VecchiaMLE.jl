@@ -129,9 +129,9 @@ end
 
 function VecchiaMLEInput(
     n::Int, k::Int, 
-    samples::M, number_of_samples::Int, 
-    plevel::Union{Nothing, Symbol, Int} = :VERROR, 
-    arch::Union{Nothing, Symbol, Int} = :cpu;
+    samples::M, number_of_samples::Int; 
+    plevel::VPL=:VERROR, 
+    arch::VAR=:cpu,
     ptset::V=nothing,
     lvar_diag::Vl=nothing,
     uvar_diag::Vu=nothing,
@@ -153,7 +153,9 @@ function VecchiaMLEInput(
         V1  <: Union{Nothing, AbstractVector}, 
         Vl  <: Union{Nothing, AbstractVector}, 
         Vu  <: Union{Nothing, AbstractVector}, 
-        Vx0 <: Union{Nothing, AbstractVector}
+        Vx0 <: Union{Nothing, AbstractVector},
+        VPL <: Union{Symbol, Int},
+        VAR <: Union{Symbol, Int}
     }
     ptset_::AbstractVector = resolve_ptset(n, ptset)
     n_::Int = length(ptset_)

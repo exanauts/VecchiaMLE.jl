@@ -193,7 +193,7 @@ end
     MatCov = CuMatrix(VecchiaMLE.generate_MatCov(params, xyGrid))
     samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; arch=:gpu)
 
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; ptset=xyGrid)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset=xyGrid)
     model = VecchiaMLE.VecchiaModelGPU(samples, input)
     mems = test_allocs_nlpmodels_gpu(model)
 

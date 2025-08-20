@@ -30,7 +30,7 @@
         L_jump = LowerTriangular(L_jump)
         
         # Get result from VecchiaMLE
-        input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; lambda=lambda, ptset=xyGrid)
+        input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples; lambda=lambda, ptset=xyGrid)
         d, L_mle = VecchiaMLE_Run(input)
         L_mle = LowerTriangular(L_mle)
         # get model from VecchiaMLE

@@ -28,7 +28,7 @@
         L_jump = LowerTriangular(L_jump)
 
         # Get result from VecchiaMLE
-        input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; lambda=lambda, ptset=xyGrid)
+        input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; lambda=lambda, ptset=xyGrid)
         d, L_mle = VecchiaMLE_Run(input)
 
         @testset norm(L_mle - L_jump) ≤ 1e-6

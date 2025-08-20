@@ -12,7 +12,7 @@ params = [5.0, 0.2, 2.25, 0.25]
 @pprof begin
     MatCov = VecchiaMLE.generate_MatCov(n, params)
     samples = VecchiaMLE.generate_samples(MatCov, n, number_of_samples; arch=VecchiaMLE.cpu)
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples)
 
     global diagnostics, L = VecchiaMLE_Run(input)
     global error_KL = VecchiaMLE.KLDivergence(MatCov, L)
