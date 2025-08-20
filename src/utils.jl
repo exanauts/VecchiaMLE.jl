@@ -46,7 +46,7 @@ function generate_samples(::AbstractMatrix, ::Int, ::Val{arch}) where {arch}
     error("Unsupported architecture $arch for CPU matrix input.")
 end
 
-function generate_samples(::CuArray, ::Int, ::Val{arch}) where {arch}
+function generate_samples(::CUDA.CuArray{T, 2} where T, ::Int, ::Val{arch}) where {arch}
     error("Unsupported architecture $arch for GPU matrix input.")
 end
 
