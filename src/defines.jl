@@ -1,10 +1,10 @@
 
 """
-Computation mode for which the analysis to run. Currently
+Computer architecture on which the analysis will be run. Currently
 only defined as cpu or gpu, but in the future could encompass
 different gpu architectures. 
 """
-const COMPUTE_LEVEL = (:cpu, :gpu)
+const ARCHITECTURES = (:cpu, :gpu)
 
 """
 Print level of the program.
@@ -55,7 +55,7 @@ recover. The fields to the struct are as follows:\n
 * `normed_constraint_value`: Optimal norm of constraint vector.
 * `normed_grad_value`: Optimal norm of gradient vector.
 * `iterations`: Iterations for MadNLP to reach optimal.
-* `mode`: Operation mode: cpu or gpu
+* `arch`: Architecture. Either cpu or gpu
 """
 mutable struct Diagnostics
     create_model_time::Float64          # Time taken to create Vecchia Cache and MadNLP init.              
@@ -65,7 +65,7 @@ mutable struct Diagnostics
     normed_constraint_value::Float64    # Optimal norm of constraint vector.
     normed_grad_value::Float64          # Optimal norm of gradient vector.
     iterations::Int                     # Iterations for MadNLP to reach optimal.
-    mode::Symbol                        # Operation mode: :cpu or :gpu
+    arch::Symbol                        # Architecture: :cpu or :gpu
 end
 
 """
@@ -90,7 +90,7 @@ The fields to the struct are as follows:\n
 - `samples::M`: Samples to generate the output. Each sample should match the length of the `observed_pts` vector. If no samples are available, consult the documentation.
 - `number_of_samples::Int`: Number of samples provided as input to the program.
 - `MadNLP_print_level::MadNLP.LogLevels`: Print level for the optimizer. Defaults to `ERROR` if ignored.
-- `mode::ComputeMode`: Operating mode for the analysis. Either `gpu` or `cpu`. Defaults to `cpu`.
+- `arch::ARCHITECTURES`: Architecture for the analysis. Either `gpu` or `cpu`. Defaults to `cpu`.
 - `ptset::AbstractVector`: The locations from which the samples reveal their value.
 - `lvar_diag::AbstractVector`: Lower bounds on the diagonal of the sparse Vecchia approximation.
 - `uvar_diag::AbstractVector`: Upper bounds on the diagonal of the sparse Vecchia approximation.
@@ -110,7 +110,7 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu, Vx0}
     samples::M
     number_of_samples::Int
     plevel::Symbol
-    mode::Symbol
+    arch::Symbol
     ptset::V
     lvar_diag::Vl
     uvar_diag::Vu
@@ -131,7 +131,7 @@ function VecchiaMLEInput(
     n::Int, k::Int, 
     samples::M, number_of_samples::Int, 
     plevel::Union{Nothing, Symbol, Int} = :VERROR, 
-    mode::Union{Nothing, Symbol, Int} = :cpu;
+    arch::Union{Nothing, Symbol, Int} = :cpu;
     ptset::V=nothing,
     lvar_diag::Vl=nothing,
     uvar_diag::Vu=nothing,
@@ -164,7 +164,7 @@ function VecchiaMLEInput(
         samples,
         number_of_samples,
         convert_plevel(Val(plevel)),
-        convert_computemode(Val(mode)),
+        convert_computemode(Val(arch)),
         ptset_,
         lvar_diag,
         uvar_diag,

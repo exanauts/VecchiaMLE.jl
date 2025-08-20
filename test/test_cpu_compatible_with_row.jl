@@ -7,7 +7,7 @@
     xyGrid = VecchiaMLE.generate_xyGrid(n)
 
     MatCov = VecchiaMLE.generate_MatCov(params, xyGrid)
-    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; mode=:cpu)
+    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; arch=:cpu)
     Sparsity = VecchiaMLE.sparsitypattern(xyGrid, k)
 
     L_row = VecchiaMLE_models(n, k, samples, number_of_samples, Sparsity, "Row")

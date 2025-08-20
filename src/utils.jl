@@ -25,7 +25,7 @@ end
 """
     Samples_Matrix = generate_samples(MatCov::AbstractMatrix, 
                                       number_of_samples::Int;
-                                      mode::VecchiaMLE.ComputeMode )
+                                      arch::VecchiaMLE.ComputeMode )
 
     Generate a number of samples according to the given Covariance Matrix MatCov.
     Note the samples are given as mean zero. 
@@ -39,7 +39,7 @@ end
 * `number_of_samples`: How many samples to return.
 
 ## Keyword Arguments
-* `mode`: Either generate samples on gpu or cpu
+* `arch`: Either generate samples on gpu or cpu
 
 ## Output arguments
 
@@ -64,16 +64,16 @@ function generate_samples(MatCov::CuArray{Float64}, number_of_samples::Int, ::Va
     return V
 end
 
-function generate_samples(::AbstractMatrix, ::Int, ::Val{mode}) where {mode}
-    error("Unsupported mode $mode for CPU matrix input.")
+function generate_samples(::AbstractMatrix, ::Int, ::Val{arch}) where {arch}
+    error("Unsupported architecture $arch for CPU matrix input.")
 end
 
-function generate_samples(::CuArray, ::Int, ::Val{mode}) where {mode}
-    error("Unsupported mode $mode for GPU matrix input.")
+function generate_samples(::CuArray, ::Int, ::Val{arch}) where {arch}
+    error("Unsupported architecture $arch for GPU matrix input.")
 end
 
-generate_samples(MatCov::AbstractMatrix, number_of_samples::Int; mode::Symbol=:cpu) = generate_samples(MatCov, number_of_samples, Val(mode))
-generate_samples(MatCov::CuArray{<:Float64}, number_of_samples::Int; mode::Symbol=:gpu) = generate_samples(MatCov, number_of_samples, Val(mode))
+generate_samples(MatCov::AbstractMatrix, number_of_samples::Int; arch::Symbol=:cpu) = generate_samples(MatCov, number_of_samples, Val(arch))
+generate_samples(MatCov::CuArray{<:Float64}, number_of_samples::Int; arch::Symbol=:gpu) = generate_samples(MatCov, number_of_samples, Val(arch))
 
 
 
@@ -153,7 +153,7 @@ end
 * `model`: The Vecchia model based on the VecchiaMLEInput  
 """
 function get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)::VecchiaModel
-    return get_vecchia_model(iVecchiaMLE, Val(iVecchiaMLE.mode))
+    return get_vecchia_model(iVecchiaMLE, Val(iVecchiaMLE.arch))
 end
 
 get_vecchia_model(iVecchiaMLE::VecchiaMLEInput, ::Val{:cpu}) = VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE)
@@ -539,7 +539,7 @@ end
 
 # TODO: Move validate_input to internals
 """
-    validate_input(iVecchiaMLE::VecchiaMLEInput, ptset::Union{AbstractVector, Nothing})
+    validate_input(iVecchiaMLE::VecchiaMLEInput)
 
 A helper function to catch any inconsistencies in the input given by the user.
 
@@ -547,6 +547,7 @@ A helper function to catch any inconsistencies in the input given by the user.
 * `iVecchiaMLE`: The filled-out VecchiaMLEInput struct. See VecchiaMLEInput struct for more details. 
 """
 function validate_input(iVecchiaMLE::VecchiaMLEInput) 
+
     @assert_cond iVecchiaMLE.n > 0 iVecchiaMLE.n "be strictly positive"
     @assert_cond_compare iVecchiaMLE.k <= iVecchiaMLE.n  
     @assert_cond size(iVecchiaMLE.samples, 1) > 0 iVecchiaMLE.samples "have at least one sample"
@@ -554,14 +555,16 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
     @assert_eq size(iVecchiaMLE.samples, 1) iVecchiaMLE.number_of_samples 
     @assert eltype(iVecchiaMLE.samples) <: AbstractFloat "samples must have eltype which is a subtype of AbstractFloat"
 
-    if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.mode == :gpu
-        @warn "mode given is gpu, but samples are on cpu. Transferring samples to gpu."
+    if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.arch == :gpu
+        @warn "architecture given is gpu, but samples are on cpu. Transferring samples to gpu."
         iVecchiaMLE.samples = CuMatrix{Float64}(iVecchiaMLE.samples)
     end
 
     @assert_eq length(iVecchiaMLE.ptset) iVecchiaMLE.n
-    for (i, pt) in enumerate(iVecchiaMLE.ptset)
-        @assert_eq length(pt) 2 
+    
+    dimension = length(iVecchiaMLE.ptset[1])
+    for pt in iVecchiaMLE.ptset
+        @assert_eq length(pt) dimension 
     end
 
     if !isnothing(iVecchiaMLE.rowsL) && !isnothing(iVecchiaMLE.colsL) && !isnothing(iVecchiaMLE.colptrL)
@@ -585,7 +588,10 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
 
     @assert_cond iVecchiaMLE.solver_tol > 0.0 iVecchiaMLE.solver_tol "be positive"
 
-    @assert iVecchiaMLE.solver in SUPPORTED_SOLVERS "Unsupported solver given: $(iVecchiaMLE.solver)"
+    @assert_in iVecchiaMLE.solver SUPPORTED_SOLVERS
+    @assert_in iVecchiaMLE.arch ARCHITECTURES
+    @assert_in iVecchiaMLE.plevel PRINT_LEVEL
+    @assert_in iVecchiaMLE.sparsitygen SPARSITY_GEN
 
 end
 
@@ -660,7 +666,7 @@ end
 """
 function print_diagnostics(d::Diagnostics)
     println("========== Diagnostics ==========")
-    println(rpad("Model Creation Time:", 25), d.create_model_time)
+    println(rpad("Model Creation Time:",  25), d.create_model_time)
     println(rpad("LinAlg Solve Time:",    25), d.linalg_solve_time)
     println(rpad("Solve Model Time:",     25), d.solve_model_time)
     println(rpad("Objective Value:",      25), d.objective_value)
@@ -707,7 +713,7 @@ convert_plevel(::Val{1}) = :VTRACE
 convert_plevel(::Val{:VDEBUG}) = :VDEBUG
 convert_plevel(::Val{2}) = :VDEBUG
 
-convert_plevel(::Val{:INFO}) = :VINFO
+convert_plevel(::Val{:VINFO}) = :VINFO
 convert_plevel(::Val{3}) = :VINFO
 
 convert_plevel(::Val{:VWARN}) = :VWARN
@@ -717,8 +723,8 @@ convert_plevel(::Val{:VERROR}) = :VERROR
 convert_plevel(::Val{5}) = :VERROR
 
 
-function convert_computemode(::Val{mode}) where {mode}
-    error("Unsupported compute mode: $mode")
+function convert_computemode(::Val{arch}) where {arch}
+    error("Unsupported architecture: $arch")
 end
 
 convert_computemode(::Val{:cpu}) = :cpu

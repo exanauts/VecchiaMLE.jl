@@ -50,7 +50,7 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, preschol::AbstractMatrix, d
     colsL = view(model.cache.colsL, :)
 
     # Casting to CPU matrices
-    if iVecchiaMLE.mode != :cpu
+    if iVecchiaMLE.arch != :cpu
         valsL = Vector{Float64}(valsL)
         rowsL = Vector{Int}(rowsL)
         colsL = Vector{Int}(colsL)
@@ -70,7 +70,7 @@ function RetrieveDiagnostics!(iVecchiaMLE, output, model, diagnostics)
         diagnostics.linalg_solve_time = output.counters.linear_solver_time
     end
     diagnostics.iterations = output.iter
-    diagnostics.mode = iVecchiaMLE.mode
+    diagnostics.arch = iVecchiaMLE.arch
 
     # Getting some values for error checking
     diagnostics.objective_value = NLPModels.obj(model, output.solution)

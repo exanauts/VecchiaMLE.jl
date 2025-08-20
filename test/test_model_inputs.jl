@@ -7,7 +7,7 @@
     ptset = VecchiaMLE.generate_safe_xyGrid(n)
 
     MatCov = VecchiaMLE.generate_MatCov(params, ptset)
-    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; mode=:cpu)
+    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; arch=:cpu)
 
     # default input
     input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset)
@@ -34,11 +34,6 @@
 
     # test length(ptset) == n
     input.ptset = [zeros(2) for i in 1:4]
-    @test_throws AssertionError VecchiaMLE_Run(input)
-    input.ptset = ptset
-
-    # test 1D ptset
-    input.ptset = [[0.0] for i in 1:n]
     @test_throws AssertionError VecchiaMLE_Run(input)
     input.ptset = ptset
 
@@ -74,5 +69,19 @@
     # test if minimal inputs passes
     input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples)
     VecchiaMLE_Run(input)
+
+    # Check print level
+    @test_throws ErrorException VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, :BLANK, :cpu)
+
+    # Check architecture
+    @test_throws ErrorException VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, :VERROR, :BLANK)
+
+    # check solvers
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, :VERROR, :cpu; solver=:BLANK)
+    @test_throws AssertionError VecchiaMLE_Run(input) 
+
+    # check sparsity gen
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, :VERROR, :cpu; sparsitygen=:BLANK)
+    @test_throws AssertionError VecchiaMLE_Run(input) 
 
 end

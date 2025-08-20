@@ -41,3 +41,14 @@ macro assert_cond_compare(expr)
         )
     end
 end
+
+macro assert_in(sym_expr, tuple_expr)
+    quote
+        sym_val = $(esc(sym_expr))
+        tuple_val = $(esc(tuple_expr))
+        @assert sym_val in tuple_val (
+            string($(QuoteNode(sym_expr)), " must be one of ", $(QuoteNode(tuple_expr)),
+                   ". Given: ", sym_val, ".")
+        )
+    end
+end

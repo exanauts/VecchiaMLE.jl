@@ -1,7 +1,7 @@
 
 ## VecchiaMLE Defines
 ```@docs
-VecchiaMLE.COMPUTE_LEVEL
+VecchiaMLE.ARCHITECTURES
 VecchiaMLE.PRINT_LEVEL
 VecchiaMLE.SPARSITY_GEN
 VecchiaMLE.SUPPORTED_SOLVERS

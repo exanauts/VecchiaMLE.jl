@@ -59,8 +59,8 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
     nnzh_tri_obj::Int = sum(m[j] * (m[j] + 1) for j in 1:n) ÷ 2
     nnzh_tri_lag::Int = nnzh_tri_obj + n
 
-    # Check for compute mode. 
-    # NOTE: Only valid since there is only 1 gpu mode instanced.
+    # Check for architecture. 
+    # NOTE: Only valid since there is only 1 gpu architecture instanced.
     if S != Vector{Float64}
 
         offsets = cumsum([0; m[1:end-1]]) |> CuVector{Int}

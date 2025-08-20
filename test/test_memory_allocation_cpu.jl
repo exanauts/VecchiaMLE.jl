@@ -5,7 +5,7 @@
     params = [5.0, 0.2, 2.25, 0.25]
     xyGrid = VecchiaMLE.generate_xyGrid(n)
     MatCov = VecchiaMLE.generate_MatCov(params, xyGrid)
-    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; mode=:cpu)
+    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; arch=:cpu)
 
     iVecchiaMLE = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; ptset=xyGrid)
     model = VecchiaMLE.VecchiaModelCPU(samples, iVecchiaMLE)

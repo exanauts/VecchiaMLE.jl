@@ -7,7 +7,7 @@
     ptset = VecchiaMLE.generate_safe_xyGrid(n)
 
     MatCov = VecchiaMLE.generate_MatCov(params, ptset)
-    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; mode=:cpu)
+    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; arch=:cpu)
 
     
     # Get result from VecchiaMLE NearestNeighbors

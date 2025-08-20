@@ -11,7 +11,7 @@ params = [5.0, 0.2, 2.25, 0.25]
 
 @pprof begin
     MatCov = VecchiaMLE.generate_MatCov(n, params)
-    samples = VecchiaMLE.generate_samples(MatCov, n, number_of_samples; mode=VecchiaMLE.cpu)
+    samples = VecchiaMLE.generate_samples(MatCov, n, number_of_samples; arch=VecchiaMLE.cpu)
     input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1)
 
     global diagnostics, L = VecchiaMLE_Run(input)
@@ -31,7 +31,7 @@ labels_for_file = [
     "normed_constraint_value",
     "normed_grad_value",
     "iterations",
-    "mode"
+    "arch"
 ]
 
 
@@ -43,7 +43,7 @@ stuff_to_file = [error_KL, error_uni,
     diagnostics.normed_constraint_value,
     diagnostics.normed_grad_value,
     diagnostics.iterations,
-    diagnostics.mode,
+    diagnostics.arch,
 ]
 stuff = hcat(labels_for_file, string.(stuff_to_file))
 
