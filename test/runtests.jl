@@ -32,6 +32,7 @@ end
 
 include("test_model_inputs.jl")
 include("test_abnormal_ptset.jl")
+include("test_model_solver.jl")
 
 using HSL, MadNLPHSL
 
