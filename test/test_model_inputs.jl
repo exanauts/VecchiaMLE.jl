@@ -66,8 +66,8 @@
     input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; solver_tol = -1.0) 
     @test_throws AssertionError VecchiaMLE_Run(input)
 
-    # test if minimal inputs passes
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples)
+    # test if minimal inputs passes. passing a kwarg also. 
+    input = VecchiaMLE.VecchiaMLEInput(k, samples; solver_tol=:1e-7)
     VecchiaMLE_Run(input)
 
     # Check print level

@@ -79,19 +79,17 @@ mutable struct VecchiaModel{T, S, VI, M} <: AbstractNLPModel{T, S}
 end
 
 """
-Input to the VecchiaMLE analysis, needs to be filled out by the user!
-The fields to the struct are as follows:\n
+Input to the VecchiaMLE analysis.
+## Fields
 
-
-#### Fields
-
-- `n::Int`: Square root size of the problem, i.e., the length of one side of `ptset`.
 - `k::Int`: Number of neighbors, representing the number of conditioning points in the Vecchia Approximation.
-- `samples::M`: Samples to generate the output. Each sample should match the length of the `observed_pts` vector. If no samples are available, consult the documentation.
-- `number_of_samples::Int`: Number of samples provided as input to the program.
-- `MadNLP_print_level::MadNLP.LogLevels`: Print level for the optimizer. Defaults to `ERROR` if ignored.
-- `arch::ARCHITECTURES`: Architecture for the analysis. Either `gpu` or `cpu`. Defaults to `cpu`.
-- `ptset::AbstractVector`: The locations from which the samples reveal their value.
+- `samples::M`: Samples to generate the output. Each sample should match the length of the `observed_pts` vector.
+- `plevel::Symbol`: Print level for the optimizer. See PRINT_LEVEL. Defaults to `:VERROR`.
+- `arch::Symbol`: Architecture for the analysis. See ARCHITECTURES. Defaults to `:cpu`.
+
+## Keyword Arguments
+
+- `ptset::AbstractVector`: The locations from which the samples reveal their value. Can be passed as a matrix or vector of vectors.
 - `lvar_diag::AbstractVector`: Lower bounds on the diagonal of the sparse Vecchia approximation.
 - `uvar_diag::AbstractVector`: Upper bounds on the diagonal of the sparse Vecchia approximation.
 - `rowsL::AbstractVector`: The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT! 
@@ -102,7 +100,7 @@ The fields to the struct are as follows:\n
 - `skip_check::Bool`: Whether or not to skip the `validate_input` function.
 - `metric`: The metric by which nearest neighbors are determined. Defaults to Euclidean
 - `lambda`: The regularization term scalar for the ridge term `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
-- `x0`: The user may give an inital condition, but it is limiting if you do not have the sparsity pattern. 
+- `x0`: The user may give an initial condition, but it is limiting if you do not have the sparsity pattern. 
 """
 mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu, Vx0}
     n::Int 
@@ -183,3 +181,29 @@ function VecchiaMLEInput(
         x0
     )
 end
+
+"""
+Input to the VecchiaMLE analysis. Samples are expected as row vectors. 
+## Fields
+
+- `k::Int`: Number of neighbors, representing the number of conditioning points in the Vecchia Approximation.
+- `samples::M`: Samples to generate the output. Each sample should match the length of the `observed_pts` vector.
+
+## Keyword Arguments
+- `plevel::Symbol`: Print level for the optimizer. See PRINT_LEVEL. Defaults to `ERROR`.
+- `arch::Symbol`: Architecture for the analysis. See ARCHITECTURES. Defaults to `:cpu`.
+- `ptset::AbstractVector`: The locations from which the samples reveal their value. Can be passed as a matrix or vector of vectors.
+- `lvar_diag::AbstractVector`: Lower bounds on the diagonal of the sparse Vecchia approximation.
+- `uvar_diag::AbstractVector`: Upper bounds on the diagonal of the sparse Vecchia approximation.
+- `rowsL::AbstractVector`: The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT! 
+- `colsL::AbstractVector`: The sparsity pattern cols of L if the user gives one. MUST BE IN CSC FORMAT!
+- `colptrL::AbstractVector`: The column pointer of L if the user gives one. MUST BE IN CSC FORMAT!
+- `solver::Symbol`: Optimization solver (:madnlp, :ipopt, :knitro). Defaults to `:madnlp`.
+- `solver_tol::Float64`: Tolerance for the optimization solver. Defaults to `1e-8`.
+- `skip_check::Bool`: Whether or not to skip the `validate_input` function.
+- `metric`: The metric by which nearest neighbors are determined. Defaults to Euclidean
+- `lambda`: The regularization term scalar for the ridge term `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
+- `x0`: The user may give an initial condition, but it is limiting if you do not have the sparsity pattern. 
+"""
+VecchiaMLEInput(k::Int, samples; kwargs...) = VecchiaMLEInput(size(samples, 2), k, samples, size(samples, 1); kwargs...)
+    
