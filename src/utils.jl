@@ -167,8 +167,8 @@ A helper function to generate a point grid which partitions the positive square 
 """
 function generate_rectGrid(dims::Tuple{Int, Int})::AbstractVector
     nx, ny = dims
-    @assert_cond nx > 0 "be positive"
-    @assert_cond ny > 0 "be positive"
+    @assert_cond nx > 0 nx "be positive"
+    @assert_cond ny > 0 ny "be positive"
 
     grid_x = range(0.0, 1.0, length=nx)
     grid_y = range(0.0, 1.0, length=ny)
