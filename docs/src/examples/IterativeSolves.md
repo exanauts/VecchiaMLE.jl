@@ -36,11 +36,11 @@ for i in 1:niter
     # save sparsity pattern
     if i == 1
         L_csc = SparseMatrixCSC(L)
-        global rowsL = L_csc.rowval
-        global colptrL = L_csc.colptr
-        global colsL = similar(rowsL)
-        for j in 1:length(colptr)-1
-            idx_range = colptr[j]:(colptr[j+1]-1)
+        rowsL = L_csc.rowval
+        colptrL = L_csc.colptr
+        colsL = similar(rowsL)
+        for j in 1:length(colptrL)-1
+            idx_range = colptrL[j]:(colptrL[j+1]-1)
             colsL[idx_range] .= j
         end
     end
