@@ -16,8 +16,11 @@ const KA = KernelAbstractions
 
 # Includes
 include("defines.jl")
+include("macros.jl")
 include("internals.jl")
 include("utils.jl")
+include("sparsitypattern.jl")
+include("errors.jl")
 include("input.jl")
 include("kernels.jl")
 include("models/VecchiaModel.jl")
