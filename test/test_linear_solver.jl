@@ -15,7 +15,7 @@
     model = VecchiaMLE.get_vecchia_model(input)
     output = madnlp(model,
         linear_solver=linear_solver,
-        print_level=input.plevel
+        print_level=VecchiaMLE.resolve_plevel(Val(input.solver), Val(input.plevel))
     )
 
     valsL = Vector{Float64}(output.solution[1:model.cache.nnzL])
@@ -27,7 +27,7 @@
     model = VecchiaMLE.get_vecchia_model(input)
     output = madnlp(model,
         linear_solver=MadNLP.UmfpackSolver,
-        print_level=input.plevel
+        print_level=VecchiaMLE.resolve_plevel(Val(input.solver), Val(input.plevel))
     )
 
     valsL = Vector{Float64}(output.solution[1:model.cache.nnzL])
