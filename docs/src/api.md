@@ -39,6 +39,5 @@ VecchiaMLE.sparsitypattern_HNSW
 VecchiaMLE.sparsitypattern_NN
 VecchiaMLE.validate_input
 VecchiaMLE.nn_to_csc
-VecchiaMLE.is_csc_format
 VecchiaMLE.print_diagnostics
 ```
