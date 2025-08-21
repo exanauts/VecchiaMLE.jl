@@ -12,7 +12,6 @@ VecchiaMLE.VecchiaMLEInput
 ```
 
 ## VecchiaMLE input
-
 ```@docs
 VecchiaMLE.VecchiaMLE_Run
 VecchiaMLE.VecchiaMLERunAnalysis!
@@ -22,22 +21,38 @@ VecchiaMLE.RetrieveDiagnostics!
 
 ## VecchiaMLE utils
 ```@docs
-VecchiaMLE.get_vecchia_model 
 VecchiaMLE.generate_samples
 VecchiaMLE.generate_MatCov
 VecchiaMLE.generate_xyGrid
 VecchiaMLE.generate_safe_xyGrid
 VecchiaMLE.generate_rectGrid
-VecchiaMLE.uni_error
+VecchiaMLE.print_diagnostics
+```
+
+## VecchiaMLE internals
+```@docs
+VecchiaMLE.get_vecchia_model 
+VecchiaMLE.validate_input
+VecchiaMLE.nn_to_csc
+```
+
+## VecchiaMLE permutations
+```@docs
 VecchiaMLE.IndexReorder
 VecchiaMLE.IndexMaxMin
 VecchiaMLE.dist_from_set
 VecchiaMLE.IndexRandom
-VecchiaMLE.KLDivergence
+```
+
+## VecchiaMLE sparsitypatterns
+```@docs
 VecchiaMLE.sparsitypattern
 VecchiaMLE.sparsitypattern_HNSW
 VecchiaMLE.sparsitypattern_NN
-VecchiaMLE.validate_input
-VecchiaMLE.nn_to_csc
-VecchiaMLE.print_diagnostics
+```
+
+## VecchiaMLE errors
+```@docs
+VecchiaMLE.uni_error
+VecchiaMLE.KLDivergence
 ```

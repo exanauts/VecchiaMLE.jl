@@ -1,11 +1,6 @@
 # These functions are only for internal use, and are not intended for the user to call them!
 
 
-
-
-
-
-
 ####################################################
 #               validate_input                
 ####################################################
@@ -116,9 +111,7 @@ convert_plevel(::Val{5})       = :VERROR
 #              convert_computemode
 ####################################################
 
-function convert_computemode(::Val{arch}) where {arch}
-    error("Unsupported architecture: $arch")
-end
+convert_computemode(::Val{arch}) where {arch} = error("Unsupported architecture: $arch")
 
 convert_computemode(::Val{:cpu}) = :cpu
 convert_computemode(::Val{1})    = :cpu
