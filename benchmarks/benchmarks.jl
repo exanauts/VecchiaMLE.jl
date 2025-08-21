@@ -13,9 +13,9 @@ timings_solve = zeros(2, ns |> length)
 for (i, n) in enumerate(ns)
     # Generate samples
     MatCov = VecchiaMLE.generate_MatCov(n, params)
-    samples = VecchiaMLE.generate_samples(MatCov, n, number_of_samples; mode=cpu)
-    input_cpu = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1)
-    input_gpu = VecchiaMLE.VecchiaMLEInput(n, k, CuMatrix(samples), number_of_samples, 5, 2)
+    samples = VecchiaMLE.generate_samples(MatCov, n, number_of_samples; arch=:cpu)
+    input_cpu = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples)
+    input_gpu = VecchiaMLE.VecchiaMLEInput(n, k, CuMatrix(samples), number_of_samples; arch=:gpu)
 
     # cpu
     diagnostics_cpu, L_cpu = VecchiaMLE_Run(input_cpu)

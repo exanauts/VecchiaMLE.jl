@@ -5,8 +5,9 @@
     number_of_samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
     xyGrid = VecchiaMLE.generate_xyGrid(n)
+
     MatCov = VecchiaMLE.generate_MatCov(params, xyGrid)
-    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; mode=VecchiaMLE.cpu)
+    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; arch=:cpu)
     Sparsity = VecchiaMLE.sparsitypattern(xyGrid, k)
 
     L_row = VecchiaMLE_models(n, k, samples, number_of_samples, Sparsity, "Row")
@@ -14,7 +15,7 @@
 
 
     # Get result from VecchiaMLE
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples)
     d, L_mle = VecchiaMLE_Run(input)
 
     errors_row = [VecchiaMLE.KLDivergence(MatCov, L_row), VecchiaMLE.uni_error(MatCov, L_row)]

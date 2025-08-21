@@ -2,43 +2,22 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
     T = eltype(S)
 
     cache::VecchiaCache = create_vecchia_cache(S, iVecchiaMLE)
+
     nvar::Int = length(cache.rowsL) + length(cache.colptrL) - 1
-
-    # calculate nnzh
     ncon::Int = length(cache.colptrL) - 1
-    x0_::S = fill!(S(undef, nvar), zero(T))
-    # check x0
-    if !isnothing(iVecchiaMLE.x0) 
-        if mapreduce(x -> x > 0, &, view(iVecchiaMLE.x0, cache.diagL))       
-            view(x0_, 1:cache.nnzL) .= iVecchiaMLE.x0
-            view(x0_, (1:cache.n).+cache.nnzL) .= log.(view(iVecchiaMLE.x0, cache.diagL))
-        else
-            @warn "User given x0 is not feasible. Setting x0 such that the initial Vecchia approximation is the identity."
-            view(x0_, cache.diagL) .= one(T)
-        end
-    end 
 
+    # Allocating data    
+    x0_::S = fill!(S(undef, nvar), zero(T))
     y0::S = fill!(S(undef, ncon), zero(T))
     lcon::S = fill!(S(undef, ncon), zero(T))
     ucon::S = fill!(S(undef, ncon), zero(T))    
     lvar::S = fill!(S(undef, nvar), -Inf)
     uvar::S = fill!(S(undef, nvar), Inf)
 
-    #TODO: Add checks to sanitize_input, also provide bounds if none were given in VecchiaMLEInput constructor
-    if !isnothing(iVecchiaMLE.lvar_diag)
-        view(lvar, cache.diagL) .= iVecchiaMLE.lvar_diag
-        view(lvar, cache.nnzL+1:nvar) .= log.(iVecchiaMLE.lvar_diag)
-    else
-        # Always ensure that the diagonal coefficient Lᵢᵢ of the Vecchia approximation are strictly positive
-        view(lvar, cache.diagL) .= 1e-16
-        view(lvar, cache.nnzL+1:nvar) .= log(1e-16)
-    end
-
-    if !isnothing(iVecchiaMLE.uvar_diag)
-        view(uvar, cache.diagL) .= iVecchiaMLE.uvar_diag
-        view(uvar, cache.nnzL+1:nvar) .= log.(iVecchiaMLE.uvar_diag)
-    end
-    #TODO: End TODO
+    # Assigning user-given values
+    check_x0!(x0_, iVecchiaMLE, cache)
+    check_lvar!(lvar, iVecchiaMLE, cache)
+    check_uvar!(uvar, iVecchiaMLE, cache)
 
     meta = NLPModelMeta{T, S}(
         nvar,
@@ -67,16 +46,11 @@ VecchiaModelGPU(samples::CuMatrix{Float64, B}, iVecchiaMLE::VecchiaMLEInput) whe
 # Constructing the vecchia cache used everywhere in the code below.
 function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaCache where {S <: AbstractVector}
     Msamples::Int = size(iVecchiaMLE.samples, 1)
-    Lsamples::Int = size(iVecchiaMLE.samples, 2)
     n::Int = iVecchiaMLE.n
     T = eltype(S)
 
     # SPARSITY PATTERN OF L IN CSC FORMAT.
-    if !isnothing(iVecchiaMLE.rowsL)
-        rowsL, colsL, colptrL = iVecchiaMLE.rowsL, iVecchiaMLE.colsL, iVecchiaMLE.colptrL
-    else
-        rowsL, colsL, colptrL = sparsitypattern(iVecchiaMLE.ptset, iVecchiaMLE.k, iVecchiaMLE.metric, iVecchiaMLE.sparsitygen)
-    end
+    rowsL, colsL, colptrL = sparsitypattern(Val(iVecchiaMLE.sparsitygen), iVecchiaMLE)
 
     nnzL::Int = length(rowsL)
     m = [colptrL[j+1] - colptrL[j] for j in 1:n]
@@ -85,6 +59,8 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
     nnzh_tri_obj::Int = sum(m[j] * (m[j] + 1) for j in 1:n) ÷ 2
     nnzh_tri_lag::Int = nnzh_tri_obj + n
 
+    # Check for architecture. 
+    # NOTE: Only valid since there is only 1 gpu architecture instanced.
     if S != Vector{Float64}
 
         offsets = cumsum([0; m[1:end-1]]) |> CuVector{Int}
@@ -97,6 +73,7 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
         offsets = Int[]
         B = [Matrix{T}(undef, m[j], m[j]) for j = 1:n]
     end
+
     hess_obj_vals::S = S(undef, nnzh_tri_obj)
 
     vecchia_build_B!(B, iVecchiaMLE.samples, iVecchiaMLE.lambda, rowsL, colptrL, hess_obj_vals, n, m)

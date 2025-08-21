@@ -7,8 +7,10 @@
         Number_of_Samples = 100
         params = [5.0, 0.2, 2.25, 0.25]
         xyGrid = VecchiaMLE.generate_xyGrid(n)
+
         MatCov = VecchiaMLE.generate_MatCov(params, xyGrid)
-        samples = VecchiaMLE.generate_samples(MatCov, Number_of_Samples; mode=VecchiaMLE.cpu)
+        samples = VecchiaMLE.generate_samples(MatCov, Number_of_Samples; arch=:cpu)
+
         Sparsity = VecchiaMLE.sparsitypattern(xyGrid, k)
         # Model itself
         model = Model(()->MadNLP.Optimizer(max_iter=100, print_level=MadNLP.ERROR))
@@ -28,7 +30,7 @@
         L_jump = LowerTriangular(L_jump)
         
         # Get result from VecchiaMLE
-        input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples, 5, 1; lambda=lambda, ptset=xyGrid)
+        input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples; lambda=lambda, ptset=xyGrid)
         d, L_mle = VecchiaMLE_Run(input)
         L_mle = LowerTriangular(L_mle)
         # get model from VecchiaMLE

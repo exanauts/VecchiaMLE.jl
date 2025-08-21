@@ -6,8 +6,9 @@
         number_of_samples = 100
         params = [5.0, 0.2, 2.25, 0.25]
         xyGrid = VecchiaMLE.generate_xyGrid(n)
+
         MatCov = VecchiaMLE.generate_MatCov(params, xyGrid)
-        samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; mode=VecchiaMLE.cpu)
+        samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; arch=:cpu)
         Sparsity = VecchiaMLE.sparsitypattern(xyGrid, k)
 
         # Model itself
@@ -27,7 +28,7 @@
         L_jump = LowerTriangular(L_jump)
 
         # Get result from VecchiaMLE
-        input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; lambda=lambda, ptset=xyGrid)
+        input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; lambda=lambda, ptset=xyGrid)
         d, L_mle = VecchiaMLE_Run(input)
 
         @testset norm(L_mle - L_jump) ≤ 1e-6

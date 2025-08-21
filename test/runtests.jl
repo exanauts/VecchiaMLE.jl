@@ -10,8 +10,6 @@ using CUDA
 using NLPModels, NLPModelsTest
 # using Random
 
-using .VecchiaMLE
-
 # Includes
 include("models/Jump_models.jl")
 include("models/VecchiaMLE_models.jl")
@@ -34,6 +32,7 @@ end
 
 include("test_model_inputs.jl")
 include("test_abnormal_ptset.jl")
+include("test_model_solver.jl")
 
 using HSL, MadNLPHSL
 

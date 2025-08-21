@@ -15,7 +15,7 @@ function VecchiaMLE_Run(iVecchiaMLE::VecchiaMLEInput)
 
     !iVecchiaMLE.skip_check && validate_input(iVecchiaMLE)
     preschol = spzeros(iVecchiaMLE.n, iVecchiaMLE.n)
-    diagnostics = Diagnostics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, cpu)
+    diagnostics = Diagnostics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, :cpu)
     VecchiaMLERunAnalysis!(iVecchiaMLE, preschol, diagnostics)
     
     return diagnostics, preschol
@@ -40,9 +40,8 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, preschol::AbstractMatrix, d
     
     diags.solve_model_time = @elapsed begin
         output = vecchia_solver(Val(iVecchiaMLE.solver), model,
-            #linear_solver=MadNLPHSL.Ma57Solver, # Linear Solver should be determined if found on machine! #TODO: Later
-            print_level=iVecchiaMLE.plevel,
-            tol=iVecchiaMLE.solver_tol,
+            print_level=resolve_plevel(Val(iVecchiaMLE.solver), Val(iVecchiaMLE.plevel)),
+            tol=iVecchiaMLE.solver_tol
         )
     end
     
@@ -51,7 +50,7 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, preschol::AbstractMatrix, d
     colsL = view(model.cache.colsL, :)
 
     # Casting to CPU matrices
-    if iVecchiaMLE.mode != cpu
+    if iVecchiaMLE.arch != :cpu
         valsL = Vector{Float64}(valsL)
         rowsL = Vector{Int}(rowsL)
         colsL = Vector{Int}(colsL)
@@ -71,7 +70,7 @@ function RetrieveDiagnostics!(iVecchiaMLE, output, model, diagnostics)
         diagnostics.linalg_solve_time = output.counters.linear_solver_time
     end
     diagnostics.iterations = output.iter
-    diagnostics.mode = iVecchiaMLE.mode
+    diagnostics.arch = iVecchiaMLE.arch
 
     # Getting some values for error checking
     diagnostics.objective_value = NLPModels.obj(model, output.solution)

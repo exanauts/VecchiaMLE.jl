@@ -5,11 +5,12 @@
     number_of_samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
     ptset = VecchiaMLE.generate_safe_xyGrid(n)
+
     MatCov = VecchiaMLE.generate_MatCov(params, ptset)
-    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; mode=VecchiaMLE.cpu)
+    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; arch=:cpu)
     
     # Get result from VecchiaMLE cpu
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples, 5, 1; ptset = ptset)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset)
     D, L_cpu = VecchiaMLE_Run(input)
 
     @test (D.iterations ≥ 0)

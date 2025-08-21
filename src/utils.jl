@@ -1,22 +1,5 @@
 export generate_samples, generate_MatCov, generate_xyGrid
 
-"""
-    Covariance_Matrix = covariance2D(ptset::AbstractVector, 
-                                     params::AbstractVector)
-
-    Generate a Matern-Like Covariance Matrix for the parameters and locations given.
-    Note: This should not be called by the user. This is the back end for the function
-    generate_MatCov()!
-
-## Input arguments
-
-* `ptset`: A set of points in 2D space upon which we determine the indices of the Covariance matrix;
-* `params`: An array of length 3 (or 4) that holds the parameters to the matern covariance kernel (σ, ρ, ν).
-
-## Output arguments
-
-* `Covariance_Matrix` : An n × n Matern matrix, where n is the length of the ptset 
-"""
 function covariance2D(ptset::AbstractVector, params::AbstractVector)::AbstractMatrix
     return Symmetric([BesselK.matern(x, y, params) for x in ptset, y in ptset])
 end
@@ -25,66 +8,116 @@ end
 """
     Samples_Matrix = generate_samples(MatCov::AbstractMatrix, 
                                       number_of_samples::Int;
-                                      mode::VecchiaMLE.ComputeMode )
+                                      arch::Symbol)
 
     Generate a number of samples according to the given Covariance Matrix MatCov.
     Note the samples are given as mean zero. 
-    If a CUDA compatible device is detected, the samples are generated on the gpu
-    and transferred back to the cpu. 
 
 ## Input arguments
 
-* `MatCov`: A Covariance Matrix, presumably positive definite;
+* `MatCov`: A Covariance Matrix, assumed positive definite;
 * `n`: The length of one side of the Covariance matrix;
 * `number_of_samples`: How many samples to return.
 
 ## Keyword Arguments
-* `mode`: Either generate samples on gpu or cpu
+* `arch`: Either to perform the linear algebra on cpu or gpu. See ARCHITECTURES. Defaults to `:cpu`.
 
 ## Output arguments
 
 * `Samples_Matrix` : A matrix of size (number_of_samples × n), where the rows are the i.i.d samples  
 """
-function generate_samples(MatCov::AbstractMatrix, number_of_samples::Int; mode::ComputeMode=cpu)::AbstractMatrix
-    n = size(MatCov, 1)
-    if mode == gpu
-        V = CUDA.randn(Float64, number_of_samples, n)
-        S = CuArray{Float64}(MatCov)
-    elseif mode == cpu 
-        V = randn(number_of_samples, n)
-        S = Matrix{Float64}(MatCov)
-    else
-        error("Unsupported compute mode!")
-    end
-
+function generate_samples(MatCov::AbstractMatrix, number_of_samples::Int, ::Val{:cpu})
+    S = Matrix(copy(MatCov))
+    V = randn(number_of_samples, size(S, 1))
     LinearAlgebra.LAPACK.potrf!('U', S)
-    LinearAlgebra.rmul!(V, UpperTriangular(S))
+    rmul!(V, UpperTriangular(S))
     return V
 end
+
+function generate_samples(MatCov::CUDA.CuMatrix{Float64}, number_of_samples::Int, ::Val{:gpu})
+    S = copy(MatCov)
+    V = CUDA.randn(Float64, number_of_samples, size(S, 1))
+    F = cholesky!(S)
+    rmul!(V, F.U)
+    return V
+end
+
+function generate_samples(::AbstractMatrix, ::Int, ::Val{arch}) where {arch}
+    error("Unsupported architecture $arch for CPU matrix input.")
+end
+
+function generate_samples(::CUDA.CuMatrix{Float64}, ::Int, ::Val{arch}) where {arch}
+    error("Unsupported architecture $arch for GPU matrix input.")
+end
+
+function generate_samples(::CUDA.CuArray{Float64,2}, number_of_samples::Int, ::Val{:cpu})
+    error("GPU matrix with arch=:cpu. Choose arch=:gpu or convert to Matrix on CPU.")
+end
+
+function generate_samples(::AbstractMatrix, ::Int, ::Val{:gpu})
+    error("CPU matrix with arch=:gpu. Choose arch=:cpu or move data to CuArray.")
+end
+
+generate_samples(MatCov::AbstractMatrix, number_of_samples::Int; arch::Symbol=:cpu) = generate_samples(MatCov, number_of_samples, Val(arch))
+generate_samples(MatCov::CUDA.CuMatrix{Float64}, number_of_samples::Int; arch::Symbol=:gpu) = generate_samples(MatCov, number_of_samples, Val(arch))
 
 """
     Covariance_Matrix = generate_MatCov(params::AbstractArray,
                                         ptset::AbstractVector)
 
-    Generates a Matern Covariance Matrix determined via the given paramters (params) and ptset.
-
+    Generates a matern-like Covariance Matrix determined via the given paramters (params) and ptset. 
+    See https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function. 
 ## Input arguments
 
-* `params`: An array of length 3 (or 4) that holds the parameters to the matern covariance kernel (σ, ρ, ν);
+* `params`: An array of length 3 that holds the parameters to the matern covariance kernel (σ, ρ, ν);
 * `ptset`: A set of points in 2D space upon which we determine the indices of the Covariance matrix;
 
 ## Output arguments
 
-* `Covariance_Matrix` : An n × n Symmetric Matern matrix 
+* `Covariance_Matrix` : An n × n Symmetric Matern matrix, where n = length(ptset).
 """
 function generate_MatCov(params::AbstractArray, ptset::AbstractVector)::Symmetric{Float64}
     return covariance2D(ptset, params)
 end
 
-generate_MatCov(n::Int, params::AbstractVector) = generate_MatCov(params::AbstractVector, generate_xyGrid(n::Integer))
+"""
+    Covariance_Matrix = generate_MatCov(n::Int, 
+                                        params::AbstractArray)
+
+    Generates a 2D matern-like Covariance Matrix determined via the given paramters (params). 
+    A square grid with `n` elements will be generated and used in lieu of a given location set.
+    See https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function. 
+## Input arguments
+
+* `n`: The dimension of the desired MatCov;
+* `params`: An array of length 3 that holds the parameters to the matern covariance kernel (σ, ρ, ν);
+
+## Output arguments
+
+* `Covariance_Matrix` : An n × n Symmetric Matern matrix 
+"""
+generate_MatCov(n::Int, params::AbstractVector) = generate_MatCov(params::AbstractVector, generate_xyGrid(n::Int))
 
 """
-    xyGrid = generate_xyGrid(n::Integer)
+    Covariance_Matrix = generate_MatCov(params::AbstractArray,
+                                        ptset::AbstractMatrix)
+
+    Generates a matern-like Covariance Matrix determined via the given paramters (params). 
+    The matrix of locations will be parsed as a vector of vectors, where each location is a row vector. 
+    See https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function. 
+## Input arguments
+
+* `params`: An array of length 3 that holds the parameters to the matern covariance kernel (σ, ρ, ν);
+* `ptset` : A matrix filled with row vectors of locations. 
+
+## Output arguments
+
+* `Covariance_Matrix` : An n × n Symmetric Matern matrix, where n = size(ptset, 1).
+"""
+generate_MatCov(params::AbstractVector, ptset::AbstractMatrix) = generate_MatCov(params::AbstractVector, tovector(ptset))
+
+"""
+    xyGrid = generate_xyGrid(n::Int)
 
     A helper function to generate a point grid which partitions the positive unit square [0, 1] × [0, 1].
     NOTE: This function at larger n values (n > 100) causes ill conditioning of the genreated Covariance matrix!
@@ -127,9 +160,31 @@ function generate_safe_xyGrid(n::Int)::AbstractVector
 end
 
 """
+    rect = generate_rectGrid(dims::Tuple)
+
+A helper function to generate a point grid which partitions the positive square [0, 1] × [0, 1] by dims[1] and dims[2]. 
+
+## Input arguments
+
+* `dims`: A tuple of dimensions `(nx, ny)`;
+## Output arguments
+
+* `rectGrid` : The desired points in 2D space as a vector of 2-element arrays
+"""
+function generate_rectGrid(dims::Tuple{Int, Int})::AbstractVector
+    nx, ny = dims
+    @assert_cond nx > 0 nx "be positive"
+    @assert_cond ny > 0 ny "be positive"
+
+    grid_x = range(0.0, 1.0, length=nx)
+    grid_y = range(0.0, 1.0, length=ny)
+    return vec([[x, y] for x in grid_x, y in grid_y])
+end
+
+"""
     model = get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)
 
-    creates and returns a vecchia model based on the VecchiaMLEInput and point grid. 
+    Creates and returns a vecchia model based on the VecchiaMLEInput and point grid. 
 ## Input arguments
 
 * `iVecchiaMLE`: The filled out VecchiaMLEInput struct
@@ -138,52 +193,14 @@ end
 * `model`: The Vecchia model based on the VecchiaMLEInput  
 """
 function get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)::VecchiaModel
-
-    if iVecchiaMLE.mode == gpu
-       return VecchiaModelGPU(iVecchiaMLE.samples, iVecchiaMLE)
-    else 
-       return VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE)
-    end
+    return get_vecchia_model(iVecchiaMLE, Val(iVecchiaMLE.arch))
 end
 
-"""
-    log_level = _printlevel(plevel::Union{Int, PrintLevel})
+get_vecchia_model(iVecchiaMLE::VecchiaMLEInput, ::Val{:cpu}) = VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE)
+get_vecchia_model(iVecchiaMLE::VecchiaMLEInput, ::Val{:gpu}) = VecchiaModelGPU(iVecchiaMLE.samples, iVecchiaMLE)
 
-    A helper function to convert an Int to a MadNLP LogLevel.
-    The mapping is [1: 'TRACE', 2: 'DEBUG', 3: 'INFO', 4: 'WARN', 5: 'ERROR'].
-    Any other Int given is converted to MadNLP.Fatal. 
-## Input arguments
 
-* `plevel`: The given log level;
-## Output arguments
-
-* `log_level` : The coded MadNLP.LogLevel.   
-"""
-function _printlevel(plevel::PL) where {PL <: Union{Int, PrintLevel}}
-    get(PRINT_LEVEL_TO_MADNLP, plevel, MadNLP.ERROR)
-end
-
-"""
-    cpu_mode = Int_to_Mode(n::Int)
-
-    A helper function to convert an Int to a ComputeMode.
-    The mapping is [1: 'cpu', 2: 'gpu'].
-    Any other Int given is converted cpu.
-
-## Input arguments
-
-* `n`: The given cpu mode as an Int;
-## Output arguments
-
-* `cpu_mode` : The coded ComputeMode.   
-"""
-function _computemode(n::CM)::ComputeMode where {CM <: Union{ComputeMode, Int}}
-    if isa(n, ComputeMode) return n end
-
-    if n == 2 return gpu end
-    return cpu
-end
-
+# TODO: Move error to own file. call it errors.jl
 """
     Error = uni_error(TCov::AbstractMatrix,
                       L::AbstractMatrix)
@@ -208,6 +225,8 @@ function uni_error(TCov::AbstractMatrix, L::AbstractMatrix)
     return maximum([0.5*(log(mu) + 1.0 / mu - 1.0) for mu in mu_val])
 end
 
+
+# TODO: Move permutations to own file. call it permutations.jl
 """
     permutation, dists = IndexReorder(condset::AbstractVector,
                                        data::AbstractVector,
@@ -339,7 +358,7 @@ function IndexMaxMin(condset::AbstractVector, data::AbstractVector, mu::Abstract
     end
 
     return index_arr, dist_arr
-end #function
+end
 
 """
 Helper function. See IndexReorder().
@@ -357,27 +376,16 @@ function dist_from_set(loc, setidxs, data)
     return mindistance
 end
 
-
-#
-#    Just gives a random reordering pattern. 
-#    Conditioning set will just be assumed empty.
-#    Also returning nothing for the distance array (useless?)
-#
 """
 See IndexReorder().
 """
 function IndexRandom(condset::AbstractVector, data::AbstractVector, reverse_ordering::Bool)
-    
     n = size(data, 1)    
     return Random.randperm(n), []
 end
-#    KLDivergence for the true covariance, TCov, and the 
-#    cholesky factor for the approximate precision matrix, AL.
-#    This is most applicable to the analysis at hand.
-#    ASSUMED ZERO MEAN.
 
+# TODO: Move errors to own file. Call it errors.jl
 """
-
     KL_Divergence = KLDivergence(TCov::Symmetric{Float64},
                                  AL::AbstractMatrix)
 
@@ -402,9 +410,7 @@ function KLDivergence(TCov::Symmetric{Float64}, AL::AbstractMatrix)
     return 0.5*sum(terms)
 end
 
-
 """
-
 KL_Divergence = KLDivergence(TChol::T,
 AChol::T) where {T <: AbstractMatrix}
 
@@ -432,23 +438,24 @@ function KLDivergence(TChol::T, AChol::T) where {T <: AbstractMatrix}
     return 0.5*sum(terms)
 end
 
-
-
-
+# TODO: Move sparsity pattern stuff to own file. Call it sparsitypattern.jl
 """
-    rows, cols, colptr = sparsitypattern(data::AbstractVector,
-                                         k::Int,
-                                         method::SparsityPatternGeneration=NN)
+    rows, cols, colptr = sparsitypattern(
+        ::Val{<:Symbol}, 
+        data::AbstractVector,
+        k::Int,
+        metric::Distances.Metric=Distances.Euclidean()
+    )
 
-    Front end to generate the sparsity pattern of the approximate 
+    Generates the sparsity pattern of the approximate 
     precision's cholesky factor, L, in CSC format. The pattern is 
     determined by nearest neighbors of the previous points in data.
 
 ## Input arguments
 * `data`: The point grid that was used to either generate the covariance matrix, or any custom ptset.
 * `k`: The number of nearest neighbors for each point (Including the point itself)
-* `method`: How the sparsity pattern is generated. Either NN (NearestNeighbors.jl) or Experimental (HNSW.jl) 
-* `metric`: The metric for determining nearest neighbors. 
+* `method`: How the sparsity pattern is generated. See SPARSITY_GEN
+* `metric`: The metric for determining nearest neighbors.
 
 ## Output arguments
 * `rows`: A vector of row indices of the sparsity pattern for L, in CSC format.
@@ -456,16 +463,31 @@ end
 * `colptr`: A vector of incides which determine where new columns start. 
 
 """
-function sparsitypattern(data, k::Int, metric::Distances.Metric=Distances.Euclidean(), method::SparsityPatternGeneration=NN)
-    if method == NN
-        return sparsitypattern_NN(data, k, metric) # NearestNeighbors.jl
-    elseif method == HNSW
-        return sparsitypattern_HNSW(data, k, metric) 
-    else
-        println("Sparsity Pattern: Bad method. Gave ", method)
-        return nothing
-    end
+function sparsitypattern(::Val{:NN}, iVecchiaMLE::VecchiaMLEInput)
+    return sparsitypattern_NN(iVecchiaMLE.ptset, iVecchiaMLE.k, iVecchiaMLE.metric)
 end
+
+function sparsitypattern(::Val{:HNSW}, iVecchiaMLE::VecchiaMLEInput)
+    return sparsitypattern_HNSW(iVecchiaMLE.ptset, iVecchiaMLE.k, iVecchiaMLE.metric)
+end
+
+function sparsitypattern(::Val{:USERGIVEN}, iVecchiaMLE::VecchiaMLEInput)
+    return iVecchiaMLE.rowsL, iVecchiaMLE.colsL, iVecchiaMLE.colptrL
+end
+
+function sparsitypattern(::Val{M}, iVecchiaMLE::VecchiaMLEInput) where {M}
+    error("sparsitypattern: Bad method. Gave $M")
+end
+
+function sparsitypattern(::Val{:NN}, ptset::AbstractVector, k::Int, metric::Distances.Metric=Distances.Euclidean())
+    return sparsitypattern_NN(ptset, k, metric)
+end
+
+function sparsitypattern(::Val{:HNSW}, ptset::AbstractVector, k::Int, metric::Distances.Metric=Distances.Euclidean())
+    return sparsitypattern_HNSW(ptset, k, metric)
+end
+
+sparsitypattern(ptset::AbstractVector, k::Int) = sparsitypattern(Val(:NN), ptset, k)
 
 """
 See sparsitypattern(). Uses NearestNeighbors library. In case of tie, opt for larger index. 
@@ -522,6 +544,7 @@ function sparsitypattern_HNSW(data, k, metric::Distances.Metric=Distances.Euclid
     return nn_to_csc(sparsity)
 end
 
+# TODO: Move to internals
 """
     Checks csc format. A user can call this, but not advised. 
 """
@@ -530,7 +553,6 @@ function is_csc_format(iVecchiaMLE::VecchiaMLEInput)::Bool
     colsL = iVecchiaMLE.colsL
     colptrL = iVecchiaMLE.colptrL
     n = iVecchiaMLE.n
-    nnz = length(rowsL)
 
     # lengths
     length(rowsL) != length(colsL) && return false
@@ -554,8 +576,9 @@ function is_csc_format(iVecchiaMLE::VecchiaMLEInput)::Bool
     return true
 end
 
+# TODO: Move validate_input to internals
 """
-    validate_input(iVecchiaMLE::VecchiaMLEInput, ptset::Union{AbstractVector, Nothing})
+    validate_input(iVecchiaMLE::VecchiaMLEInput)
 
 A helper function to catch any inconsistencies in the input given by the user.
 
@@ -563,6 +586,7 @@ A helper function to catch any inconsistencies in the input given by the user.
 * `iVecchiaMLE`: The filled-out VecchiaMLEInput struct. See VecchiaMLEInput struct for more details. 
 """
 function validate_input(iVecchiaMLE::VecchiaMLEInput) 
+
     @assert_cond iVecchiaMLE.n > 0 iVecchiaMLE.n "be strictly positive"
     @assert_cond_compare iVecchiaMLE.k <= iVecchiaMLE.n  
     @assert_cond size(iVecchiaMLE.samples, 1) > 0 iVecchiaMLE.samples "have at least one sample"
@@ -570,14 +594,16 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
     @assert_eq size(iVecchiaMLE.samples, 1) iVecchiaMLE.number_of_samples 
     @assert eltype(iVecchiaMLE.samples) <: AbstractFloat "samples must have eltype which is a subtype of AbstractFloat"
 
-    if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.mode == gpu
-        @warn "mode given is gpu, but samples are on cpu. Transferring samples to gpu."
+    if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.arch == :gpu
+        @warn "architecture given is gpu, but samples are on cpu. Transferring samples to gpu."
         iVecchiaMLE.samples = CuMatrix{Float64}(iVecchiaMLE.samples)
     end
 
     @assert_eq length(iVecchiaMLE.ptset) iVecchiaMLE.n
-    for (i, pt) in enumerate(iVecchiaMLE.ptset)
-        @assert_eq length(pt) 2 
+    
+    dimension = length(iVecchiaMLE.ptset[1])
+    for pt in iVecchiaMLE.ptset
+        @assert_eq length(pt) dimension 
     end
 
     if !isnothing(iVecchiaMLE.rowsL) && !isnothing(iVecchiaMLE.colsL) && !isnothing(iVecchiaMLE.colptrL)
@@ -601,7 +627,10 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
 
     @assert_cond iVecchiaMLE.solver_tol > 0.0 iVecchiaMLE.solver_tol "be positive"
 
-    @assert iVecchiaMLE.solver in SUPPORTED_SOLVERS "Unsupported solver given: $(iVecchiaMLE.solver)"
+    @assert_in iVecchiaMLE.solver SUPPORTED_SOLVERS
+    @assert_in iVecchiaMLE.arch ARCHITECTURES
+    @assert_in iVecchiaMLE.plevel PRINT_LEVEL
+    @assert_in iVecchiaMLE.sparsitygen SPARSITY_GEN
 
 end
 
@@ -676,7 +705,7 @@ end
 """
 function print_diagnostics(d::Diagnostics)
     println("========== Diagnostics ==========")
-    println(rpad("Model Creation Time:", 25), d.create_model_time)
+    println(rpad("Model Creation Time:",  25), d.create_model_time)
     println(rpad("LinAlg Solve Time:",    25), d.linalg_solve_time)
     println(rpad("Solve Model Time:",     25), d.solve_model_time)
     println(rpad("Objective Value:",      25), d.objective_value)
@@ -686,6 +715,7 @@ function print_diagnostics(d::Diagnostics)
     println("=================================")
 end
 
+# TODO: Move functions below to internals.jl
 function vecchia_solver(::Val{s}, args...; kwargs...) where {s}
     error("The solver $s is not available.")
 end
@@ -695,7 +725,94 @@ function vecchia_solver(::Val{:madnlp}, args...; kwargs...)
 end
 
 
+# MadNLP Conversions
+
+function resolve_plevel(::Val{:madnlp}, plevel::Val{T}) where {T}
+    error("Unsupported print level $(T) for solver :madnlp.")
+end
+
+function resolve_plevel(solver::Val{<:Symbol}, ::Val{T}) where {T}
+    error("The solver $(solver) does not have defined print level $(T).")
+end
+
+resolve_plevel(::Val{:madnlp}, ::Val{:VTRACE}) = MadNLP.TRACE
+resolve_plevel(::Val{:madnlp}, ::Val{:VDEBUG}) = MadNLP.DEBUG
+resolve_plevel(::Val{:madnlp}, ::Val{:VINFO})  = MadNLP.INFO
+resolve_plevel(::Val{:madnlp}, ::Val{:VWARN})  = MadNLP.WARN
+resolve_plevel(::Val{:madnlp}, ::Val{:VERROR}) = MadNLP.ERROR
+resolve_plevel(::Val{:madnlp}, ::Val{:VFATAL}) = MadNLP.ERROR
+
+function convert_plevel(::Val{T}) where {T}
+    error("Unsupported print level $T")
+end
+
+convert_plevel(::Val{:VTRACE}) = :VTRACE
+convert_plevel(::Val{1}) = :VTRACE
+
+convert_plevel(::Val{:VDEBUG}) = :VDEBUG
+convert_plevel(::Val{2}) = :VDEBUG
+
+convert_plevel(::Val{:VINFO}) = :VINFO
+convert_plevel(::Val{3}) = :VINFO
+
+convert_plevel(::Val{:VWARN}) = :VWARN
+convert_plevel(::Val{4}) = :VWARN
+
+convert_plevel(::Val{:VERROR}) = :VERROR
+convert_plevel(::Val{5}) = :VERROR
+
+
+function convert_computemode(::Val{arch}) where {arch}
+    error("Unsupported architecture: $arch")
+end
+
+convert_computemode(::Val{:cpu}) = :cpu
+convert_computemode(::Val{1})    = :cpu
+
+convert_computemode(::Val{:gpu}) = :gpu
+convert_computemode(::Val{2})    = :gpu
+
+
 function tovector(A::AbstractMatrix)::AbstractVector
     return size(A, 1) > size(A, 2) ? [row for row in eachrow(A)] :
                                      [col for col in eachcol(A)]
+end
+
+function check_x0!(x0_::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::VecchiaCache)
+    if !isnothing(iVecchiaMLE.x0) 
+        if mapreduce(x -> x > 0, &, view(iVecchiaMLE.x0, cache.diagL))       
+            view(x0_, 1:cache.nnzL) .= iVecchiaMLE.x0
+            view(x0_, (1:cache.n).+cache.nnzL) .= log.(view(iVecchiaMLE.x0, cache.diagL))
+        else
+            @warn "User given x0 is not feasible. Setting x0 such that the initial Vecchia approximation is the identity."
+            view(x0_, cache.diagL) .= one(eltype(x0_))
+        end
+    end 
+end
+
+function check_lvar!(lvar::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::VecchiaCache)
+    if !isnothing(iVecchiaMLE.lvar_diag)
+        view(lvar, cache.diagL) .= iVecchiaMLE.lvar_diag
+        view(lvar, (1:cache.n).+cache.nnzL) .= log.(iVecchiaMLE.lvar_diag)
+    else
+        # Always ensure that the diagonal coefficient Lᵢᵢ of the Vecchia approximation are strictly positive
+        view(lvar, cache.diagL) .= 1e-16
+        view(lvar, (1:cache.n).+cache.nnzL) .= log(1e-16)
+    end
+end
+
+function check_uvar!(uvar::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::VecchiaCache)    
+    if !isnothing(iVecchiaMLE.uvar_diag)
+        view(uvar, cache.diagL) .= iVecchiaMLE.uvar_diag
+        view(uvar, (1:cache.n).+cache.nnzL) .= log.(iVecchiaMLE.uvar_diag)
+    end
+end
+
+resolve_ptset(n::Int, ::Nothing) = generate_safe_xyGrid(n)
+resolve_ptset(::Int, ptset::AbstractMatrix) = tovector(ptset)
+resolve_ptset(::Int, ptset::AbstractVector) = ptset
+
+function resolve_sparistygen(V1::V, sparsitygen::Val{:SparsityGen}) where {V <: Union{AbstractVector, Nothing}} 
+    if isnothing(V1) return sparsitygen end 
+    return :USERGIVEN
 end
