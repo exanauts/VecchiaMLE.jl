@@ -45,6 +45,17 @@ Specification for the Sparsity Pattern generation algorithm.
 const SPARSITY_GEN = (:NN, :HNSW, :USERGIVEN)
 
 """
+Linear solvers for use in the optimization problem. 
+#TODO: Provide better documentation for these solvers. 
+
+## Supported solvers
+- `Umfpack` (`:umfpack`) : The standard linear solver
+- `Ma27` (`:ma27`) : A good one. 
+- `Ma57` (`:ma57`) : More than twice as good as Ma27 (27 * 2 < 57).
+"""
+const LINEAR_SOLVERS = (:umfpack, :ma27, :ma57)
+
+"""
 Internal struct from which to fetch persisting objects in the optimization function.
 There is no need for a user to mess with this!
 
@@ -155,6 +166,7 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu, Vx0}
     colsL::V1
     colptrL::V1
     solver::Symbol
+    linear_solver::Symbol
     solver_tol::Float64
     skip_check::Bool
     metric::Distances.Metric
@@ -176,6 +188,7 @@ function VecchiaMLEInput(
     colsL::V1=nothing,
     colptrL::V1=nothing,
     solver::Symbol=:madnlp,
+    linear_solver::Symbol=:umfpack,
     solver_tol::Real=1e-8,
     skip_check::Bool=false,
     metric::Distances.Metric=Distances.Euclidean(),
@@ -211,6 +224,7 @@ function VecchiaMLEInput(
         colsL,
         colptrL,
         solver,
+        linear_solver,
         Float64(solver_tol),
         skip_check,
         metric,
