@@ -14,8 +14,7 @@ matrix via a nonparametric optimization process. The nonzero entries of the inve
 conditional depenencies are determined by local proximity to any given point. The values of L are recovered via optimizing the joint probability distribtuion 
 function (mean zero) to best match the given samples. Other regularization terms are implemented for stability and biasing purposes.
 
-**VecchiaMLE.jl** requires the user to provide at the least the samples matrix; the accuracy of the Vecchia Approximation (number of conditioning points, which manifests as the number of nonzeros per row of L); as well as the computation mode, which can be either on CPU or GPU. 
-
+**VecchiaMLE.jl** requires the user to provide at the least the samples matrix and the accuracy of the Vecchia Approximation (number of conditioning points, which manifests as the number of nonzeros per row of L). Other parameters are available, including (but no limited to) the option for GPU utilization, print level, and providing an initial point x0 to coax the optimizer to a solution.   
 
 > **Note:** All samples (generated or provided) are assumed to have a zero-mean distribution.
 
@@ -23,63 +22,65 @@ The code is written to be flexible enough to be run on either cpu or gpu capable
 
 ## Installation and Dependencies
 
-Before you start, make sure you have the following:
+**VecchiaMLE.jl** requires the following packages for startup. Others may be necessary, depending on your use case. 
 
-- **Julia**: Version 1.x or higher.
 - **CUDA**: Required for gpu mode (if you plan on using it).
-- **MadNLP, MadNLPGPU**: Ensure that this nonlinear optimization solver is installed.
-- **NearestNeighbors**: For use in generating the sparsity pattern for the Cholesky factor
+- **MadNLP, MadNLPGPU**: We utilize the **MadNLP** optimizer as a default sovler. Other solvers available are **KNITRO** and **Ipopt**.
+- **NearestNeighbors, HNSW**: Either package can be specified for computation of the sparsity pattern of the inverse Cholesky.
 - **NLPModels**: Construction of the Optimization problem.
 
 ## Configuration
-The struct `VecchiaMLEInput` needs to be properly filled out in order for the analysis to be run. The components of said structure is as follows:
+The struct `VecchiaMLEInput` is available for the user to specify their analysis. At the minimum, we require the following:
 
 ```
-n::Int                           # The size of the problem (e.g., dimension of the covariance matrix). 
-k::Int                           # Number of conditioning points per point for the Vecchia Approximation.
-samples::Matrix{Float64}             # Matrix of samples (each row is a sample).
-number_of_samples::Int           # Number of samples to generate (if samples_given=false).
-mode::Int                        # Operation mode. Expects an int [1: cpu, 2: gpu].
-MadNLP_Print_level::Int          # Print level of MadNLP. Expects an int with the corresponding flag [1: TRACE, 2: DEBUG, 3: INFO, 4: WARN, 5: ERROR].
+* k::Int                      # Number of conditioning points per point for the Vecchia Approximation.
+* samples::Matrix{Float64}    # Matrix of samples (each row is a sample).
+```
+Other options may be passed as keyword arguments. Such options are:
+
+```
+* plevel::Symbol            # Print level for the optimizer. See PRINT_LEVEL. Defaults to `ERROR`.
+* arch::Symbol              # Architecture for the analysis. See ARCHITECTURES. Defaults to `:cpu`.
+* ptset::AbstractVector     # The locations of the analysis. May be passed as a matrix or vector of vectors.
+* lvar_diag::AbstractVector # Lower bounds on the diagonal of the sparse Vecchia approximation.
+* uvar_diag::AbstractVector # Upper bounds on the diagonal of the sparse Vecchia approximation.
+* rowsL::AbstractVector     # The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT! 
+* colsL::AbstractVector     # The sparsity pattern cols of L if the user gives one. MUST BE IN CSC FORMAT!
+* colptrL::AbstractVector   # The column pointer of L if the user gives one. MUST BE IN CSC FORMAT!
+* solver::Symbol            # Optimization solver (:madnlp, :ipopt, :knitro). Defaults to `:madnlp`.
+* solver_tol::Float64       # Tolerance for the optimization solver. Defaults to `1e-8`.
+* skip_check::Bool          # Whether or not to skip the `validate_input` function.
+* metric                    # The metric by which nearest neighbors are determined. Defaults to Euclidean
+* lambda                    # The regularization scalar for the ridge `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
+* x0                        # The user may give an initial condition, but it is limiting if you do not have the sparsity pattern. 
 ```
 
 ## Usage
-Once `VecchiaMLEInput` has been filled appropriately, pass it to VecchiaMLE_Run() for the analysis to start. Note that some arguments have default values, such as mode (cpu), and MadNLP_Print_level (5). After the analysis has been completed, the function outputs diagnostics - that would be difficult other wise to acquire - and the resulting Lm factor in sparse, LowerTriangular format. 
-
-> If the user desires to input their own location grid, then it must be passed as a keyword argument to VecchiaMLE_Run(). That is, `VecchiaMLE_Run(iVecchiaMLE::VecchiaMLEInput; ptset::AbstractVector)`. 
+Once the user has initialized an instance of `VecchiaMLEInput`, they may pass it to `VecchiaMLE_Run()` to recover the inverse cholesky. The ouput of `VecchiaMLE_Run()` is a tuple, with vales internal diagnostics and the inverse cholesky in sparse COO format.  
 
 ## Getting Samples from a Covariance Matrix
 I will describe here how to properly use this package. Some functions used are not exported since there is no need for the user to realistically use them. The only major work to do is to generate the samples (if this isn't done by another means). In production, I generated the samples via first creating a Covariance Matrix via the martern covariance kernel, then feeding it into a Multivariate normal distribution to create the samples. The code to do this, using functions defined in VecchiaMLE, is as follows:
 
 ```
-n = 10                                         # or any positive integer
-number_of_samples = 100                        # or however many you want
-params = [5.0, 0.2, 2.25, 0.25]                # Follow the procedure for matern in BesselK.jl
-ptset = VecchiaMLE.generate_safe_xyGrid(n)
-MatCov = VecchiaMLE.generate_MatCov(params, ptset) # size n x n
-samples = VecchiaMLE.generate_samples(MatCov, number_of_samples)
+n = 100                                                            # Dimension of Covariance matrix
+number_of_samples = 100                                            # Analysis samples number
+params = [5.0, 0.2, 2.25]                                          # Parameters for Matern matrix. See BesselK.jl. 
+ptset = VecchiaMLE.generate_safe_xyGrid(n)                         # Generates 100 equiparitioned points on [0, 10] x [0, 10].
+MatCov = VecchiaMLE.generate_MatCov(params, ptset)                 # size n x n. 
+samples = VecchiaMLE.generate_samples(MatCov, number_of_samples)   # Generate samples. 
 ```
 
-You can easily skip the Covariance generation if you already have one. To give insight as to why the covariance matrix is of that size, the creation of the covariance matrix requires a set of points in space to generate the matrix entries. This is done by generating a 2D grid, on the postive unit square. That is, we use the following function:
-
-```
-function covariance2D(ptset::AbstractVector, params::AbstractVector)::AbstractMatrix
-    return Symmetric([BesselK.matern(x, y, params) for x in ptset, y in ptset])
-end
-```
-The matern function (provided by BesselK, credit to Chris Geoga) generates the entries of the covariance matrix via the given prarmeters, and returns the symmetric form.
-
-After the samples have been generated, they can simply be stored in the VecchiaMLEInput struct you intend to input into the program. Note that the resulting matrix, the cholesky factor of the precision matrix, is given as a LowerTriangular matrix, which does not clearly show its sparsity. However, the LowerTriangular format can be more easily leveraged by common operations (for example, solving systems and matrix inversion). 
+One may skip Covariance generation, as its use is only to generate samples. The matern function generates the entries of the covariance matrix via the given prarmeters, and returns the symmetric form.
 
 ## Getting the error
 
-We can get the error for the approximation (assuming you have the true covariance matrix), via the KL-Divergence formula. This, along with its univariate cousin, can be queryed respectively by the following VecchiaMLE functions:
+We can get the error for the approximation (assuming you have the true covariance matrix), via the KL-Divergence formula. An error derived on individual dimensions may also be queryed. These errors are found via the two functions:
 
 ```
 uni_error = VecchiaMLE.uni_error(True_Covariance, Approximate_Cholesky_Factor)
 kl_error = VecchiaMLE.KLDivergence(True_Covariance, Approximate_Cholesky_Factor)
 ```
-Note the KL-Divergence error is computationally heavy, thus takes a long time for large `n` values! Also, we assue mean-zero distributions. 
+Note the KL-Divergence error is computationally heavy, and is expensive even at `n = 900`. 
 
 ## Contribution
 Although the bulk of the project has been written, there are sure to be problems that arise from errors in logic. As such, please feel free to open an issue;
