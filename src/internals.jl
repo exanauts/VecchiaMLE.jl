@@ -61,7 +61,8 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
     @assert_in iVecchiaMLE.sparsitygen SPARSITY_GEN
     @assert_in iVecchiaMLE.linear_solver LINEAR_SOLVERS
 
-    (!LIBHSL_isfunctional() && iVecchiaMLE.linear_solver in (:ma27, :ma57)) &&
+    # Check package version of  instead
+    (!HSL.LIBHSL_isfunctional() && iVecchiaMLE.linear_solver in (:ma27, :ma57)) &&
          error("LIBHSL_isfunctional() returned false. $linear_solver is not available.")
 
 end
@@ -89,9 +90,9 @@ resolve_linear_solver(solver::Val{:knitro}, ::Val{:umfpack}) = error("linear_sol
 resolve_linear_solver(solver::Val{:knitro}, ::Val{:ma27}) = error("linear_solver for $solver not yet implemented!")
 resolve_linear_solver(solver::Val{:knitro}, ::Val{:ma57}) = error("linear_solver for $solver not yet implemented!")
 
-resolve_linear_solver(solver::Val{:ipopt}, ::Val{:umfpack}) = error("linear_solver for $solver not yet implemented!")
-resolve_linear_solver(solver::Val{:ipopt}, ::Val{:ma27}) = error("linear_solver for $solver not yet implemented!")
-resolve_linear_solver(solver::Val{:ipopt}, ::Val{:ma57}) = error("linear_solver for $solver not yet implemented!")
+
+resolve_linear_solver(solver::Val{:ipopt}, ::Val{:ma27}) = "ma27"
+resolve_linear_solver(solver::Val{:ipopt}, ::Val{:ma57}) = "ma57"
 
 resolve_linear_solver(solver::Val{<:Symbol}, lin::Val{<:Symbol}) = error("solver $solver does not support linear solver $lin")
 
