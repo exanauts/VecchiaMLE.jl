@@ -38,14 +38,22 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
         @assert is_csc_format(iVecchiaMLE) "rowsL and colsL are not in CSC format"
     end
 
-    if !isnothing(iVecchiaMLE.lvar_diag)    
+    if !isnothing(iVecchiaMLE.lvar_diag)
+        # Check that lower bounds are positive
+        @assert mapreduce(x -> x > 0.0, &, iVecchiaMLE.lvar_diag) "User given lvar_diag must have all positive entries"
         @assert_eq length(iVecchiaMLE.lvar_diag) cache.n
     end
     
     if !isnothing(iVecchiaMLE.uvar_diag)
+        @assert mapreduce(x -> x > 0.0, &, iVecchiaMLE.uvar_diag) "User given uvar_diag must have all positive entries"
         @assert_eq length(iVecchiaMLE.uvar_diag) cache.n 
     end
     
+    # Check if lvar_diag .< iVecchiaMLE.uvar_diag
+    if !isnothing(iVecchiaMLE.lvar_diag) && !isnothing(iVecchiaMLE.uvar_diag)
+        @assert mapreduce(x -> x < 0.0, &, iVecchiaMLE.lvar_diag .- iVecchiaMLE.uvar_diag) "lvar_diag must be .< uvar_diag"
+    end
+
     @assert_cond iVecchiaMLE.lambda >= 0 iVecchiaMLE.lambda "be positive"
 
     nvar = Int(0.5 * iVecchiaMLE.k * ( 2*iVecchiaMLE.n - iVecchiaMLE.k + 1))
@@ -135,34 +143,46 @@ end
 # check_x0!, check_lvar!, check_uvar!
 # Functions to check user given arrays. 
 ####################################################
+function check_x0!(x0_::AbstractVector, lvar::AbstractVector, uvar::AbstractVector, x0, cache::VecchiaCache)
+    if isnothing(x0) 
+        return
+    end
+    
+    v = view(x0_, cache.diagL)
+    uvar_diag = view(uvar, cache.diagL)
+    lvar_diag = view(lvar, cache.diagL)
+    
+    # clamp x0_ lvar and uvar 
+    if mapreduce(x -> x > 0, &, view(x0, cache.diagL))       
+        view(x0_, 1:cache.nnzL) .= x0
+    else
+        @warn "User given x0 is not feasible. Setting x0 such that the initial Vecchia approximation is the identity."
+        view(x0_, cache.diagL) .= one(eltype(x0_))
+    end
 
-function check_x0!(x0_::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::VecchiaCache)
-    if !isnothing(iVecchiaMLE.x0) 
-        if mapreduce(x -> x > 0, &, view(iVecchiaMLE.x0, cache.diagL))       
-            view(x0_, 1:cache.nnzL) .= iVecchiaMLE.x0
-            view(x0_, (1:cache.n).+cache.nnzL) .= log.(view(iVecchiaMLE.x0, cache.diagL))
-        else
-            @warn "User given x0 is not feasible. Setting x0 such that the initial Vecchia approximation is the identity."
-            view(x0_, cache.diagL) .= one(eltype(x0_))
-        end
-    end 
+    v .= max.(lvar_diag, min.(uvar_diag, v))
+        
+     # work around for clamp
+    
+    view(x0_, (1:cache.n).+cache.nnzL) .= log.(v)
+    
+    
 end
 
 function check_lvar!(lvar::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::VecchiaCache)
     if !isnothing(iVecchiaMLE.lvar_diag)
         view(lvar, cache.diagL) .= iVecchiaMLE.lvar_diag
-        view(lvar, (1:cache.n).+cache.nnzL) .= log.(iVecchiaMLE.lvar_diag)
     else
         # Always ensure that the diagonal coefficient Lᵢᵢ of the Vecchia approximation are strictly positive
-        view(lvar, cache.diagL) .= 1e-16
-        view(lvar, (1:cache.n).+cache.nnzL) .= log(1e-16)
+        view(lvar, cache.diagL) .= 1e-10
     end
 end
 
 function check_uvar!(uvar::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::VecchiaCache)    
     if !isnothing(iVecchiaMLE.uvar_diag)
         view(uvar, cache.diagL) .= iVecchiaMLE.uvar_diag
-        view(uvar, (1:cache.n).+cache.nnzL) .= log.(iVecchiaMLE.uvar_diag)
+    else
+        view(uvar, cache.diagL) .= 1e10
     end
 end
 

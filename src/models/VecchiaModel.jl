@@ -7,17 +7,18 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
     ncon::Int = length(cache.colptrL) - 1
 
     # Allocating data    
-    x0_::S = fill!(S(undef, nvar), zero(T))
-    y0::S = fill!(S(undef, ncon), zero(T))
+    x0_::S  = fill!(S(undef, nvar), zero(T))
+    y0::S   = fill!(S(undef, ncon), zero(T))
     lcon::S = fill!(S(undef, ncon), zero(T))
     ucon::S = fill!(S(undef, ncon), zero(T))    
-    lvar::S = fill!(S(undef, nvar), -Inf)
-    uvar::S = fill!(S(undef, nvar), Inf)
+    lvar::S = fill!(S(undef, nvar), -T(1e10))
+    uvar::S = fill!(S(undef, nvar),  T(1e10))
 
     # Assigning user-given values
-    check_x0!(x0_, iVecchiaMLE, cache)
+    # check lvar and uvar first. then apply them to x0
     check_lvar!(lvar, iVecchiaMLE, cache)
     check_uvar!(uvar, iVecchiaMLE, cache)
+    !iVecchiaMLE.skip_check && check_x0!(x0_, lvar, uvar, iVecchiaMLE.x0, cache)
 
     meta = NLPModelMeta{T, S}(
         nvar,
