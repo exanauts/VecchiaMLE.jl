@@ -151,7 +151,7 @@ function apply_x0!(x0_::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::Vec
     end
     v = view(x0_, cache.diagL)
     
-    # clamp x0_ lvar and uvar 
+    # copy iVecchiaMLE.x0 to x0_ (they are different sizes!)
     if !mapreduce(x -> x > 0, &, view(iVecchiaMLE.x0, cache.diagL))       
         @warn "User given x0 is not feasible. Setting x0 such that the initial Vecchia approximation is the identity."
         v .= one(eltype(iVecchiaMLE.x0))
@@ -159,12 +159,14 @@ function apply_x0!(x0_::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::Vec
         view(x0_, 1:cache.nnzL) .= iVecchiaMLE.x0
     end
 
+    # Clamp x0_
     if !isnothing(iVecchiaMLE.lvar_diag) && !isnothing(iVecchiaMLE.uvar_diag)
         v .= max.(iVecchiaMLE.lvar_diag, min.(iVecchiaMLE.uvar_diag, v))
     else
         clamp!(v, 1e-10, 1e10)
     end
     
+    # Add z values to x0_
     view(x0_, (1:cache.n).+cache.nnzL) .= log.(v)
     
     
