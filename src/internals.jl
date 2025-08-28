@@ -51,7 +51,7 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
     
     # Check if lvar_diag .< iVecchiaMLE.uvar_diag
     if !isnothing(iVecchiaMLE.lvar_diag) && !isnothing(iVecchiaMLE.uvar_diag)
-        @assert mapreduce(x -> x < 0.0, &, iVecchiaMLE.lvar_diag .- iVecchiaMLE.uvar_diag) "lvar_diag must be .< uvar_diag"
+        @assert mapreduce(<, &, iVecchiaMLE.lvar_diag, iVecchiaMLE.uvar_diag) "lvar_diag must be .< uvar_diag"
     end
 
     @assert_cond iVecchiaMLE.lambda >= 0 iVecchiaMLE.lambda "be positive"
