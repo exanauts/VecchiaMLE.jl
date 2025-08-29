@@ -20,7 +20,8 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
     @assert_cond size(iVecchiaMLE.samples, 1) > 0 iVecchiaMLE.samples "have at least one sample"
     @assert_eq size(iVecchiaMLE.samples, 2) iVecchiaMLE.n
     @assert_eq size(iVecchiaMLE.samples, 1) iVecchiaMLE.number_of_samples 
-    @assert eltype(iVecchiaMLE.samples) <: AbstractFloat "samples must have eltype which is a subtype of AbstractFloat"
+    @assert mapreduce(isfinite, &, iVecchiaMLE.samples) "Invalid value found in samples matrix"
+    
 
     if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.arch == :gpu
         @warn "architecture given is gpu, but samples are on cpu. Transferring samples to gpu."
@@ -41,14 +42,14 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
     if !isnothing(iVecchiaMLE.lvar_diag)
         # Check that lower bounds are positive
         @assert mapreduce(x -> x > 0.0, &, iVecchiaMLE.lvar_diag) "User given lvar_diag must have all positive entries"
-        @assert mapreduce(x -> x >= 1e-10, &, iVecchiaMLE.lvar_diag) "User given lvar_diag must have entries above 1e-10"
-        @assert_eq length(iVecchiaMLE.lvar_diag) cache.n
+        @assert mapreduce(isfinite, &, iVecchiaMLE.lvar_diag) "User given lvar_diag must have finite entries!"
+        @assert_eq length(iVecchiaMLE.lvar_diag) iVecchiaMLE.n
     end
     
     if !isnothing(iVecchiaMLE.uvar_diag)
         @assert mapreduce(x -> x > 0.0, &, iVecchiaMLE.uvar_diag) "User given uvar_diag must have all positive entries"
-        @assert mapreduce(x -> x <= 1e10, &, iVecchiaMLE.uvar_diag) "User given uvar_diag must have entries below 1e10"
-        @assert_eq length(iVecchiaMLE.uvar_diag) cache.n 
+        @assert mapreduce(isfinite, &, iVecchiaMLE.uvar_diag) "User given uvar_diag must have finite entries!"
+        @assert_eq length(iVecchiaMLE.uvar_diag) iVecchiaMLE.n 
     end
     
     # Check if lvar_diag .< iVecchiaMLE.uvar_diag
@@ -149,14 +150,24 @@ function apply_x0!(x0_::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::Vec
     if isnothing(iVecchiaMLE.x0) 
         return
     end
+
     v = view(x0_, cache.diagL)
     
     # copy iVecchiaMLE.x0 to x0_ (they are different sizes!)
-    if !mapreduce(x -> x > 0, &, view(iVecchiaMLE.x0, cache.diagL))       
-        @warn "User given x0 is not feasible. Setting x0 such that the initial Vecchia approximation is the identity."
-        v .= one(eltype(iVecchiaMLE.x0))
+    if !isnothing(iVecchiaMLE.lvar_diag) && !isnothing(iVecchiaMLE.uvar_diag)
+        if mapreduce(<, &, iVecchiaMLE.x0, iVecchiaMLE.lvar_diag) || mapreduce(>, &, iVecchiaMLE.x0, iVecchiaMLE.uvar_diag)       
+            @warn "User given x0 is not feasible. Setting x0 to have diagonal as average of uvar_diag and lvar_diag."
+            v .= 0.5 .* (iVecchiaMLE.uvar_diag .+ iVecchiaMLE.lvar_diag)
+        end
     else
-        view(x0_, 1:cache.nnzL) .= iVecchiaMLE.x0
+        # if the user only gives x0, not lvar_diag or uvar_diag, check if we can take its log
+        if !mapreduce(x -> x > 0, &, iVecchiaMLE.x0) 
+            @warn "User given x0 is not feasible. Setting x0 to have diagonal as ones"
+            v .= 1.0
+        end
+        
+         
+        view(x0_, 1:cache.nnzL) .= iVecchiaMLE.x0        
     end
 
     # Clamp x0_
@@ -167,11 +178,10 @@ function apply_x0!(x0_::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::Vec
     end
     
     # Add z values to x0_
-    view(x0_, (1:cache.n).+cache.nnzL) .= log.(v)
-    
-    
+    view(x0_, (1:cache.n).+cache.nnzL) .= log.(v) 
 end
 
+# Function not used!
 function check_lvar!(lvar::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::VecchiaCache)
     if !isnothing(iVecchiaMLE.lvar_diag)
         view(lvar, cache.diagL) .= iVecchiaMLE.lvar_diag
@@ -181,6 +191,7 @@ function check_lvar!(lvar::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::
     end
 end
 
+# Function not used!
 function check_uvar!(uvar::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::VecchiaCache)    
     if !isnothing(iVecchiaMLE.uvar_diag)
         view(uvar, cache.diagL) .= iVecchiaMLE.uvar_diag
