@@ -51,6 +51,12 @@ NLPModelsKnitro = "0.9"
 NLPModelsJuMP = "0.13"
 NLPModelsTest = "0.10"
 SpecialFunctions = "2"
+HSL = "0.5"
+LinearAlgebra = "1.10"
+Random = "1.10"
+SparseArrays = "1.10"
+Statistics = "1.10"
+Test = "1.10"
 
 [extras]
 HSL = "34c5aeac-e683-54a6-a0e9-6e0fdc586c50"
