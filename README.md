@@ -50,9 +50,10 @@ Other options may be passed as keyword arguments. Such options are:
 * solver::Symbol            # Optimization solver (:madnlp, :ipopt, :knitro). Defaults to `:madnlp`.
 * solver_tol::Float64       # Tolerance for the optimization solver. Defaults to `1e-8`.
 * skip_check::Bool          # Whether or not to skip the `validate_input` function.
-* metric                    # The metric by which nearest neighbors are determined. Defaults to Euclidean
-* lambda                    # The regularization scalar for the ridge `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
-* x0                        # The user may give an initial condition, but it is limiting if you do not have the sparsity pattern. 
+* sparsityGeneration        # The method by which to generate a sparsity pattern. See SPARSITY_GEN.
+* metric::Distances.metric  # The metric by which nearest neighbors are determined. Defaults to Euclidean.
+* lambda::Real              # The regularization scalar for the ridge `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
+* x0::AbstractVector        # The user may give an initial condition, but it is limiting if you do not have the sparsity pattern. 
 ```
 
 ## Usage
