@@ -130,6 +130,7 @@ Input to the VecchiaMLE analysis.
 * ptset::AbstractVector     # The locations of the analysis. May be passed as a matrix or vector of vectors.
 * lvar_diag::AbstractVector # Lower bounds on the diagonal of the sparse Vecchia approximation.
 * uvar_diag::AbstractVector # Upper bounds on the diagonal of the sparse Vecchia approximation.
+* rowsL::AbstractVector     # The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT!
 * colptrL::AbstractVector   # The column pointer of L if the user gives one. MUST BE IN CSC FORMAT!
 * solver::Symbol            # Optimization solver (:madnlp, :ipopt, :knitro). Defaults to `:madnlp`.
 * solver_tol::Float64       # Tolerance for the optimization solver. Defaults to `1e-8`.
@@ -139,7 +140,7 @@ Input to the VecchiaMLE analysis.
 * lambda::Real              # The regularization scalar for the ridge `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
 * x0::AbstractVector        # The user may give an initial condition, but it is limiting if you do not have the sparsity pattern. 
 """
-mutable struct VecchiaMLEInput{M, V, Vl, Vu, Vx0}
+mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu, Vx0}
     n::Int 
     k::Int 
     samples::M
@@ -150,8 +151,8 @@ mutable struct VecchiaMLEInput{M, V, Vl, Vu, Vx0}
     lvar_diag::Vl
     uvar_diag::Vu
     diagnostics::Bool
-    rowsL::AbstractVector
-    colptrL::AbstractVector
+    rowsL::V1
+    colptrL::V1
     solver::Symbol
     solver_tol::Float64
     skip_check::Bool
@@ -166,7 +167,7 @@ function VecchiaMLEInput(
     samples::M, number_of_samples::Int; 
     plevel::VPL=:VERROR, 
     arch::VAR=:cpu,
-    ptset::V=nothing,
+    ptset::V=generate_safe_xyGrid(n),
     lvar_diag::Vl=nothing,
     uvar_diag::Vu=nothing,
     diagnostics::Bool=false,
@@ -182,7 +183,7 @@ function VecchiaMLEInput(
 ) where
     {
         M   <: AbstractMatrix, 
-        V   <: Union{Nothing, AbstractVector, AbstractMatrix},
+        V   <: Union{AbstractVector, AbstractMatrix},
         V1  <: Union{Nothing, AbstractVector},
         Vl  <: Union{Nothing, AbstractVector},
         Vu  <: Union{Nothing, AbstractVector},
@@ -190,12 +191,12 @@ function VecchiaMLEInput(
         VPL <: Union{Symbol, Int},
         VAR <: Union{Symbol, Int}
     }
-    ptset_::AbstractVector = resolve_ptset(n, ptset)
+    ptset_ = resolve_ptset(n, ptset)
     n_::Int = length(ptset_)
     
 
 
-    return VecchiaMLEInput{M, AbstractVector, Vl, Vu, Vx0}(
+    return VecchiaMLEInput{M, typeof(ptset_), Vector{Int}, Vl, Vu, Vx0}(
         n_,
         k,
         samples,
