@@ -16,7 +16,7 @@
         cache = create_vecchia_cache_jump(samples, Sparsity, lambda)
         @variable(model, w[1:(cache.nnzL + cache.n)])
         # Initial L is identity
-        for i in cache.colptr[1:end-1]
+        for i in cache.colptrL[1:end-1]
             set_start_value(w[i], 1.0)
         end
         # Apply constraints and objective
@@ -24,12 +24,13 @@
         @objective(model, Min, obj_vecchia(w, cache))
 
         optimize!(model)
-        L_jump = sparse(cache.rowsL, cache.colsL, value.(w)[1:cache.nnzL])
+        L_jump = SparseMatrixCSC(cache.n, cache.n, cache.colptrL, cache.rowsL, value.(w)[1:cache.nnzL])
         L_jump = LowerTriangular(L_jump)
 
         # Get result from VecchiaMLE
         input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; lambda=lambda, ptset=xyGrid)
         d, L_mle = VecchiaMLE_Run(input)
+        L_mle = LowerTriangular(L_mle)
 
         @testset norm(L_mle - L_jump) ≤ 1e-6
 
