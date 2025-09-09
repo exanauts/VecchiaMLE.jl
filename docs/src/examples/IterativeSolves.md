@@ -36,7 +36,6 @@ for i in 1:niter
     if i == 1
         global rowsL = L_csc.rowval
         global colptrL = L_csc.colptr
-        end
     end
 end
 ```
