@@ -34,8 +34,8 @@ for i in 1:niter
 
     # save sparsity pattern
     if i == 1
-        global rowsL = L_csc.rowval
-        global colptrL = L_csc.colptr
+        global rowsL = L.rowval
+        global colptrL = L.colptr
     end
 end
 ```
