@@ -49,7 +49,9 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
     T = eltype(S)
 
     # SPARSITY PATTERN OF L IN CSC FORMAT.
-    rowsL, colsL, colptrL = sparsitypattern(Val(iVecchiaMLE.sparsitygen), iVecchiaMLE)
+    rowsL, colptrL = sparsitypattern(Val(iVecchiaMLE.sparsitygen), iVecchiaMLE)
+    iVecchiaMLE.rowsL .= rowsL
+    iVecchiaMLE.colptrL .= colptrL
 
     nnzL::Int = length(rowsL)
     m = [colptrL[j+1] - colptrL[j] for j in 1:n]
@@ -65,7 +67,6 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
         offsets = cumsum([0; m[1:end-1]]) |> CuVector{Int}
         B = [CuMatrix{T}(undef, 0, 0)]
         rowsL = CuVector{Int}(rowsL)
-        colsL = CuVector{Int}(colsL)
         colptrL = CuVector{Int}(colptrL)
         m = CuVector{Int}(m)
     else
@@ -82,7 +83,7 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
 
     return VecchiaCache{eltype(S), S, typeof(rowsL), typeof(B[1])}(
         n, Msamples, nnzL,
-        colptrL, rowsL, colsL, diagL,
+        colptrL, rowsL, diagL,
         m, offsets, B, nnzh_tri_obj,
         nnzh_tri_lag, hess_obj_vals,
         buffer,

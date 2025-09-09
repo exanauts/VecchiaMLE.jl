@@ -1,6 +1,6 @@
 
 """
-    rows, cols, colptr = sparsitypattern(
+    rows, colptr = sparsitypattern(
         ::Val{<:Symbol}, 
         data::AbstractVector,
         k::Int,
@@ -19,7 +19,6 @@
 
 ## Output arguments
 * `rows`: A vector of row indices of the sparsity pattern for L, in CSC format.
-* `cols`: A vector of column indices of the sparsity pattern for L, in CSC format.
 * `colptr`: A vector of incides which determine where new columns start. 
 
 """
@@ -32,7 +31,7 @@ function sparsitypattern(::Val{:HNSW}, iVecchiaMLE::VecchiaMLEInput)
 end
 
 function sparsitypattern(::Val{:USERGIVEN}, iVecchiaMLE::VecchiaMLEInput)
-    return iVecchiaMLE.rowsL, iVecchiaMLE.colsL, iVecchiaMLE.colptrL
+    return iVecchiaMLE.rowsL, iVecchiaMLE.colptrL
 end
 
 function sparsitypattern(::Val{M}, iVecchiaMLE::VecchiaMLEInput) where {M}
@@ -52,7 +51,7 @@ sparsitypattern(ptset::AbstractVector, k::Int) = sparsitypattern(Val(:NN), ptset
 """
 See sparsitypattern(). Uses NearestNeighbors library. In case of tie, opt for larger index. 
 """
-function sparsitypattern_NN(data, k, metric::Distances.Metric=Distances.Euclidean())::Tuple{Vector{Int}, Vector{Int}, Vector{Int}}
+function sparsitypattern_NN(data, k, metric::Distances.Metric=Distances.Euclidean())::Tuple{Vector{Int}, Vector{Int}}
     n = size(data, 1)
     sparsity = Matrix{Int}(undef, n, k)
     fill!(sparsity, -1)
@@ -79,7 +78,7 @@ end
 """
 See sparsitypattern(). In place for HNSW.jl
 """
-function sparsitypattern_HNSW(data, k, metric::Distances.Metric=Distances.Euclidean())
+function sparsitypattern_HNSW(data, k, metric::Distances.Metric=Distances.Euclidean())::Tuple{Vector{Int}, Vector{Int}}
     n = size(data, 1)
     sparsity = Matrix{Int}(undef, n, k)
     fill!(sparsity, -1)

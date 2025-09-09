@@ -35,10 +35,6 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
         @assert_eq length(pt) dimension 
     end
 
-    if !isnothing(iVecchiaMLE.rowsL) && !isnothing(iVecchiaMLE.colsL) && !isnothing(iVecchiaMLE.colptrL)
-        @assert is_csc_format(iVecchiaMLE) "rowsL and colsL are not in CSC format"
-    end
-
     if !isnothing(iVecchiaMLE.lvar_diag)
         # Check that lower bounds are positive
         @assert mapreduce(x -> x > 0.0, &, iVecchiaMLE.lvar_diag) "User given lvar_diag must have all positive entries"
@@ -64,6 +60,17 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
         @assert_eq length(iVecchiaMLE.x0) nvar 
     end
 
+    if !isnothing(iVecchiaMLE.rowsL) && !isnothing(iVecchiaMLE.colptrL)
+        @assert_eq length(iVecchiaMLE.rowsL) nvar
+        @assert_eq length(iVecchiaMLE.colptrL) iVecchiaMLE.n+1
+    end
+
+
+    if !isnothing(iVecchiaMLE.rowsL) && !isnothing(iVecchiaMLE.colptrL)        
+        @assert is_csc_format(iVecchiaMLE) "rowsL and colptrL are not in CSC format"
+    end
+
+
     @assert_cond iVecchiaMLE.solver_tol > 0.0 iVecchiaMLE.solver_tol "be positive"
 
     @assert_in iVecchiaMLE.solver SUPPORTED_SOLVERS
@@ -85,6 +92,21 @@ function vecchia_solver(::Val{:madnlp}, args...; kwargs...)
     madnlp(args...; kwargs...)
 end
 
+
+####################################################
+#               Resolve vecchia_solver                
+####################################################
+resolve_rowsL(rowsL::Nothing, n::Int, k::Int) = zeros(Int, Int(0.5 * k * ( 2*n - k + 1)))
+resolve_rowsL(rowsL::AbstractVector, n::Int, k::Int) = rowsL
+
+####################################################
+#               Resolve vecchia_solver                
+####################################################
+resolve_colptrL(colptrL::Nothing, n::Int) = zeros(Int, n+1)
+resolve_colptrL(colptrL::AbstractVector, n::Int) = colptrL
+        
+
+
 ####################################################
 #                resolve_plevel
 ####################################################
@@ -99,7 +121,6 @@ resolve_plevel(::Val{:madnlp}, ::Val{:VINFO})  = MadNLP.INFO
 resolve_plevel(::Val{:madnlp}, ::Val{:VWARN})  = MadNLP.WARN
 resolve_plevel(::Val{:madnlp}, ::Val{:VERROR}) = MadNLP.ERROR
 resolve_plevel(::Val{:madnlp}, ::Val{:VFATAL}) = MadNLP.ERROR
-
 
 ####################################################
 #                convert_plevel
@@ -234,13 +255,12 @@ resolve_sparistygen(::AbstractVector, sym::Val{<:Symbol}) = error("Unsupported S
 ####################################################
 
 function is_csc_format(iVecchiaMLE::VecchiaMLEInput)::Bool
+
+    iVecchiaMLE.sparsitygen != :USERGIVEN && return true
+    
     rowsL = iVecchiaMLE.rowsL
-    colsL = iVecchiaMLE.colsL
     colptrL = iVecchiaMLE.colptrL
     n = iVecchiaMLE.n
-
-    # lengths
-    length(rowsL) != length(colsL) && return false
     
     length(colptrL) != n + 1 && return false
 
@@ -249,7 +269,6 @@ function is_csc_format(iVecchiaMLE::VecchiaMLEInput)::Bool
 
     # indices in range
     !all(1 .<= rowsL .<= n) && return false
-    !all(1 .<= colsL .<= n) && return false
 
     # check row ordering within each column
     for col in 1:n
@@ -267,7 +286,7 @@ end
 
 
 """
-    rows, cols, colptr = nn_to_csc(sparmat::Matrix{Float64})
+    rows, colptr = nn_to_csc(sparmat::Matrix{Float64})
 
     A helper function to generate the sparsity pattern of the vecchia approximation (inverse cholesky) based 
     on each point's nearest neighbors. If there are n points, each with k nearest neighbors, then the matrix
@@ -283,11 +302,10 @@ end
 
 ## Output arguments
 * `rows`: A vector of row indices of the sparsity pattern for L, in CSC format.
-* `cols`: A vector of column indices of the sparsity pattern for L, in CSC format.
 * `colptr`: A vector of incides which determine where new columns start. 
 
 """
-function nn_to_csc(sparmat::Matrix{Int})::Tuple{Vector{Int}, Vector{Int}, Vector{Int}}
+function nn_to_csc(sparmat::Matrix{Int})::Tuple{Vector{Int}, Vector{Int}}
     n, k = size(sparmat)
     
     # Preprocess the counts
@@ -300,7 +318,6 @@ function nn_to_csc(sparmat::Matrix{Int})::Tuple{Vector{Int}, Vector{Int}, Vector
     # Preallocate spari
     spari = zeros(maximum(counts))
     rows = ones(Int, Int(0.5 * k * (2*n - k + 1)))
-    cols = copy(rows)  
     idx = 0
     colptr = ones(Int, n+1)
     for i in 1:n
@@ -315,7 +332,6 @@ function nn_to_csc(sparmat::Matrix{Int})::Tuple{Vector{Int}, Vector{Int}, Vector
         end
 
         len = counts[i]
-        cols[(1:len).+idx] .= i
         rows[(1:len).+idx] .= view(spari, 1:len)
         idx += len
 
@@ -323,7 +339,7 @@ function nn_to_csc(sparmat::Matrix{Int})::Tuple{Vector{Int}, Vector{Int}, Vector
     counts .= cumsum(counts)
     view(colptr, 2:n+1) .+= counts
 
-    return rows, cols, colptr
+    return rows, colptr
 end
 
 ####################################################

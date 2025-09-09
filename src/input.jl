@@ -14,9 +14,8 @@
 function VecchiaMLE_Run(iVecchiaMLE::VecchiaMLEInput)
 
     !iVecchiaMLE.skip_check && validate_input(iVecchiaMLE)
-    preschol = spzeros(iVecchiaMLE.n, iVecchiaMLE.n)
     diagnostics = Diagnostics(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, :cpu)
-    VecchiaMLERunAnalysis!(iVecchiaMLE, preschol, diagnostics)
+    preschol = VecchiaMLERunAnalysis!(iVecchiaMLE, diagnostics)
     
     return diagnostics, preschol
 end
@@ -24,16 +23,17 @@ end
 """
 See VecchiaMLE_Run().
 """
-function VecchiaMLERunAnalysis!(iVecchiaMLE::VecchiaMLEInput, preschol::AbstractMatrix, diagnostics::Diagnostics)
-    model, output = ExecuteModel!(iVecchiaMLE, preschol, diagnostics)
+function VecchiaMLERunAnalysis!(iVecchiaMLE::VecchiaMLEInput, diagnostics::Diagnostics)
+    model, output, preschol = ExecuteModel!(iVecchiaMLE, diagnostics)
     
     !iVecchiaMLE.diagnostics && RetrieveDiagnostics!(iVecchiaMLE, output, model, diagnostics)
+    return preschol
 end
 
 """
 See VecchiaMLE_Run().
 """
-function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, preschol::AbstractMatrix, diags::Diagnostics)
+function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, diags::Diagnostics)
     diags.create_model_time = @elapsed begin
         model = get_vecchia_model(iVecchiaMLE)
     end
@@ -45,21 +45,14 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, preschol::AbstractMatrix, d
         )
     end
     
-    valsL = view(output.solution, 1:model.cache.nnzL)
-    rowsL = view(model.cache.rowsL, :)
-    colsL = view(model.cache.colsL, :)
-
-    # Casting to CPU matrices
-    if iVecchiaMLE.arch != :cpu
-        valsL = Vector{Float64}(valsL)
-        rowsL = Vector{Int}(rowsL)
-        colsL = Vector{Int}(colsL)
-    end
-
-    preschol .= sparse(rowsL, colsL, valsL)
+    S = Vector{Int}
+    preschol = SparseMatrixCSC(iVecchiaMLE.n, iVecchiaMLE.n, 
+        S(iVecchiaMLE.colptrL), S(iVecchiaMLE.rowsL),
+        Vector{Float64}(view(output.solution, 1:model.cache.nnzL))
+    )
 
 
-    return model, output
+    return model, output, preschol
 end
 
 """
