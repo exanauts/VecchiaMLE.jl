@@ -71,9 +71,6 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
     end
 
 
-    @assert_cond iVecchiaMLE.solver_tol > 0.0 iVecchiaMLE.solver_tol "be positive"
-
-    @assert_in iVecchiaMLE.solver SUPPORTED_SOLVERS
     @assert_in iVecchiaMLE.arch ARCHITECTURES
     @assert_in iVecchiaMLE.plevel PRINT_LEVEL
     @assert_in iVecchiaMLE.sparsitygen SPARSITY_GEN
@@ -82,75 +79,16 @@ end
 
 
 ####################################################
-#               Resolve vecchia_solver                
-####################################################
-function vecchia_solver(::Val{s}, args...; kwargs...) where {s}
-    error("The solver $s is not available.")
-end
-
-function vecchia_solver(::Val{:madnlp}, args...; kwargs...)
-    madnlp(args...; kwargs...)
-end
-
-
-####################################################
-#               Resolve vecchia_solver                
+#               Resolve rowsL                
 ####################################################
 resolve_rowsL(rowsL::Nothing, n::Int, k::Int) = zeros(Int, Int(0.5 * k * ( 2*n - k + 1)))
 resolve_rowsL(rowsL::AbstractVector, n::Int, k::Int) = rowsL
 
 ####################################################
-#               Resolve vecchia_solver                
+#               Resolve colptrL                
 ####################################################
 resolve_colptrL(colptrL::Nothing, n::Int) = zeros(Int, n+1)
 resolve_colptrL(colptrL::AbstractVector, n::Int) = colptrL
-        
-
-
-####################################################
-#                resolve_plevel
-####################################################
-
-resolve_plevel(::Val{:madnlp}, plevel::Val{T}) where {T} = error("Unsupported print level $(T) for solver :madnlp.")
-resolve_plevel(solver::Val{<:Symbol}, ::Val{T}) where {T} = error("The solver $(solver) does not have defined print level $(T).")
-
-
-resolve_plevel(::Val{:madnlp}, ::Val{:VTRACE}) = MadNLP.TRACE
-resolve_plevel(::Val{:madnlp}, ::Val{:VDEBUG}) = MadNLP.DEBUG
-resolve_plevel(::Val{:madnlp}, ::Val{:VINFO})  = MadNLP.INFO
-resolve_plevel(::Val{:madnlp}, ::Val{:VWARN})  = MadNLP.WARN
-resolve_plevel(::Val{:madnlp}, ::Val{:VERROR}) = MadNLP.ERROR
-resolve_plevel(::Val{:madnlp}, ::Val{:VFATAL}) = MadNLP.ERROR
-
-####################################################
-#                convert_plevel
-####################################################
-
-convert_plevel(::Val{T}) where {T} = error("Unsupported print level $T")
-
-convert_plevel(::Val{:VTRACE}) = :VTRACE
-convert_plevel(::Val{1})       = :VTRACE
-convert_plevel(::Val{:VDEBUG}) = :VDEBUG
-convert_plevel(::Val{2})       = :VDEBUG
-convert_plevel(::Val{:VINFO})  = :VINFO
-convert_plevel(::Val{3})       = :VINFO
-convert_plevel(::Val{:VWARN})  = :VWARN
-convert_plevel(::Val{4})       = :VWARN
-convert_plevel(::Val{:VERROR}) = :VERROR
-convert_plevel(::Val{5})       = :VERROR
-
-####################################################
-#              convert_computemode
-####################################################
-
-convert_computemode(::Val{arch}) where {arch} = error("Unsupported architecture: $arch")
-
-convert_computemode(::Val{:cpu}) = :cpu
-convert_computemode(::Val{1})    = :cpu
-
-convert_computemode(::Val{:gpu}) = :gpu
-convert_computemode(::Val{2})    = :gpu
-
 
 ####################################################
 # tovector. 
@@ -343,11 +281,11 @@ function nn_to_csc(sparmat::Matrix{Int})::Tuple{Vector{Int}, Vector{Int}}
 end
 
 ####################################################
-# get_vecchia_model   
+# vecchia_model_meta   
 ####################################################
 
 """
-    model = get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)
+    model = vecchia_model_meta(iVecchiaMLE::VecchiaMLEInput)
 
     Creates and returns a vecchia model based on the VecchiaMLEInput and point grid. 
 ## Input arguments
@@ -357,7 +295,17 @@ end
 
 * `model`: The Vecchia model based on the VecchiaMLEInput  
 """
-get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)::VecchiaModel =  get_vecchia_model(iVecchiaMLE, Val(iVecchiaMLE.arch))
+vecchia_model_meta(samples::AbstractMatrix, cache::VecchiaCache, x0::AbstractVector)::VecchiaModel =  vecchia_model_meta(samples, cache, x0, Val(cache.arch))
 
-get_vecchia_model(iVecchiaMLE::VecchiaMLEInput, ::Val{:cpu}) = VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE)
-get_vecchia_model(iVecchiaMLE::VecchiaMLEInput, ::Val{:gpu}) = VecchiaModelGPU(iVecchiaMLE.samples, iVecchiaMLE)
+vecchia_model_meta(samples::AbstractMatrix, cache::VecchiaCache, x0::V, ::Val{:cpu}) where {V <: AbstractVector} = VecchiaModelMetaCPU(samples, cache, x0)
+vecchia_model_meta(samples::AbstractMatrix, cache::VecchiaCache, x0::V, ::Val{:gpu}) where {V <: AbstractVector} = VecchiaModelMetaGPU(samples, cache, x0)
+
+vecchia_model_cache(samples::AbstractMatrix, lambda::Real, rowsL::AbstractVector, colptrL::AbstractVector, 
+    lvar_diag::AbstractVector, uvar_diag::AbstractVector, 
+    arch::Val{:cpu}
+)::VecchiaCache = VecchiaModelCacheCPU(samples, lambda, rowsL, colptrL, lvar_diag, uvar_diag, arch)
+
+vecchia_model_cache(samples::AbstractMatrix, lambda::Real, rowsL::AbstractVector, colptrL::AbstractVector, 
+    lvar_diag::AbstractVector, uvar_diag::AbstractVector, 
+    arch::Val{:gpu}
+)::VecchiaCache = VecchiaModelCacheGPU(samples, lambda, rowsL, colptrL, lvar_diag, uvar_diag, arch)

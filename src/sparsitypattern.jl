@@ -22,31 +22,23 @@
 * `colptr`: A vector of incides which determine where new columns start. 
 
 """
-function sparsitypattern(::Val{:NN}, iVecchiaMLE::VecchiaMLEInput)
-    return sparsitypattern_NN(iVecchiaMLE.ptset, iVecchiaMLE.k, iVecchiaMLE.metric)
-end
-
-function sparsitypattern(::Val{:HNSW}, iVecchiaMLE::VecchiaMLEInput)
-    return sparsitypattern_HNSW(iVecchiaMLE.ptset, iVecchiaMLE.k, iVecchiaMLE.metric)
-end
-
-function sparsitypattern(::Val{:USERGIVEN}, iVecchiaMLE::VecchiaMLEInput)
-    return iVecchiaMLE.rowsL, iVecchiaMLE.colptrL
-end
-
-function sparsitypattern(::Val{M}, iVecchiaMLE::VecchiaMLEInput) where {M}
-    error("sparsitypattern: Bad method. Gave $M")
-end
-
-function sparsitypattern(::Val{:NN}, ptset::AbstractVector, k::Int, metric::Distances.Metric=Distances.Euclidean())
+function sparsitypattern(::Val{:NN}, ptset::VP, k::Int, metric::Distance.Metric, rowsL::V1, colptrL::V1) where {VP <: AbstractVector, V1}
     return sparsitypattern_NN(ptset, k, metric)
 end
 
-function sparsitypattern(::Val{:HNSW}, ptset::AbstractVector, k::Int, metric::Distances.Metric=Distances.Euclidean())
+function sparsitypattern(::Val{:HNSW}, ptset::VP, k::Int, metric::Distance.Metric, rowsL::V1, colptrL::V1) where {VP <: AbstractVector, V1}
     return sparsitypattern_HNSW(ptset, k, metric)
 end
 
-sparsitypattern(ptset::AbstractVector, k::Int) = sparsitypattern(Val(:NN), ptset, k)
+function sparsitypattern(::Val{:USERGIVEN}, ptset::VP, k::Int, metric::Distance.Metric, rowsL::V1, colptrL::V1) where {VP <: AbstractVector, V1}
+    return rowsL, colptrL
+end
+
+function sparsitypattern(::Val{M}, ptset::V1, k::Int, metric::Distance.Metric) where {M, V1 <: AbstractVector}
+    error("sparsitypattern: Bad method. Gave $M")
+end
+
+sparsitypattern(ptset::AbstractVector, k::Int, metric::Distances.Metric=Distances.Euclidean()) = sparsitypattern(Val(:NN), ptset, k, metric, nothing, nothing)
 
 """
 See sparsitypattern(). Uses NearestNeighbors library. In case of tie, opt for larger index. 
