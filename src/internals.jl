@@ -79,10 +79,15 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
     @assert_in iVecchiaMLE.sparsitygen SPARSITY_GEN
     @assert_in iVecchiaMLE.linear_solver LINEAR_SOLVERS
 
-    # Check package version of  instead
-    (!HSL.LIBHSL_isfunctional() && iVecchiaMLE.linear_solver in (:ma27, :ma57)) &&
+    # Check if HSL is given
+    (!HSL.LIBHSL_isfunctional() && iVecchiaMLE.linear_solver in (:ma27, :ma57, :ma86, :ma97)) &&
          error("LIBHSL_isfunctional() returned false. $linear_solver is not available.")
 
+    # Check linear solver and architecture make sense. 
+    if iVecchiaMLE.arch == :gpu && iVecchiaMLE.linear_solver != :def 
+        @warn "linear solver given is $(iVecchiaMLE.linear_solver), but solver is not given as :def. Setting to :def"
+        iVecchiaMLE.linear_solver = :def
+    end
 end
 
 
@@ -117,6 +122,7 @@ resolve_colptrL(colptrL::M, n::Int) where{M} = error("colptrL is a Vector of Int
 #               Resolve linear_solver                
 ####################################################
 resolve_linear_solver(::Val{:madnlp}, ::Val{:umfpack}) = MadNLPHSL.UmfpackSolver
+resolve_linear_solver(::Val{:madnlp}, ::Val{:def}) = MadNLPHSL.UmfpackSolver
 
 if HSL.LIBHSL_isfunctional()
     resolve_linear_solver(::Val{:madnlp}, ::Val{:ma27}) = MadNLPHSL.Ma27Solver
@@ -126,9 +132,7 @@ if HSL.LIBHSL_isfunctional()
     resolve_linear_solver(::Val{:madnlp}, ::Val{:ma97}) = MadNLPHSL.Ma97Solver
 end
 
-resolve_linear_solver(solver::Val{:knitro}, ::Val{:umfpack}) = error("linear_solver for $solver not yet implemented!")
-resolve_linear_solver(solver::Val{:knitro}, ::Val{:ma27}) = error("linear_solver for $solver not yet implemented!")
-resolve_linear_solver(solver::Val{:knitro}, ::Val{:ma57}) = error("linear_solver for $solver not yet implemented!")
+resolve_linear_solver(solver::Val{:knitro}, ::Val{Symbol}) = error("linear_solver for $solver not yet implemented!")
 
 
 resolve_linear_solver(solver::Val{:ipopt}, ::Val{:umfpack}) = "umfpack"

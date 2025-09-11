@@ -38,6 +38,7 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, diags::Diagnostics)
         model = get_vecchia_model(iVecchiaMLE)
     end
     
+    if iVecchiaMLE.arch == :cpu
     diags.solve_model_time = @elapsed begin
         output = vecchia_solver(Val(iVecchiaMLE.solver), model,
             linear_solver = resolve_linear_solver(Val(iVecchiaMLE.solver), Val(iVecchiaMLE.linear_solver)),
@@ -45,7 +46,16 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, diags::Diagnostics)
             tol=iVecchiaMLE.solver_tol
         )
     end
-    
+    else
+        diags.solve_model_time = @elapsed begin
+        output = vecchia_solver(Val(iVecchiaMLE.solver), model,
+            print_level=resolve_plevel(Val(iVecchiaMLE.solver), Val(iVecchiaMLE.plevel)),
+            tol=iVecchiaMLE.solver_tol
+        )
+        end
+    end
+
+
     S = Vector{Int}
     preschol = SparseMatrixCSC(iVecchiaMLE.n, iVecchiaMLE.n, 
         S(iVecchiaMLE.colptrL), S(iVecchiaMLE.rowsL),

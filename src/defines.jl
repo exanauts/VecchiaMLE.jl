@@ -54,8 +54,9 @@ Linear solvers for use in the optimization problem.
 - `Ma57` (`:ma57`) : More than twice as good as Ma27 (27 * 2 < 57).
 - `Ma86` (`:ma86`) : Keeps getting better.
 - `Ma97` (`:ma97`) : The ultimate one.
+- `Default` (`:def`) : lets VecchiaMLE decide
 """
-const LINEAR_SOLVERS = (:umfpack, :ma27, :ma57, :ma86, :ma97)
+const LINEAR_SOLVERS = (:umfpack, :ma27, :ma57, :ma86, :ma97, :def)
 
 """
 Internal struct from which to fetch persisting objects in the optimization function.
@@ -188,7 +189,7 @@ function VecchiaMLEInput(
     rowsL::V1=nothing,
     colptrL::V1=nothing,
     solver::Symbol=:madnlp,
-    linear_solver::Symbol=:umfpack,
+    linear_solver::Symbol=:def,
     solver_tol::Real=1e-8,
     skip_check::Bool=false,
     metric::Distances.Metric=Distances.Euclidean(),
