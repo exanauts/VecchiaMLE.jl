@@ -5,6 +5,7 @@ VecchiaMLE.ARCHITECTURES
 VecchiaMLE.PRINT_LEVEL
 VecchiaMLE.SPARSITY_GEN
 VecchiaMLE.SUPPORTED_SOLVERS
+VecchiaMLE.LINEAR_SOLVERS
 VecchiaMLE.VecchiaCache
 VecchiaMLE.Diagnostics
 VecchiaMLE.VecchiaModel

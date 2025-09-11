@@ -10,16 +10,16 @@
     samples = VecchiaMLE.generate_samples(MatCov, number_of_samples)
 
     input = VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset, linear_solver=:ma27)
-    d, L_ma27 = VecchiaMLE_Run(input)
+    d, L_27 = VecchiaMLE_Run(input)
 
     input = VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset, linear_solver=:ma57)
-    d, L_ma57 = VecchiaMLE_Run(input)
+    d, L_57 = VecchiaMLE_Run(input)
 
     input = VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset, linear_solver=:ma86)
-    d, L_ma86 = VecchiaMLE_Run(input)
+    d, L_86 = VecchiaMLE_Run(input)
 
     input = VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset, linear_solver=:ma97)
-    d, L_ma97 = VecchiaMLE_Run(input)
+    d, L_97 = VecchiaMLE_Run(input)
 
     input = VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset, linear_solver=:umfpack)
     d, L_umf = VecchiaMLE_Run(input)
