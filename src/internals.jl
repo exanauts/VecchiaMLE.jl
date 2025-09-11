@@ -102,14 +102,15 @@ end
 #               Resolve vecchia_solver                
 ####################################################
 resolve_rowsL(rowsL::Nothing, n::Int, k::Int) = zeros(Int, Int(0.5 * k * ( 2*n - k + 1)))
-resolve_rowsL(rowsL::AbstractVector, n::Int, k::Int) = rowsL
+resolve_rowsL(rowsL::Vector{Int}, n::Int, k::Int) = rowsL
+resolve_rowsL(rowsL::M, n::Int, k::Int) where {M} = error("rowsL is a Vector of Ints, not $M")
 
 ####################################################
 #               Resolve vecchia_solver                
 ####################################################
 resolve_colptrL(colptrL::Nothing, n::Int) = zeros(Int, n+1)
-resolve_colptrL(colptrL::AbstractVector, n::Int) = colptrL
-        
+resolve_colptrL(colptrL::Vector{Int}, n::Int) = colptrL
+resolve_colptrL(colptrL::M, n::Int) where{M} = error("colptrL is a Vector of Ints, not $M")
 
 
 ####################################################
@@ -130,8 +131,11 @@ resolve_linear_solver(solver::Val{:knitro}, ::Val{:ma27}) = error("linear_solver
 resolve_linear_solver(solver::Val{:knitro}, ::Val{:ma57}) = error("linear_solver for $solver not yet implemented!")
 
 
+resolve_linear_solver(solver::Val{:ipopt}, ::Val{:umfpack}) = "umfpack"
 resolve_linear_solver(solver::Val{:ipopt}, ::Val{:ma27}) = "ma27"
 resolve_linear_solver(solver::Val{:ipopt}, ::Val{:ma57}) = "ma57"
+resolve_linear_solver(solver::Val{:ipopt}, ::Val{:ma86}) = "ma86"
+resolve_linear_solver(solver::Val{:ipopt}, ::Val{:ma97}) = "ma97"
 
 resolve_linear_solver(solver::Val{<:Symbol}, lin::Val{<:Symbol}) = error("solver $solver does not support linear solver $lin")
 

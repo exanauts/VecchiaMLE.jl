@@ -52,8 +52,10 @@ Linear solvers for use in the optimization problem.
 - `Umfpack` (`:umfpack`) : The standard linear solver
 - `Ma27` (`:ma27`) : A good one. 
 - `Ma57` (`:ma57`) : More than twice as good as Ma27 (27 * 2 < 57).
+- `Ma86` (`:ma86`) : Keeps getting better.
+- `Ma97` (`:ma97`) : The ultimate one.
 """
-const LINEAR_SOLVERS = (:umfpack, :ma27, :ma57)
+const LINEAR_SOLVERS = (:umfpack, :ma27, :ma57, :ma86, :ma97)
 
 """
 Internal struct from which to fetch persisting objects in the optimization function.
@@ -207,7 +209,7 @@ function VecchiaMLEInput(
     ptset_ = resolve_ptset(n, ptset)
     n_::Int = length(ptset_)
 
-    return VecchiaMLEInput{M, typeof(ptset_), V1, Vl, Vu, Vx0}(
+    return VecchiaMLEInput{M, typeof(ptset_), Vector{Int}, Vl, Vu, Vx0}(
         n_,
         k,
         samples,
