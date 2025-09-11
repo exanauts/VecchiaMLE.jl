@@ -77,7 +77,17 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
     @assert_in iVecchiaMLE.arch ARCHITECTURES
     @assert_in iVecchiaMLE.plevel PRINT_LEVEL
     @assert_in iVecchiaMLE.sparsitygen SPARSITY_GEN
+    @assert_in iVecchiaMLE.linear_solver LINEAR_SOLVERS
 
+    # Check if HSL is given
+    (!HSL.LIBHSL_isfunctional() && iVecchiaMLE.linear_solver in (:ma27, :ma57, :ma86, :ma97)) &&
+         error("LIBHSL_isfunctional() returned false. $linear_solver is not available.")
+
+    # Check linear solver and architecture make sense. 
+    if iVecchiaMLE.arch == :gpu && iVecchiaMLE.linear_solver != :def 
+        @warn "linear solver given is $(iVecchiaMLE.linear_solver), but solver is not given as :def. Setting to :def"
+        iVecchiaMLE.linear_solver = :def
+    end
 end
 
 
@@ -97,15 +107,41 @@ end
 #               Resolve vecchia_solver                
 ####################################################
 resolve_rowsL(rowsL::Nothing, n::Int, k::Int) = zeros(Int, Int(0.5 * k * ( 2*n - k + 1)))
-resolve_rowsL(rowsL::AbstractVector, n::Int, k::Int) = rowsL
+resolve_rowsL(rowsL::Vector{Int}, n::Int, k::Int) = rowsL
+resolve_rowsL(rowsL::M, n::Int, k::Int) where {M} = error("rowsL is a Vector of Ints, not $M")
 
 ####################################################
 #               Resolve vecchia_solver                
 ####################################################
 resolve_colptrL(colptrL::Nothing, n::Int) = zeros(Int, n+1)
-resolve_colptrL(colptrL::AbstractVector, n::Int) = colptrL
-        
+resolve_colptrL(colptrL::Vector{Int}, n::Int) = colptrL
+resolve_colptrL(colptrL::M, n::Int) where{M} = error("colptrL is a Vector of Ints, not $M")
 
+
+####################################################
+#               Resolve linear_solver                
+####################################################
+resolve_linear_solver(::Val{:madnlp}, ::Val{:umfpack}) = MadNLPHSL.UmfpackSolver
+resolve_linear_solver(::Val{:madnlp}, ::Val{:def}) = MadNLPHSL.UmfpackSolver
+
+if HSL.LIBHSL_isfunctional()
+    resolve_linear_solver(::Val{:madnlp}, ::Val{:ma27}) = MadNLPHSL.Ma27Solver
+    resolve_linear_solver(::Val{:madnlp}, ::Val{:ma57}) = MadNLPHSL.Ma57Solver
+    resolve_linear_solver(::Val{:madnlp}, ::Val{:ma77}) = MadNLPHSL.Ma77Solver
+    resolve_linear_solver(::Val{:madnlp}, ::Val{:ma86}) = MadNLPHSL.Ma86Solver
+    resolve_linear_solver(::Val{:madnlp}, ::Val{:ma97}) = MadNLPHSL.Ma97Solver
+end
+
+resolve_linear_solver(solver::Val{:knitro}, ::Val{Symbol}) = error("linear_solver for $solver not yet implemented!")
+
+
+resolve_linear_solver(solver::Val{:ipopt}, ::Val{:umfpack}) = "umfpack"
+resolve_linear_solver(solver::Val{:ipopt}, ::Val{:ma27}) = "ma27"
+resolve_linear_solver(solver::Val{:ipopt}, ::Val{:ma57}) = "ma57"
+resolve_linear_solver(solver::Val{:ipopt}, ::Val{:ma86}) = "ma86"
+resolve_linear_solver(solver::Val{:ipopt}, ::Val{:ma97}) = "ma97"
+
+resolve_linear_solver(solver::Val{<:Symbol}, lin::Val{<:Symbol}) = error("solver $solver does not support linear solver $lin")
 
 ####################################################
 #                resolve_plevel
