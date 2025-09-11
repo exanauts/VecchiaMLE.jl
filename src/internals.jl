@@ -83,8 +83,14 @@ end
 #               Resolve linear_solver                
 ####################################################
 resolve_linear_solver(::Val{:madnlp}, ::Val{:umfpack}) = MadNLPHSL.UmfpackSolver
-resolve_linear_solver(::Val{:madnlp}, ::Val{:ma27}) = MadNLPHSL.Ma27Solver
-resolve_linear_solver(::Val{:madnlp}, ::Val{:ma57}) = MadNLPHSL.Ma57Solver
+
+if HSL.LIBHSL_isfunctional()
+    resolve_linear_solver(::Val{:madnlp}, ::Val{:ma27}) = MadNLPHSL.Ma27Solver
+    resolve_linear_solver(::Val{:madnlp}, ::Val{:ma57}) = MadNLPHSL.Ma57Solver
+    resolve_linear_solver(::Val{:madnlp}, ::Val{:ma77}) = MadNLPHSL.Ma77Solver
+    resolve_linear_solver(::Val{:madnlp}, ::Val{:ma86}) = MadNLPHSL.Ma86Solver
+    resolve_linear_solver(::Val{:madnlp}, ::Val{:ma97}) = MadNLPHSL.Ma97Solver
+end
 
 resolve_linear_solver(solver::Val{:knitro}, ::Val{:umfpack}) = error("linear_solver for $solver not yet implemented!")
 resolve_linear_solver(solver::Val{:knitro}, ::Val{:ma27}) = error("linear_solver for $solver not yet implemented!")

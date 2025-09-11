@@ -13,6 +13,10 @@
     input_knitro = VecchiaMLEInput(n, k, samples, Number_of_Samples; ptset=xyGrid, solver=:knitro)
     input_ipopt  = VecchiaMLEInput(n, k, samples, Number_of_Samples; ptset=xyGrid, solver=:ipopt)
         
+    # _, L_madnlp = VecchiaMLE_Run(input_madnlp)
+    # _, L_knitro = VecchiaMLE_Run(input_knitro)
+    # _, L_ipopt = VecchiaMLE_Run(input_ipopt)
+
     # each row is the solver errors
     # errors = zeros(3, 2)
     # errors[1, :] .= [VecchiaMLE.KLDivergence(MatCov, L_madnlp), VecchiaMLE.uni_error(MatCov, L_madnlp)]

@@ -209,7 +209,7 @@ function VecchiaMLEInput(
     ptset_::AbstractVector = resolve_ptset(n, ptset)
     n_::Int = length(ptset_)
 
-    return VecchiaMLEInput{M, AbstractVector, V1, Vl, Vu, Vx0}(
+    return VecchiaMLEInput{M, typeof(ptset_), V1, Vl, Vu, Vx0}(
         n_,
         k,
         samples,

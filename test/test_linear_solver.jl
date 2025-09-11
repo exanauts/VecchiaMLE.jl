@@ -9,14 +9,8 @@
     MatCov = VecchiaMLE.generate_MatCov(params, ptset)
     samples = VecchiaMLE.generate_samples(MatCov, number_of_samples)
 
-    input = VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset)
-    linear_solver = solver == :ma27 ? MadNLPHSL.Ma27Solver : MadNLPHSL.Ma57Solver
-
-    model = VecchiaMLE.get_vecchia_model(input)
-    output = madnlp(model,
-        linear_solver=linear_solver,
-        print_level=VecchiaMLE.resolve_plevel(Val(input.solver), Val(input.plevel))
-    )
+    input = VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset, linear_solver=:ma27)
+    d, L = VecchiaMLE_Run(input)
 
     valsL = Vector{Float64}(output.solution[1:model.cache.nnzL])
     rowsL = Vector{Int}(model.cache.rowsL)

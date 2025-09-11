@@ -40,7 +40,7 @@ function ExecuteModel!(iVecchiaMLE::VecchiaMLEInput, preschol::AbstractMatrix, d
     
     diags.solve_model_time = @elapsed begin
         output = vecchia_solver(Val(iVecchiaMLE.solver), model,
-            linear_solver = resolve_linear_solver(Val(iVecchiaMLE.solver), Val(iVEcchiaMLE.linear_solver)),
+            linear_solver = resolve_linear_solver(Val(iVecchiaMLE.solver), Val(iVecchiaMLE.linear_solver)),
             print_level=resolve_plevel(Val(iVecchiaMLE.solver), Val(iVecchiaMLE.plevel)),
             tol=iVecchiaMLE.solver_tol
         )
