@@ -33,7 +33,7 @@
     kl_86 = VecchiaMLE.KLDivergence(MatCov, L_86)
     kl_97 = VecchiaMLE.KLDivergence(MatCov, L_97)
     
-    @test isnan(kl_hsl) == false
+    @test isnan(kl_27) == false
     @test isnan(kl_umf) == false
     
     @test kl_umf < 100
