@@ -46,21 +46,24 @@
     colptr = L_csc.colptr
     vals = L_csc.nzval
     input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; x0= zeros(length(vals)))
-    @test_warn "User given x0 is not feasible. Setting x0 such that the initial Vecchia approximation is the identity." VecchiaMLE_Run(input)
+    @test_warn "User given x0 is not feasible. Setting x0 to have diagonal as ones" VecchiaMLE_Run(input)
     
-    colsL = similar(rowsL)
-    for j in 1:length(colptr)-1
-        idx_range = colptr[j]:(colptr[j+1]-1)
-        colsL[idx_range] .= j
-    end
 
-    # rows, columns
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; rowsL = rowsL, colsL = colsL, colptrL = colptr)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; 
+        x0= zeros(length(vals)), lvar_diag = zeros(n).+0.01, uvar_diag= zeros(n).+500)
+    @test_warn "User given x0 is not feasible. Setting x0 to have diagonal as average of uvar_diag and lvar_diag" VecchiaMLE_Run(input)
+    
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; 
+        x0= zeros(length(vals)), lvar_diag = zeros(n).+0.01, uvar_diag= ones(n).*Inf)
+    @test_throws AssertionError VecchiaMLE_Run(input)
+
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; 
+        x0= zeros(length(vals)), lvar_diag = ones(n).*-Inf, uvar_diag= ones(n))
+    @test_throws AssertionError VecchiaMLE_Run(input)
+
+    # rows, colptr
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; rowsL = rowsL, colptrL = colptr)
     @test_nowarn VecchiaMLE_Run(input)
-
-    # columns swapped with rows (will run technically, just worse than other)
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; rowsL = colsL, colsL = rowsL, colptrL = colptr)
-    VecchiaMLE_Run(input)
 
     # test solver_tol
     input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; solver_tol = -1.0) 

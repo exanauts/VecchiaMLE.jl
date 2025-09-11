@@ -3,10 +3,9 @@ struct VecchiaCacheJump
     samples::Matrix{Float64}
     n::Int
     M::Int
-    colptr::Vector{Int}
+    colptrL::Vector{Int}
     nnzL::Int
     rowsL::Vector{Int}
-    colsL::Vector{Int}
     diagL::Vector{Int}
     lambda::Float64
 end
@@ -16,14 +15,14 @@ function create_vecchia_cache_jump(samples::AbstractMatrix, Sparsity, lambda)
     n = size(samples, 2)
     
     # SPARSITY PATTERN OF L IN COO FORMAT.
-    rows, cols, colptr = Sparsity
+    rows, colptr = Sparsity
     diag = colptr[1:end-1]
     
     # Swap the two around for a second
     nnz_L = length(rows)
     samples_outerprod = sum(samples[k, :] * samples[k, :]' for k in 1:M)
 
-    return VecchiaCacheJump(samples_outerprod, samples, n, M, colptr, nnz_L, rows, cols, diag, lambda)
+    return VecchiaCacheJump(samples_outerprod, samples, n, M, colptr, nnz_L, rows, diag, lambda)
 end
 
 function obj_vecchia(w::AbstractVector, cache::VecchiaCacheJump)
@@ -33,7 +32,7 @@ function obj_vecchia(w::AbstractVector, cache::VecchiaCacheJump)
             sum(
                 sum(
                     w[r] * cache.samples[k, cache.rowsL[r]]
-                    for r in cache.colptr[j]:(cache.colptr[j+1] - 1)
+                    for r in cache.colptrL[j]:(cache.colptrL[j+1] - 1)
                 )^2
                 for j in 1:cache.n
             )

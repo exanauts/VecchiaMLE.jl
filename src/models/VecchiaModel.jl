@@ -7,17 +7,16 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
     ncon::Int = length(cache.colptrL) - 1
 
     # Allocating data    
-    x0_::S = fill!(S(undef, nvar), zero(T))
-    y0::S = fill!(S(undef, ncon), zero(T))
+    x0_::S  = fill!(S(undef, nvar), zero(T))
+    y0::S   = fill!(S(undef, ncon), zero(T))
     lcon::S = fill!(S(undef, ncon), zero(T))
     ucon::S = fill!(S(undef, ncon), zero(T))    
     lvar::S = fill!(S(undef, nvar), -Inf)
-    uvar::S = fill!(S(undef, nvar), Inf)
+    uvar::S = fill!(S(undef, nvar),  Inf)
 
-    # Assigning user-given values
-    check_x0!(x0_, iVecchiaMLE, cache)
-    check_lvar!(lvar, iVecchiaMLE, cache)
-    check_uvar!(uvar, iVecchiaMLE, cache)
+
+    !iVecchiaMLE.skip_check && apply_x0!(x0_, iVecchiaMLE, cache)
+    
 
     meta = NLPModelMeta{T, S}(
         nvar,
@@ -50,7 +49,9 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
     T = eltype(S)
 
     # SPARSITY PATTERN OF L IN CSC FORMAT.
-    rowsL, colsL, colptrL = sparsitypattern(Val(iVecchiaMLE.sparsitygen), iVecchiaMLE)
+    rowsL, colptrL = sparsitypattern(Val(iVecchiaMLE.sparsitygen), iVecchiaMLE)
+    iVecchiaMLE.rowsL .= rowsL
+    iVecchiaMLE.colptrL .= colptrL
 
     nnzL::Int = length(rowsL)
     m = [colptrL[j+1] - colptrL[j] for j in 1:n]
@@ -66,7 +67,6 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
         offsets = cumsum([0; m[1:end-1]]) |> CuVector{Int}
         B = [CuMatrix{T}(undef, 0, 0)]
         rowsL = CuVector{Int}(rowsL)
-        colsL = CuVector{Int}(colsL)
         colptrL = CuVector{Int}(colptrL)
         m = CuVector{Int}(m)
     else
@@ -83,7 +83,7 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
 
     return VecchiaCache{eltype(S), S, typeof(rowsL), typeof(B[1])}(
         n, Msamples, nnzL,
-        colptrL, rowsL, colsL, diagL,
+        colptrL, rowsL, diagL,
         m, offsets, B, nnzh_tri_obj,
         nnzh_tri_lag, hess_obj_vals,
         buffer,

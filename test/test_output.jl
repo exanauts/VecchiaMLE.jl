@@ -6,7 +6,7 @@
         k = 3
         Number_of_Samples = 100
         params = [5.0, 0.2, 2.25, 0.25]
-        xyGrid = VecchiaMLE.generate_xyGrid(n)
+        xyGrid = VecchiaMLE.generate_safe_xyGrid(n)
 
         MatCov = VecchiaMLE.generate_MatCov(params, xyGrid)
         samples = VecchiaMLE.generate_samples(MatCov, Number_of_Samples; arch=:cpu)
@@ -17,7 +17,7 @@
         cache = create_vecchia_cache_jump(samples, Sparsity, lambda)
         @variable(model, w[1:(cache.nnzL + cache.n)])
         # Initial L is identity
-        for i in cache.colptr[1:end-1]
+        for i in cache.colptrL[1:end-1]
             set_start_value(w[i], 1.0)  
         end
         
@@ -25,8 +25,7 @@
         @constraint(model, cons_vecchia(w, cache) .== 0)
         @objective(model, Min, obj_vecchia(w, cache))
         optimize!(model)
-        L_jump = sparse(cache.rowsL, cache.colsL, value.(w)[1:cache.nnzL]) 
-       
+        L_jump = SparseMatrixCSC(cache.n, cache.n, cache.colptrL, cache.rowsL, value.(w)[1:cache.nnzL]) 
         L_jump = LowerTriangular(L_jump)
         
         # Get result from VecchiaMLE

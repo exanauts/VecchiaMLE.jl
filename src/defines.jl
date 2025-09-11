@@ -65,7 +65,6 @@ There is no need for a user to mess with this!
 - `nnzL` : Number of nonzeros in L
 - `colptrL` : Array which indexes the beginning of each column in L
 - `rowsL` : Row index of nonzero entries in L
-- `colsL` : Column index of nonzero entries in L
 - `diagL` : Position of the diagonal coefficient of L
 - `m` : Number of nonzeros in each column of L
 - `offsets` : Number of nonzeros in hess_obj_vals before the block Bⱼ
@@ -82,7 +81,6 @@ struct VecchiaCache{T, S, VI, M}
     nnzL::Int                           # Number of nonzeros in L
     colptrL::VI                         # Array which indexes the beginning of each column in L
     rowsL::VI                           # Row index of nonzero entries in L
-    colsL::VI                           # Column index of nonzero entries in L
     diagL::VI                           # Position of the diagonal coefficient of L
     m::VI                               # Number of nonzeros in each column of L
     offsets::VI                         # Number of nonzeros in hess_obj_vals before the block Bⱼ
@@ -138,18 +136,20 @@ Input to the VecchiaMLE analysis.
 
 ## Keyword Arguments
 
-- `ptset::AbstractVector`: The locations from which the samples reveal their value. Can be passed as a matrix or vector of vectors.
-- `lvar_diag::AbstractVector`: Lower bounds on the diagonal of the sparse Vecchia approximation.
-- `uvar_diag::AbstractVector`: Upper bounds on the diagonal of the sparse Vecchia approximation.
-- `rowsL::AbstractVector`: The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT! 
-- `colsL::AbstractVector`: The sparsity pattern cols of L if the user gives one. MUST BE IN CSC FORMAT!
-- `colptrL::AbstractVector`: The column pointer of L if the user gives one. MUST BE IN CSC FORMAT!
-- `solver::Symbol`: Optimization solver (:madnlp, :ipopt, :knitro). Defaults to `:madnlp`.
-- `solver_tol::Float64`: Tolerance for the optimization solver. Defaults to `1e-8`.
-- `skip_check::Bool`: Whether or not to skip the `validate_input` function.
-- `metric`: The metric by which nearest neighbors are determined. Defaults to Euclidean
-- `lambda`: The regularization term scalar for the ridge term `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
-- `x0`: The user may give an initial condition, but it is limiting if you do not have the sparsity pattern. 
+* plevel::Symbol            # Print level for the optimizer. See PRINT_LEVEL. Defaults to `ERROR`.
+* arch::Symbol              # Architecture for the analysis. See ARCHITECTURES. Defaults to `:cpu`.
+* ptset::AbstractVector     # The locations of the analysis. May be passed as a matrix or vector of vectors.
+* lvar_diag::AbstractVector # Lower bounds on the diagonal of the sparse Vecchia approximation.
+* uvar_diag::AbstractVector # Upper bounds on the diagonal of the sparse Vecchia approximation.
+* rowsL::AbstractVector     # The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT!
+* colptrL::AbstractVector   # The column pointer of L if the user gives one. MUST BE IN CSC FORMAT!
+* solver::Symbol            # Optimization solver (:madnlp, :ipopt, :knitro). Defaults to `:madnlp`.
+* solver_tol::Float64       # Tolerance for the optimization solver. Defaults to `1e-8`.
+* skip_check::Bool          # Whether or not to skip the `validate_input` function.
+* sparsityGeneration        # The method by which to generate a sparsity pattern. See SPARSITY_GEN.
+* metric::Distances.metric  # The metric by which nearest neighbors are determined. Defaults to Euclidean.
+* lambda::Real              # The regularization scalar for the ridge `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
+* x0::AbstractVector        # The user may give an initial condition, but it is limiting if you do not have the sparsity pattern. 
 """
 mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu, Vx0}
     n::Int 
@@ -163,7 +163,6 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu, Vx0}
     uvar_diag::Vu
     diagnostics::Bool
     rowsL::V1
-    colsL::V1
     colptrL::V1
     solver::Symbol
     linear_solver::Symbol
@@ -180,12 +179,11 @@ function VecchiaMLEInput(
     samples::M, number_of_samples::Int; 
     plevel::VPL=:VERROR, 
     arch::VAR=:cpu,
-    ptset::V=nothing,
+    ptset::V=generate_safe_xyGrid(n),
     lvar_diag::Vl=nothing,
     uvar_diag::Vu=nothing,
     diagnostics::Bool=false,
     rowsL::V1=nothing,
-    colsL::V1=nothing,
     colptrL::V1=nothing,
     solver::Symbol=:madnlp,
     linear_solver::Symbol=:umfpack,
@@ -198,15 +196,15 @@ function VecchiaMLEInput(
 ) where
     {
         M   <: AbstractMatrix, 
-        V   <: Union{Nothing, AbstractVector, AbstractMatrix},
-        V1  <: Union{Nothing, AbstractVector}, 
-        Vl  <: Union{Nothing, AbstractVector}, 
-        Vu  <: Union{Nothing, AbstractVector}, 
+        V   <: Union{AbstractVector, AbstractMatrix},
+        V1  <: Union{Nothing, AbstractVector},
+        Vl  <: Union{Nothing, AbstractVector},
+        Vu  <: Union{Nothing, AbstractVector},
         Vx0 <: Union{Nothing, AbstractVector},
         VPL <: Union{Symbol, Int},
         VAR <: Union{Symbol, Int}
     }
-    ptset_::AbstractVector = resolve_ptset(n, ptset)
+    ptset_ = resolve_ptset(n, ptset)
     n_::Int = length(ptset_)
 
     return VecchiaMLEInput{M, typeof(ptset_), V1, Vl, Vu, Vx0}(
@@ -220,9 +218,8 @@ function VecchiaMLEInput(
         lvar_diag,
         uvar_diag,
         diagnostics,
-        rowsL,
-        colsL,
-        colptrL,
+        resolve_rowsL(rowsL, n_, k),
+        resolve_colptrL(colptrL, n_),
         solver,
         linear_solver,
         Float64(solver_tol),
@@ -238,24 +235,24 @@ end
 Input to the VecchiaMLE analysis. Samples are expected as row vectors. 
 ## Fields
 
-- `k::Int`: Number of neighbors, representing the number of conditioning points in the Vecchia Approximation.
-- `samples::M`: Samples to generate the output. Each sample should match the length of the `observed_pts` vector.
+* `k::Int`: Number of neighbors, representing the number of conditioning points in the Vecchia Approximation.
+* `samples::M`: Samples to generate the output. Each sample should match the length of the `observed_pts` vector.
 
 ## Keyword Arguments
-- `plevel::Symbol`: Print level for the optimizer. See PRINT_LEVEL. Defaults to `ERROR`.
-- `arch::Symbol`: Architecture for the analysis. See ARCHITECTURES. Defaults to `:cpu`.
-- `ptset::AbstractVector`: The locations from which the samples reveal their value. Can be passed as a matrix or vector of vectors.
-- `lvar_diag::AbstractVector`: Lower bounds on the diagonal of the sparse Vecchia approximation.
-- `uvar_diag::AbstractVector`: Upper bounds on the diagonal of the sparse Vecchia approximation.
-- `rowsL::AbstractVector`: The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT! 
-- `colsL::AbstractVector`: The sparsity pattern cols of L if the user gives one. MUST BE IN CSC FORMAT!
-- `colptrL::AbstractVector`: The column pointer of L if the user gives one. MUST BE IN CSC FORMAT!
-- `solver::Symbol`: Optimization solver (:madnlp, :ipopt, :knitro). Defaults to `:madnlp`.
-- `solver_tol::Float64`: Tolerance for the optimization solver. Defaults to `1e-8`.
-- `skip_check::Bool`: Whether or not to skip the `validate_input` function.
-- `metric`: The metric by which nearest neighbors are determined. Defaults to Euclidean
-- `lambda`: The regularization term scalar for the ridge term `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
-- `x0`: The user may give an initial condition, but it is limiting if you do not have the sparsity pattern. 
+* plevel::Symbol            # Print level for the optimizer. See PRINT_LEVEL. Defaults to `ERROR`.
+* arch::Symbol              # Architecture for the analysis. See ARCHITECTURES. Defaults to `:cpu`.
+* ptset::AbstractVector     # The locations of the analysis. May be passed as a matrix or vector of vectors.
+* lvar_diag::AbstractVector # Lower bounds on the diagonal of the sparse Vecchia approximation.
+* uvar_diag::AbstractVector # Upper bounds on the diagonal of the sparse Vecchia approximation.
+* rowsL::AbstractVector     # The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT!
+* colptrL::AbstractVector   # The column pointer of L if the user gives one. MUST BE IN CSC FORMAT!
+* solver::Symbol            # Optimization solver (:madnlp, :ipopt, :knitro). Defaults to `:madnlp`.
+* solver_tol::Float64       # Tolerance for the optimization solver. Defaults to `1e-8`.
+* skip_check::Bool          # Whether or not to skip the `validate_input` function.
+* sparsityGeneration        # The method by which to generate a sparsity pattern. See SPARSITY_GEN.
+* metric::Distances.metric  # The metric by which nearest neighbors are determined. Defaults to Euclidean.
+* lambda::Real              # The regularization scalar for the ridge `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
+* x0::AbstractVector        # The user may give an initial condition, but it is limiting if you do not have the sparsity pattern. 
 """
 VecchiaMLEInput(k::Int, samples; kwargs...) = VecchiaMLEInput(size(samples, 2), k, samples, size(samples, 1); kwargs...)
     

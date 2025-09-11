@@ -14,8 +14,8 @@
 
     valsL = Vector{Float64}(output.solution[1:model.cache.nnzL])
     rowsL = Vector{Int}(model.cache.rowsL)
-    colsL = Vector{Int}(model.cache.colsL)
-    L_hsl = LowerTriangular(sparse(rowsL, colsL, valsL))
+    colptrL = Vector{Int}(model.cache.colptrL)
+    L_hsl = SparseMatrixCSC(n, n, colptrL, rowsL, valsL)
 
     # Umfpack
     model = VecchiaMLE.get_vecchia_model(input)
@@ -26,9 +26,9 @@
 
     valsL = Vector{Float64}(output.solution[1:model.cache.nnzL])
     rowsL = Vector{Int}(model.cache.rowsL)
-    colsL = Vector{Int}(model.cache.colsL)
+    colptrL = Vector{Int}(model.cache.colptrL)
 
-    L_umf = LowerTriangular(sparse(rowsL, colsL, valsL))
+    L_umf = SparseMatrixCSC(n, n, colptrL, rowsL, valsL)
 
     # Then check if we have the same result.
     kl_hsl = VecchiaMLE.KLDivergence(MatCov, L_hsl)

@@ -45,14 +45,14 @@ Other options may be passed as keyword arguments. Such options are:
 * lvar_diag::AbstractVector # Lower bounds on the diagonal of the sparse Vecchia approximation.
 * uvar_diag::AbstractVector # Upper bounds on the diagonal of the sparse Vecchia approximation.
 * rowsL::AbstractVector     # The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT! 
-* colsL::AbstractVector     # The sparsity pattern cols of L if the user gives one. MUST BE IN CSC FORMAT!
 * colptrL::AbstractVector   # The column pointer of L if the user gives one. MUST BE IN CSC FORMAT!
 * solver::Symbol            # Optimization solver (:madnlp, :ipopt, :knitro). Defaults to `:madnlp`.
 * solver_tol::Float64       # Tolerance for the optimization solver. Defaults to `1e-8`.
 * skip_check::Bool          # Whether or not to skip the `validate_input` function.
-* metric                    # The metric by which nearest neighbors are determined. Defaults to Euclidean
-* lambda                    # The regularization scalar for the ridge `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
-* x0                        # The user may give an initial condition, but it is limiting if you do not have the sparsity pattern. 
+* sparsityGeneration        # The method by which to generate a sparsity pattern. See SPARSITY_GEN.
+* metric::Distances.metric  # The metric by which nearest neighbors are determined. Defaults to Euclidean.
+* lambda::Real              # The regularization scalar for the ridge `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
+* x0::AbstractVector        # The user may give an initial condition, but it is limiting if you do not have the sparsity pattern. 
 ```
 
 ## Usage
