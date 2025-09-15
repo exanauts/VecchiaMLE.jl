@@ -4,18 +4,20 @@ using DelimitedFiles
 using CUDA
 
 function main()
-    # The samples are given as a 3d array. Reshaping to 2d
-    samples = NPZ.npzread("caleb_samples.npy")
-    samples = reshape(samples, size(samples, 1), :)
-    # Fist 100 samples.
-    samples = samples[1:100, 1:round(Int, sqrt(size(samples, 2)))^2]
+    ns = Vector{Int}(10:5:100)
+    ns .= ns.^2
+    k = 10
+    number_of_samples = 100
+    params = [5.0, 0.2, 2.25, 0.25]
 
-    number_of_samples = size(samples, 1)
-    ens = 2:size(samples, 2)
-    ns = [x for x in ens if x == round(Int, (sqrt(x)))^2]
+    # Generate samples
+    params = [5.0, 0.2, 2.25, 0.25]
+    MatCov = VecchiaMLE.generate_MatCov(maximum(ns), params)
+    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples, :cpu)
+
 
     k = 10
-    time_memory_io_file =  open("time_memory_cpu.txt","a")
+    time_memory_io_file = open("time_memory_cpu.txt","a")
     write(time_memory_io_file, "time, memory\n")
 
     for (i, n) in enumerate(ns)
@@ -36,10 +38,14 @@ function main()
     
     time_memory_io_file =  open("time_memory_gpu.txt","a")
     write(time_memory_io_file, "time, memory\n")
+    
+    # warm start for gpu
+    input = VecchiaMLE.VecchiaMLEInput(25, 10, samples[:, 1:25], number_of_samples; arch=:gpu)
+    diagsnostics = @timed VecchiaMLE_Run(input)
 
     for (i, n) in enumerate(ns)
         sample_slice = view(samples, :, 1:n)
-        input = VecchiaMLE.VecchiaMLEInput(n, min(n, k), sample_slice, number_of_samples)
+        input = VecchiaMLE.VecchiaMLEInput(n, min(n, k), sample_slice, number_of_samples; arch=:gpu)
         diagsnostics = @timed VecchiaMLE_Run(input)
 
         write(time_memory_io_file, "$(diagsnostics[2]), $(diagsnostics[3])\n")
