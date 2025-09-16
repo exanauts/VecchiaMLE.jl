@@ -45,6 +45,20 @@ Specification for the Sparsity Pattern generation algorithm.
 const SPARSITY_GEN = (:NN, :HNSW, :USERGIVEN)
 
 """
+Linear solvers for use in the optimization problem. 
+#TODO: Provide better documentation for these solvers. 
+
+## Supported solvers
+- `Umfpack` (`:umfpack`) : The standard linear solver
+- `Ma27` (`:ma27`) : A good one. 
+- `Ma57` (`:ma57`) : More than twice as good as Ma27 (27 * 2 < 57).
+- `Ma86` (`:ma86`) : Keeps getting better.
+- `Ma97` (`:ma97`) : The ultimate one.
+- `Default` (`:def`) : lets VecchiaMLE decide
+"""
+const LINEAR_SOLVERS = (:umfpack, :ma27, :ma57, :ma86, :ma97, :def)
+
+"""
 Internal struct from which to fetch persisting objects in the optimization function.
 There is no need for a user to mess with this!
 
@@ -154,6 +168,7 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu, Vx0}
     rowsL::V1
     colptrL::V1
     solver::Symbol
+    linear_solver::Symbol
     solver_tol::Float64
     skip_check::Bool
     metric::Distances.Metric
@@ -174,6 +189,7 @@ function VecchiaMLEInput(
     rowsL::V1=nothing,
     colptrL::V1=nothing,
     solver::Symbol=:madnlp,
+    linear_solver::Symbol=:def,
     solver_tol::Real=1e-8,
     skip_check::Bool=false,
     metric::Distances.Metric=Distances.Euclidean(),
@@ -193,8 +209,6 @@ function VecchiaMLEInput(
     }
     ptset_ = resolve_ptset(n, ptset)
     n_::Int = length(ptset_)
-    
-
 
     return VecchiaMLEInput{M, typeof(ptset_), Vector{Int}, Vl, Vu, Vx0}(
         n_,
@@ -210,6 +224,7 @@ function VecchiaMLEInput(
         resolve_rowsL(rowsL, n_, k),
         resolve_colptrL(colptrL, n_),
         solver,
+        linear_solver,
         Float64(solver_tol),
         skip_check,
         metric,
