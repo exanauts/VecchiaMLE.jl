@@ -397,3 +397,23 @@ get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)::VecchiaModel =  get_vecchia_mod
 
 get_vecchia_model(iVecchiaMLE::VecchiaMLEInput, ::Val{:cpu}) = VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE)
 get_vecchia_model(iVecchiaMLE::VecchiaMLEInput, ::Val{:gpu}) = VecchiaModelGPU(iVecchiaMLE.samples, iVecchiaMLE)
+
+
+####################################################
+#   resolve_optimizer_kwargs   
+####################################################
+function resolve_optimizer_kwargs(iVecchiaMLE::VecchiaMLEInput)
+    base_kwargs = (
+        print_level = resolve_plevel(Val(iVecchiaMLE.solver), Val(iVecchiaMLE.plevel)),
+        tol = iVecchiaMLE.solver_tol,
+    )
+
+    cpu_kwargs = (
+        linear_solver = resolve_linear_solver(
+            Val(iVecchiaMLE.solver),
+            Val(iVecchiaMLE.linear_solver),
+        ),
+    )
+
+    return iVecchiaMLE.arch == :cpu ? merge(base_kwargs, cpu_kwargs) : base_kwargs
+end
