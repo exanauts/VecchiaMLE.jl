@@ -153,6 +153,18 @@ end
 # Hessian - vector product
 # Not needed in current iteration of optimization, 
 # but might be useful in the future.
+function NLPModels.hprod!(nlp::VecchiaModel, x::AbstractVector, v::AbstractVector, Hv::AbstractVector; obj_weight::Real=1.0)
+    @lencheck nlp.meta.nvar v 
+    @lencheck nlp.meta.nvar Hv
+    increment!(nlp, :neval_hprod)
+    
+    # n is the number of blocks Bj in B
+    # m is a vector of length n that gives the dimensions of each block Bj
+    vecchia_mul!(Hv, nlp.cache.B, nlp.cache.hess_obj_vals, v, nlp.cache.n, nlp.cache.m, nlp.cache.offsets)
+    view(Hv, 1:nlp.cache.nnzL) .*= obj_weight
+    return Hv
+end
+
 function NLPModels.hprod!(nlp::VecchiaModel, x::AbstractVector, y::AbstractVector, v::AbstractVector, Hv::AbstractVector; obj_weight::Real=1.0)
     @lencheck nlp.meta.nvar v 
     @lencheck nlp.meta.nvar Hv
