@@ -1,4 +1,4 @@
-@testset "Linear_Solvers -- $solver" for solver in (:ma27, :ma57)
+@testset "Linear_Solvers" begin
 
     # Things for model
     n = 100
@@ -9,41 +9,38 @@
     MatCov = VecchiaMLE.generate_MatCov(params, ptset)
     samples = VecchiaMLE.generate_samples(MatCov, number_of_samples)
 
-    input = VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset)
-    linear_solver = solver == :ma27 ? MadNLPHSL.Ma27Solver : MadNLPHSL.Ma57Solver
+    input = VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset, linear_solver=:ma27)
+    d, L_27 = VecchiaMLE_Run(input)
 
-    model = VecchiaMLE.get_vecchia_model(input)
-    output = madnlp(model,
-        linear_solver=linear_solver,
-        print_level=VecchiaMLE.resolve_plevel(Val(input.solver), Val(input.plevel))
-    )
+    input = VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset, linear_solver=:ma57)
+    d, L_57 = VecchiaMLE_Run(input)
 
-    valsL = Vector{Float64}(output.solution[1:model.cache.nnzL])
-    rowsL = Vector{Int}(model.cache.rowsL)
-    colptrL = Vector{Int}(model.cache.colptrL)
-    L_hsl = SparseMatrixCSC(n, n, colptrL, rowsL, valsL)
+    input = VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset, linear_solver=:ma86)
+    d, L_86 = VecchiaMLE_Run(input)
 
-    # Umfpack
-    model = VecchiaMLE.get_vecchia_model(input)
-    output = madnlp(model,
-        linear_solver=MadNLP.UmfpackSolver,
-        print_level=VecchiaMLE.resolve_plevel(Val(input.solver), Val(input.plevel))
-    )
+    input = VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset, linear_solver=:ma97)
+    d, L_97 = VecchiaMLE_Run(input)
 
-    valsL = Vector{Float64}(output.solution[1:model.cache.nnzL])
-    rowsL = Vector{Int}(model.cache.rowsL)
-    colptrL = Vector{Int}(model.cache.colptrL)
+    input = VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset, linear_solver=:umfpack)
+    d, L_umf = VecchiaMLE_Run(input)
 
-    L_umf = SparseMatrixCSC(n, n, colptrL, rowsL, valsL)
+
 
     # Then check if we have the same result.
-    kl_hsl = VecchiaMLE.KLDivergence(MatCov, L_hsl)
     kl_umf = VecchiaMLE.KLDivergence(MatCov, L_umf)
-
-    @test isnan(kl_hsl) == false
+    kl_27 = VecchiaMLE.KLDivergence(MatCov, L_27)
+    kl_57 = VecchiaMLE.KLDivergence(MatCov, L_57)
+    kl_86 = VecchiaMLE.KLDivergence(MatCov, L_86)
+    kl_97 = VecchiaMLE.KLDivergence(MatCov, L_97)
+    
+    @test isnan(kl_27) == false
     @test isnan(kl_umf) == false
-    @test kl_hsl < 100
+    
     @test kl_umf < 100
+    @test kl_27 < 100
+    @test kl_57 < 100
+    @test kl_86 < 100
+    @test kl_97 < 100
 
-    @test (abs(kl_hsl - kl_umf) < 1e-6) # Don't know a good bound for this.
+    @test (abs(kl_27 - kl_umf) < 1e-6) # Don't know a good bound for this.
 end
