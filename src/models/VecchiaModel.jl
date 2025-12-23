@@ -14,6 +14,9 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
     lvar::S = fill!(S(undef, nvar), -Inf)
     uvar::S = fill!(S(undef, nvar),  Inf)
 
+    # Apply box constraints to the diagonal
+    if !isnothing(iVecchiaMLE.lvar_diag) view(lvar, cache.diagL) .= iVecchiaMLE.lvar_diag end
+    if !isnothing(iVecchiaMLE.uvar_diag) view(uvar, cache.diagL) .= iVecchiaMLE.uvar_diag end
 
     !iVecchiaMLE.skip_check && apply_x0!(x0_, iVecchiaMLE, cache)
     
