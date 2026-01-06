@@ -185,3 +185,13 @@ function create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T}
         buffer,
     )
 end
+
+function recover_factor(nlp::VecchiaModel{T,Vector{T}}, solution::Vector{T}) where T
+    n = nlp.cache.n
+    colptr = nlp.cache.colptrL
+    rowval = nlp.cache.rowsL
+    nnz_factor = length(rowval)
+    nzval = solution[1:nnz_factor]
+    factor = SparseMatrixCSC(n, n, colptr, rowval, nzval)
+    return factor
+end

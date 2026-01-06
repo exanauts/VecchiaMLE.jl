@@ -29,4 +29,6 @@ include("models/api.jl")
 
 # Exports
 export VecchiaMLE_Run, VecchiaMLEInput, VecchiaModel
+export recover_factor
+
 end
