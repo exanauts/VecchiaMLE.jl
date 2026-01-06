@@ -132,6 +132,8 @@ function VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T};
         view(uvar, cache.diagL) .= 1e10
     end
 
+    view(x0, cache.diagL) .= 1.0
+
     meta = NLPModelMeta{T, S}(
         nvar,
         ncon = ncon,
