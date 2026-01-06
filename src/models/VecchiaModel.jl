@@ -1,7 +1,7 @@
-function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:AbstractArray}
+function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput; uplo::Symbol=:L) where {S<:AbstractArray}
     T = eltype(S)
 
-    cache::VecchiaCache = create_vecchia_cache(S, iVecchiaMLE)
+    cache::VecchiaCache = create_vecchia_cache(S, iVecchiaMLE, uplo)
 
     nvar::Int = length(cache.rowsL) + length(cache.colptrL) - 1
     ncon::Int = length(cache.colptrL) - 1
@@ -16,7 +16,6 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
 
 
     !iVecchiaMLE.skip_check && apply_x0!(x0_, iVecchiaMLE, cache)
-    
 
     meta = NLPModelMeta{T, S}(
         nvar,
@@ -38,9 +37,9 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput) where {S<:Abstrac
     return VecchiaModel(meta, Counters(), cache)
 end
 
-function VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T}) where T
+function VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T}; uplo::Symbol=:L) where T
     S = Vector{T}
-    cache::VecchiaCache = create_vecchia_cache(I, J, samples)
+    cache::VecchiaCache = create_vecchia_cache(I, J, samples, uplo)
 
     nvar::Int = length(cache.rowsL) + length(cache.colptrL) - 1
     ncon::Int = length(cache.colptrL) - 1
@@ -78,7 +77,7 @@ VecchiaModelCPU(samples::Matrix{T}, iVecchiaMLE::VecchiaMLEInput) where {T <: Ab
 VecchiaModelGPU(samples::CuMatrix{Float64, B}, iVecchiaMLE::VecchiaMLEInput) where {B} = VecchiaModel(CuVector{Float64,B}, iVecchiaMLE)
 
 # Constructing the vecchia cache used everywhere in the code below.
-function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaCache where {S <: AbstractVector}
+function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput, uplo::Symbol)::VecchiaCache where {S <: AbstractVector}
     Msamples::Int = size(iVecchiaMLE.samples, 1)
     n::Int = iVecchiaMLE.n
     T = eltype(S)
@@ -113,7 +112,18 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
 
     vecchia_build_B!(B, iVecchiaMLE.samples, iVecchiaMLE.lambda, rowsL, colptrL, hess_obj_vals, n, m)
 
-    diagL = view(colptrL, 1:n)
+    diagL = Vector{Int}(undef, n)
+    if uplo == :L
+        for i = 1:n
+            diagL[i] = colptrL[i]
+        end
+    elseif uplo == :U
+        for i = 1:n
+            diagL[i] = colptrL[i+1] - 1
+        end
+    else
+        error("Unsupported uplo = $uplo")
+    end
     buffer::S = S(undef, nnzL)
 
     return VecchiaCache{eltype(S), S, typeof(rowsL), typeof(B[1])}(
@@ -125,7 +135,7 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput)::VecchiaC
     )
 end
 
-function create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T})::VecchiaCache where {T}
+function create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T}, uplo::Symbol)::VecchiaCache where {T}
     S = Vector{T}
     Msamples, n = size(samples)
     nnz_coo = length(I)
@@ -162,7 +172,18 @@ function create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T}
 
     vecchia_build_B!(B, samples, 0.0, rowsL, colptrL, hess_obj_vals, n, m)
 
-    diagL = view(colptrL, 1:n)
+    diagL = Vector{Int}(undef, n)
+    if uplo == :L
+        for i = 1:n
+            diagL[i] = colptrL[i]
+        end
+    elseif uplo == :U
+        for i = 1:n
+            diagL[i] = colptrL[i+1] - 1
+        end
+    else
+        error("Unsupported uplo = $uplo")
+    end
     buffer::S = S(undef, nnzL)
 
     return VecchiaCache{eltype(S), S, typeof(rowsL), typeof(B[1])}(
