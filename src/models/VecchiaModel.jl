@@ -112,15 +112,11 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput, uplo::Sym
 
     vecchia_build_B!(B, iVecchiaMLE.samples, iVecchiaMLE.lambda, rowsL, colptrL, hess_obj_vals, n, m)
 
-    diagL = Vector{Int}(undef, n)
     if uplo == :L
-        for i = 1:n
-            diagL[i] = colptrL[i]
-        end
+        diagL = colptrL[1:n]
     elseif uplo == :U
-        for i = 1:n
-            diagL[i] = colptrL[i+1] - 1
-        end
+        diagL = colptrL[2:n+1]
+        diagL .-= 1
     else
         error("Unsupported uplo = $uplo")
     end
@@ -141,7 +137,6 @@ function create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T}
     nnz_coo = length(I)
     V = ones(Int, nnz_coo)
     P = sparse(I, J, V, n, n)
-    n = size(P, 1)
 
     # SPARSITY PATTERN OF L IN CSC FORMAT.
     rowsL = P.rowval
@@ -172,15 +167,11 @@ function create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T}
 
     vecchia_build_B!(B, samples, 0.0, rowsL, colptrL, hess_obj_vals, n, m)
 
-    diagL = Vector{Int}(undef, n)
     if uplo == :L
-        for i = 1:n
-            diagL[i] = colptrL[i]
-        end
+        diagL = colptrL[1:n]
     elseif uplo == :U
-        for i = 1:n
-            diagL[i] = colptrL[i+1] - 1
-        end
+        diagL = colptrL[2:n+1]
+        diagL .-= 1
     else
         error("Unsupported uplo = $uplo")
     end
