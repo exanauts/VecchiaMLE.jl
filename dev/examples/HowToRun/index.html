@@ -10,51 +10,51 @@ number_of_samples = 100 # Number of Samples to generate</code></pre><pre class="
 ptset = VecchiaMLE.generate_safe_xyGrid(n)
 MatCov = VecchiaMLE.generate_MatCov(params, ptset)
 samples = VecchiaMLE.generate_samples(MatCov, number_of_samples)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">100×400 Matrix{Float64}:
- -2.35628     3.07857       2.09784    …   -8.16887    -2.75746    2.26564
-  3.46525     5.28502       2.32808        -5.39901    -7.50925   -8.14645
- -9.5652    -10.9682       -7.21122         0.102165    5.25527   10.3545
- 11.023      10.3265        4.43964         1.21099     0.620211   2.46843
- -5.38173    -9.02306      -3.38399         3.79282     2.46607    4.05764
- -0.551272   -0.00474926   -1.42621    …   -1.17331    -3.08765   -2.89142
- -5.12324    -1.47437       0.0835271       6.27463     1.34132    2.46235
- -0.746111    4.19352       8.06168         3.26349     3.6449     0.630043
-  7.46368     0.0397389    -4.83581        -2.07172    -1.11612   -0.55263
-  2.57414     0.475069      1.9494         -1.00536     0.658585  -0.520458
-  ⋮                                    ⋱                          
- -6.96379    -7.47827      -7.13407         2.40397     2.31775    3.95107
- -5.81998    -3.18161      -3.05191       -11.5081    -12.5986    -9.04313
-  7.13126     6.34129       2.12445         0.956718    1.14774   -2.17245
-  0.365104    1.50908       1.97157        -7.5042     -9.81276   -5.87157
- -4.75257    -5.6234       -5.91364    …    7.11734     5.31137    7.55719
-  1.87763     0.894592     -2.20383        -3.39472    -4.60999   -5.56932
- -2.36753     1.28554       5.63623         6.11198     5.75659   -0.0268499
- -2.01379    -4.10019     -10.0841          0.596778    0.540867  -2.21093
- -2.16137    -3.68987      -0.926111       -0.329049   -2.97974   -5.3233</code></pre><p>Above, we generate a set of locations (ptset), a covariance matrix (MatCov), and the samples.   Next, we create and fill in the VecchiaMLEInput struct. This is done below.</p><pre><code class="language-julia hljs">input = VecchiaMLE.VecchiaMLEInput(k, samples; ptset=ptset)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">VecchiaMLEInput{Matrix{Float64}, Vector{Vector{Float64}}, Vector{Int64}, Nothing, Nothing, Nothing}(400, 10, [-2.35628314142366 3.078567219984955 … -2.7574627081169716 2.265638462224354; 3.465250127971886 5.2850160924647165 … -7.509246023853462 -8.146453925358944; … ; -2.0137905654761497 -4.10019077519017 … 0.5408667779687352 -2.210934149825617; -2.1613682116195507 -3.6898728573001565 … -2.979742872258607 -5.323299071142897], 100, :VERROR, :cpu, [[0.0, 0.0], [0.10526315789473684, 0.0], [0.21052631578947367, 0.0], [0.3157894736842105, 0.0], [0.42105263157894735, 0.0], [0.5263157894736842, 0.0], [0.631578947368421, 0.0], [0.7368421052631579, 0.0], [0.8421052631578947, 0.0], [0.9473684210526315, 0.0]  …  [1.0526315789473684, 2.0], [1.1578947368421053, 2.0], [1.263157894736842, 2.0], [1.368421052631579, 2.0], [1.4736842105263157, 2.0], [1.5789473684210527, 2.0], [1.6842105263157894, 2.0], [1.7894736842105263, 2.0], [1.894736842105263, 2.0], [2.0, 2.0]], nothing, nothing, false, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0  …  0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0  …  0, 0, 0, 0, 0, 0, 0, 0, 0, 0], :madnlp, 1.0e-8, false, Distances.Euclidean(0.0), :NN, 0.0, nothing)</code></pre><p>The constructor takes at the bare minimum the locations on which to condition any given point (k),  as well as the samples matrix. Since a ptset was already generated, we go ahead and provide this. If  a ptset is not given, we fall back on a default locations set defined by the function <code>generate_safe_xyGrid</code>. </p><p>All that&#39;s left is to run the analysis. This is done in one line:</p><pre><code class="language-julia hljs">d, L = VecchiaMLE_Run(input)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(VecchiaMLE.Diagnostics(2.042077481, 0.37042922600000006, 14.245983345, 43449.96621719042, 1.1406832471935479e-15, 1.0931939992820875e-11, 6, :cpu), sparse([1, 2, 3, 4, 5, 6, 7, 8, 9, 10  …  398, 397, 398, 399, 398, 399, 400, 399, 400, 400], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1  …  396, 397, 397, 397, 398, 398, 398, 399, 399, 400], [0.5807693288224365, -0.4944204059079911, 0.21306314469465237, -0.0012686728966343366, -0.10711947233015676, 0.19013827300012506, -0.10843953864929645, 0.022053603061289742, -0.0038536803219671803, 0.008070052633367608  …  0.14115180786689138, 0.34249246634657765, -0.431506426113098, 0.1704843946259608, 0.3620077371744683, -0.43583172231719286, 0.17494497974095416, 0.3180954345086628, -0.2594826788589116, 0.19847712996311148], 400, 400))</code></pre><p>We can see the structure of the output of the program has an approximately banded structure.  This is due to the underlying assumption of the Vecchia Approximation where locaitons are independent of  eachother when conditioned on its k nearest neighbors. </p><pre><code class="language-julia hljs">sparse(L)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">400×400 SparseArrays.SparseMatrixCSC{Float64, Int64} with 3955 stored entries:
+ -2.22529    2.99697   11.1174    …   -5.73038   -3.52774   -4.64149
+ -8.48303   -6.33774   -3.31834        1.62823    0.144955  -3.47365
+  3.8091     0.29756   -2.0956        -1.58144   -1.2175    -4.13194
+  0.542475  -0.433788  -1.91777        4.63561    7.20288    5.2359
+ -4.69065   -2.4139    -1.2424         3.77207    9.43511    8.85601
+ -9.72888   -7.97965   -8.01658   …    2.25065    8.42399    8.99021
+ 12.2724     8.33212    2.8934         4.10362   -0.749096  -7.13626
+ -3.71273   -2.49197   -7.1677        10.7352     5.04643    4.46449
+  7.90395    8.10718    2.222         -6.42903   -3.71626    2.52941
+ -1.49905   -1.36769    0.573459     -10.0292    -9.79721   -8.98541
+  ⋮                               ⋱                         
+ -3.42929   -2.99799   -1.04176       -7.12441   -6.85968   -4.61496
+ -1.60049   -2.98487   -3.03853       -1.18689   -2.21974   -1.19376
+  3.37507    6.85984    3.98027        5.86063    6.44713    6.88294
+  3.52547    6.09559    5.78472        1.62421   -1.52698   -3.50104
+  2.8908     2.14142   -0.305555  …   -0.982054   3.13986    0.0736671
+ 10.2466     8.07058    4.39192       -3.49227   -5.99171   -5.63858
+  7.35547    5.79779    3.66627       -2.60885   -3.01574   -0.844173
+ -0.622408  -0.936207   3.06858        5.3126     8.42448    5.49565
+  1.01135   -0.216942   0.631854      -0.114486   2.21152    3.43324</code></pre><p>Above, we generate a set of locations (ptset), a covariance matrix (MatCov), and the samples.   Next, we create and fill in the VecchiaMLEInput struct. This is done below.</p><pre><code class="language-julia hljs">input = VecchiaMLE.VecchiaMLEInput(k, samples; ptset=ptset)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">VecchiaMLEInput{Matrix{Float64}, Vector{Vector{Float64}}, Vector{Int64}, Nothing, Nothing, Nothing}(400, 10, [-2.225286700056391 2.9969711338217944 … -3.5277417870265837 -4.64148670139607; -8.483034244103987 -6.337739014280172 … 0.14495510972334677 -3.4736480954648075; … ; -0.6224078669302796 -0.9362065854327951 … 8.424483405643143 5.495647538082597; 1.0113526496846963 -0.21694209865762093 … 2.2115226790201694 3.4332449511726537], 100, :VERROR, :cpu, [[0.0, 0.0], [0.10526315789473684, 0.0], [0.21052631578947367, 0.0], [0.3157894736842105, 0.0], [0.42105263157894735, 0.0], [0.5263157894736842, 0.0], [0.631578947368421, 0.0], [0.7368421052631579, 0.0], [0.8421052631578947, 0.0], [0.9473684210526315, 0.0]  …  [1.0526315789473684, 2.0], [1.1578947368421053, 2.0], [1.263157894736842, 2.0], [1.368421052631579, 2.0], [1.4736842105263157, 2.0], [1.5789473684210527, 2.0], [1.6842105263157894, 2.0], [1.7894736842105263, 2.0], [1.894736842105263, 2.0], [2.0, 2.0]], nothing, nothing, false, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0  …  0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0  …  0, 0, 0, 0, 0, 0, 0, 0, 0, 0], :madnlp, 1.0e-8, false, Distances.Euclidean(0.0), :NN, 0.0, nothing)</code></pre><p>The constructor takes at the bare minimum the locations on which to condition any given point (k),  as well as the samples matrix. Since a ptset was already generated, we go ahead and provide this. If  a ptset is not given, we fall back on a default locations set defined by the function <code>generate_safe_xyGrid</code>. </p><p>All that&#39;s left is to run the analysis. This is done in one line:</p><pre><code class="language-julia hljs">d, L = VecchiaMLE_Run(input)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(VecchiaMLE.Diagnostics(2.343657447, 0.04680540800000001, 16.3697288, 43032.10912304136, 1.0810431491176357e-15, 1.0399478817639254e-11, 6, :cpu), sparse([1, 2, 3, 4, 5, 6, 7, 8, 9, 10  …  397, 398, 399, 400, 398, 399, 400, 399, 400, 400], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1  …  397, 397, 397, 397, 398, 398, 398, 399, 399, 400], [0.663120752930257, -0.4006089307555127, 0.20076472320769126, -0.08310579621795754, -0.005921310875455425, 0.11524621395826036, -0.12094815275849846, 0.029807458167905553, -0.013699885702328576, -0.022541679598124902  …  0.40532216470682725, -0.5586902624926784, 0.36425831627100297, -0.1590338681916597, 0.3513283987333541, -0.4093302701763839, 0.19332058997111273, 0.35350495748001787, -0.3249183149727701, 0.190756649527752], 400, 400))</code></pre><p>We can see the structure of the output of the program has an approximately banded structure.  This is due to the underlying assumption of the Vecchia Approximation where locaitons are independent of  eachother when conditioned on its k nearest neighbors. </p><pre><code class="language-julia hljs">sparse(L)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">400×400 SparseArrays.SparseMatrixCSC{Float64, Int64} with 3955 stored entries:
 ⎡⢷⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎤
 ⎢⠻⣯⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠙⢮⡻⣮⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠁⠈⠙⢮⡹⣮⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
+⎢⠛⢮⡻⣮⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
+⎢⠁⠈⠙⢮⡻⣮⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
 ⎢⠀⠀⠁⠈⠙⣮⡻⣮⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠁⠈⠹⣮⡻⣮⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠁⠈⠻⣮⡻⣮⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠁⠈⠻⣮⡻⣮⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠁⠈⠹⣮⡻⣮⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
 ⎢⠀⠀⠀⠀⠀⠀⠀⠀⠁⠈⡻⢮⡻⣮⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⡙⢦⡹⣦⠳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⡙⢦⡻⣦⠳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
 ⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⡙⢆⠻⣦⠳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
 ⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⢀⠻⢆⠻⣦⠳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠳⢆⠻⣦⠳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⢀⡓⢦⡛⣦⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡙⢦⡻⣮⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
-⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡙⣬⡻⣮⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⢀⠳⢆⠻⣦⠳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⢀⡑⢦⡛⣦⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡙⢦⡹⣮⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
+⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡹⣬⡻⣮⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⎥
 ⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢈⡻⣬⡻⣮⡳⣄⠀⠀⠀⠀⠀⠀⠀⠀⎥
 ⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢈⡑⣬⡻⣮⡳⣄⠀⠀⠀⠀⠀⠀⎥
 ⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢈⡛⢮⡻⣮⡳⣄⠀⠀⠀⠀⎥
 ⎢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡙⢮⡻⣮⡳⣄⠀⠀⎥
-⎣⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠹⢎⠻⣮⠳⣄⎦</code></pre><p>The function <code>VecchiaMLE_Run</code> returns a tuple, respectively containing the diagnostics of the solver, and the inverse cholesky factor L. A function to obtian the KL Divergence of this approximation, is provided via an internal function of VecchiaMLE.  </p><pre><code class="language-julia hljs">println(&quot;Error: &quot;, VecchiaMLE.KLDivergence(MatCov, L))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Error: 34.96562102249689</code></pre><p>The diagnostics can be displayed via an internal function. </p><pre><code class="language-julia hljs">VecchiaMLE.print_diagnostics(d)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">========== Diagnostics ==========
-Model Creation Time:     2.042077481
-LinAlg Solve Time:       0.37042922600000006
-Solve Model Time:        14.245983345
-Objective Value:         43449.96621719042
-Normed Constraint:       1.1406832471935479e-15
-Normed Gradient:         1.0931939992820875e-11
+⎣⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⢎⠻⣮⠳⣄⎦</code></pre><p>The function <code>VecchiaMLE_Run</code> returns a tuple, respectively containing the diagnostics of the solver, and the inverse cholesky factor L. A function to obtian the KL Divergence of this approximation, is provided via an internal function of VecchiaMLE.  </p><pre><code class="language-julia hljs">println(&quot;Error: &quot;, VecchiaMLE.KLDivergence(MatCov, L))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Error: 37.20045199498193</code></pre><p>The diagnostics can be displayed via an internal function. </p><pre><code class="language-julia hljs">VecchiaMLE.print_diagnostics(d)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">========== Diagnostics ==========
+Model Creation Time:     2.343657447
+LinAlg Solve Time:       0.04680540800000001
+Solve Model Time:        16.3697288
+Objective Value:         43032.10912304136
+Normed Constraint:       1.0810431491176357e-15
+Normed Gradient:         1.0399478817639254e-11
 Optimization Iter:       6
-=================================</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../api/">« API</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.1 on <span class="colophon-date" title="Monday 15 September 2025 19:35">Monday 15 September 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+=================================</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../api/">« API</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.1 on <span class="colophon-date" title="Tuesday 6 January 2026 21:01">Tuesday 6 January 2026</span>. Using Julia version 1.12.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
