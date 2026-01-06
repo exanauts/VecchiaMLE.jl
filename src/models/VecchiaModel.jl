@@ -14,6 +14,13 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput; uplo::Symbol=:L) 
     lvar::S = fill!(S(undef, nvar), -Inf)
     uvar::S = fill!(S(undef, nvar),  Inf)
 
+    # Apply box constraints to the diagonal
+    if !isnothing(iVecchiaMLE.lvar_diag)
+        view(lvar, cache.diagL) .= iVecchiaMLE.lvar_diag
+    end
+    if !isnothing(iVecchiaMLE.uvar_diag)
+        view(uvar, cache.diagL) .= iVecchiaMLE.uvar_diag
+    end
 
     !iVecchiaMLE.skip_check && apply_x0!(x0_, iVecchiaMLE, cache)
 
@@ -21,41 +28,6 @@ function VecchiaModel(::Type{S}, iVecchiaMLE::VecchiaMLEInput; uplo::Symbol=:L) 
         nvar,
         ncon = ncon,
         x0 = x0_,
-        name = "Vecchia_manual",
-        nnzj = 2*cache.n,
-        nnzh = cache.nnzh_tri_lag,
-        y0 = y0,
-        lcon = lcon,
-        ucon = ucon,
-        lvar = lvar,
-        uvar = uvar,
-        minimize=true,
-        islp=false,
-        lin_nnzj = 0
-    )
-    
-    return VecchiaModel(meta, Counters(), cache)
-end
-
-function VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T}; uplo::Symbol=:L) where T
-    S = Vector{T}
-    cache::VecchiaCache = create_vecchia_cache(I, J, samples, uplo)
-
-    nvar::Int = length(cache.rowsL) + length(cache.colptrL) - 1
-    ncon::Int = length(cache.colptrL) - 1
-
-    # Allocating data    
-    x0::S  = fill!(S(undef, nvar), zero(T))
-    y0::S   = fill!(S(undef, ncon), zero(T))
-    lcon::S = fill!(S(undef, ncon), zero(T))
-    ucon::S = fill!(S(undef, ncon), zero(T))    
-    lvar::S = fill!(S(undef, nvar), -Inf)
-    uvar::S = fill!(S(undef, nvar),  Inf)
-
-    meta = NLPModelMeta{T, S}(
-        nvar,
-        ncon = ncon,
-        x0 = x0,
         name = "Vecchia_manual",
         nnzj = 2*cache.n,
         nnzh = cache.nnzh_tri_lag,
@@ -131,7 +103,57 @@ function create_vecchia_cache(::Type{S}, iVecchiaMLE::VecchiaMLEInput, uplo::Sym
     )
 end
 
-function create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T}, uplo::Symbol)::VecchiaCache where {T}
+function VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T};
+                      lvar_diag::Union{Nothing,Vector{T}}=nothing, uvar_diag::Union{Nothing,Vector{T}}=nothing, lambda::Real=0, uplo::Symbol=:L) where T
+    S = Vector{T}
+    cache::VecchiaCache = create_vecchia_cache(I, J, samples, T(lambda), uplo)
+
+    nvar::Int = length(cache.rowsL) + length(cache.colptrL) - 1
+    ncon::Int = length(cache.colptrL) - 1
+
+    # Allocating data    
+    x0::S  = fill!(S(undef, nvar), zero(T))
+    y0::S   = fill!(S(undef, ncon), zero(T))
+    lcon::S = fill!(S(undef, ncon), zero(T))
+    ucon::S = fill!(S(undef, ncon), zero(T))    
+    lvar::S = fill!(S(undef, nvar), -Inf)
+    uvar::S = fill!(S(undef, nvar),  Inf)
+
+    # Apply box constraints to the diagonal
+    if !isnothing(lvar_diag)
+        view(lvar, cache.diagL) .= lvar_diag
+    else
+        view(lvar, cache.diagL) .= 1e-10
+    end
+
+    if !isnothing(uvar_diag)
+        view(uvar, cache.diagL) .= uvar_diag
+    else
+        view(uvar, cache.diagL) .= 1e10
+    end
+
+    meta = NLPModelMeta{T, S}(
+        nvar,
+        ncon = ncon,
+        x0 = x0,
+        name = "Vecchia_manual",
+        nnzj = 2*cache.n,
+        nnzh = cache.nnzh_tri_lag,
+        y0 = y0,
+        lcon = lcon,
+        ucon = ucon,
+        lvar = lvar,
+        uvar = uvar,
+        minimize=true,
+        islp=false,
+        lin_nnzj = 0
+    )
+    
+    return VecchiaModel(meta, Counters(), cache)
+end
+
+function create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T},
+                              lambda::T, uplo::Symbol)::VecchiaCache where {T}
     S = Vector{T}
     Msamples, n = size(samples)
     nnz_coo = length(I)
@@ -165,7 +187,7 @@ function create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T}
 
     hess_obj_vals::S = S(undef, nnzh_tri_obj)
 
-    vecchia_build_B!(B, samples, 0.0, rowsL, colptrL, hess_obj_vals, n, m)
+    vecchia_build_B!(B, samples, lambda, rowsL, colptrL, hess_obj_vals, n, m)
 
     if uplo == :L
         diagL = colptrL[1:n]
