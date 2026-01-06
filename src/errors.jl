@@ -15,6 +15,8 @@
 
 * `KL_Divergence`: The result of the KL Divergence function.
 """
+function KLDivergence end
+
 function KLDivergence(TCov::Symmetric{Float64}, AL::AbstractMatrix)
     terms = zeros(4)
     terms[1] = tr(AL'*TCov*AL)
