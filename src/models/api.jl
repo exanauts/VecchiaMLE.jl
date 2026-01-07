@@ -105,7 +105,7 @@ function NLPModels.jac_structure!(nlp::VecchiaModel, jrows::AbstractVector, jcol
     @lencheck 2*nlp.cache.n jrows
     @lencheck 2*nlp.cache.n jcols
 
-    copyto!(view(jcols, 1:nlp.cache.n), view(nlp.cache.colptrL, 1:nlp.cache.n))
+    copyto!(view(jcols, 1:nlp.cache.n), nlp.cache.diagL)
     view(jcols, (1:nlp.cache.n).+nlp.cache.n) .= (1:nlp.cache.n).+nlp.cache.nnzL
     view(jrows, 1:nlp.cache.n) .= 1:nlp.cache.n
     view(jrows, (1:nlp.cache.n).+nlp.cache.n) .= 1:nlp.cache.n
@@ -135,7 +135,7 @@ function NLPModels.jprod!(nlp::VecchiaModel, x::AbstractVector, v::AbstractVecto
     fill!(Jv, 0.0)
     copyto!(
         Jv, 1,
-        -view(v, view(nlp.cache.colptrL, 1:nlp.cache.n)) 
+        -view(v, nlp.cache.diagL) 
             .+ exp.(view(x, nlp.cache.nnzL+1:nlp.meta.nvar)) 
             .* view(v, (1:nlp.cache.n).+nlp.cache.nnzL),
         1, nlp.cache.n
@@ -154,7 +154,7 @@ function NLPModels.jtprod!(nlp::VecchiaModel, x::AbstractVector, v::AbstractVect
     increment!(nlp, :neval_jtprod)
 
     fill!(Jtv, 0.0)
-    copyto!(view(Jtv, view(nlp.cache.colptrL, 1:nlp.cache.n)), 1, -v, 1, nlp.cache.n)
+    copyto!(view(Jtv, nlp.cache.diagL), 1, -v, 1, nlp.cache.n)
     copyto!(Jtv, nlp.cache.nnzL+1, exp.(view(x, nlp.cache.nnzL+1:nlp.meta.nvar)) .* v, 1, nlp.cache.n)
     return Jtv
 end
