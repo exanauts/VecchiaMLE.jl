@@ -11,36 +11,54 @@
         samples = VecchiaMLE.generate_samples(CuMatrix{Float64}(MatCov), number_of_samples; arch=:gpu)
         Sparsity = VecchiaMLE.sparsitypattern(xyGrid, k)
 
-        # Model itself
-        model = Model(()->MadNLP.Optimizer(max_iter=200, print_level=MadNLP.ERROR))
-        cache = create_vecchia_cache_jump(samples, Sparsity, lambda)
-        @variable(model, w[1:(cache.nnzL + cache.n)])
-        # Initial L is identity
-        for i in cache.colptrL[1:end-1]
-            set_start_value(w[i], 1.0)  
-        end
-        # Apply constraints and objective
-        @constraint(model, cons_vecchia(w, cache) .== 0)
-        @objective(model, Min, obj_vecchia(w, cache))
+        @testset "uplo = $uplo" for uplo in (:L, :U)
+            if uplo == :U
+                rows, colptr = Sparsity
+                nnzL = length(rows)
+                nzval = ones(Float64, nnzL)
+                L = SparseMatrixCSC(n, n, colptr, rows, nzval)
+                U = sparse(L')
+                Sparsity = (U.rowval, U.colptr)
+            end
 
-        optimize!(model)
-        L_jump = SparseMatrixCSC(cache.n, cache.n, cache.colptrL, cache.rowsL, value.(w)[1:cache.nnzL]) 
-        L_jump = LowerTriangular(L_jump)
+            # Model itself
+            model = Model(()->MadNLP.Optimizer(max_iter=200, print_level=MadNLP.ERROR))
+            cache = create_vecchia_cache_jump(samples, Sparsity, lambda, uplo)
+            @variable(model, w[1:(cache.nnzL + cache.n)])
+            # Initial L is identity
+            if uplo == :L
+                for i in cache.colptrL[1:end-1]
+                    set_start_value(w[i], 1.0)
+                end
+            else
+                for i in cache.colptrL[2:end]
+                    set_start_value(w[i-1], 1.0)
+                end
+            end
+            # Apply constraints and objective
+            @constraint(model, cons_vecchia(w, cache) .== 0)
+            @objective(model, Min, obj_vecchia(w, cache))
 
-        # Get result from VecchiaMLE
-        samples = CuMatrix{Float64}(samples)
-        input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; arch=:gpu, ptset=xyGrid)
-        d, L_mle = VecchiaMLE_Run(input)
-        L_mle = LowerTriangular(L_mle)
+            optimize!(model)
+            L_jump = SparseMatrixCSC(cache.n, cache.n, cache.colptrL, cache.rowsL, value.(w)[1:cache.nnzL]) 
+            L_jump = uplo == :L ? LowerTriangular(L_jump) : UpperTriangular(L_jump)
 
-        @testset norm(SparseMatrixCSC(L_mle) - L_jump) ≤ 1e-6
+            # Get result from VecchiaMLE
+            samples = CuMatrix{Float64}(samples)
+            input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; arch=:gpu, ptset=xyGrid, uplo=uplo)
+            d, L_mle = VecchiaMLE_Run(input)
+            L_mle = uplo == :L ? LowerTriangular(L_mle) : UpperTriangular(L_mle)
 
-        errors_jump = [VecchiaMLE.KLDivergence(MatCov, L_jump), VecchiaMLE.uni_error(MatCov, L_jump)]
-        errors_mle = [VecchiaMLE.KLDivergence(MatCov, L_mle), VecchiaMLE.uni_error(MatCov, L_mle)]
+            @testset norm(SparseMatrixCSC(L_mle) - L_jump) ≤ 1e-6
+
+            if uplo == :L
+                errors_jump = [VecchiaMLE.KLDivergence(MatCov, L_jump), VecchiaMLE.uni_error(MatCov, L_jump)]
+                errors_mle = [VecchiaMLE.KLDivergence(MatCov, L_mle), VecchiaMLE.uni_error(MatCov, L_mle)]
         
-        for i in eachindex(errors_mle)
-            @test (abs(errors_jump[i] - errors_mle[i]) < 0.01)
+                for i in eachindex(errors_mle)
+                    @test (abs(errors_jump[i] - errors_mle[i]) < 0.01)
+                end
+            end
         end
-    
     end
 end

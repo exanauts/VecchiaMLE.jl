@@ -8,21 +8,26 @@ struct VecchiaCacheJump
     rowsL::Vector{Int}
     diagL::Vector{Int}
     lambda::Float64
+    uplo::Symbol
 end
 
-function create_vecchia_cache_jump(samples::AbstractMatrix, Sparsity, lambda)
+function create_vecchia_cache_jump(samples::AbstractMatrix, Sparsity, lambda, uplo::Symbol)
     M = size(samples, 1)
     n = size(samples, 2)
     
     # SPARSITY PATTERN OF L IN COO FORMAT.
     rows, colptr = Sparsity
-    diag = colptr[1:end-1]
-    
+    if uplo == :L
+        diag = colptr[1:end-1]
+    else
+        diag = colptr[2:end]
+        diag .-= 1
+    end
     # Swap the two around for a second
     nnz_L = length(rows)
     samples_outerprod = sum(samples[k, :] * samples[k, :]' for k in 1:M)
 
-    return VecchiaCacheJump(samples_outerprod, samples, n, M, colptr, nnz_L, rows, diag, lambda)
+    return VecchiaCacheJump(samples_outerprod, samples, n, M, colptr, nnz_L, rows, diag, lambda, uplo)
 end
 
 function obj_vecchia(w::AbstractVector, cache::VecchiaCacheJump)

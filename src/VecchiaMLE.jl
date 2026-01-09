@@ -25,6 +25,7 @@ include("permutations.jl")
 include("input.jl")
 include("kernels.jl")
 include("models/VecchiaModel.jl")
+include("models/legacy.jl")
 include("models/api.jl")
 
 # Exports
