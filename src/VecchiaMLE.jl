@@ -12,6 +12,7 @@ using BesselK, SpecialFunctions
 using Distributions, Statistics
 using KernelAbstractions
 using HNSW
+using HSL
 const KA = KernelAbstractions
 
 # Includes
