@@ -160,6 +160,7 @@ mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu, Vx0}
     sparsitygen::Symbol
     lambda::Float64
     x0::Vx0
+    uplo::Symbol
 end
 
 function VecchiaMLEInput(
@@ -179,7 +180,8 @@ function VecchiaMLEInput(
     metric::Distances.Metric=Distances.Euclidean(),
     sparsitygen::Symbol=:NN,
     lambda::Real=0.0,
-    x0::Vx0=nothing
+    x0::Vx0=nothing,
+    uplo::Symbol=:L
 ) where
     {
         M   <: AbstractMatrix, 
@@ -193,8 +195,6 @@ function VecchiaMLEInput(
     }
     ptset_ = resolve_ptset(n, ptset)
     n_::Int = length(ptset_)
-    
-
 
     return VecchiaMLEInput{M, typeof(ptset_), Vector{Int}, Vl, Vu, Vx0}(
         n_,
@@ -215,7 +215,8 @@ function VecchiaMLEInput(
         metric,
         sparsitygen,
         Float64(lambda),
-        x0
+        x0,
+        uplo
     )
 end
 
@@ -240,7 +241,7 @@ Input to the VecchiaMLE analysis. Samples are expected as row vectors.
 * sparsityGeneration        # The method by which to generate a sparsity pattern. See SPARSITY_GEN.
 * metric::Distances.metric  # The metric by which nearest neighbors are determined. Defaults to Euclidean.
 * lambda::Real              # The regularization scalar for the ridge `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
-* x0::AbstractVector        # The user may give an initial condition, but it is limiting if you do not have the sparsity pattern. 
+* x0::AbstractVector        # The user may give an initial condition, but it is limiting if you do not have the sparsity pattern.
+* uplo::Symbol              # Specify if the sparsity pattern is for a lower triangular matrix L (default) or an upper triangular matrix U.
 """
 VecchiaMLEInput(k::Int, samples; kwargs...) = VecchiaMLEInput(size(samples, 2), k, samples, size(samples, 1); kwargs...)
-    

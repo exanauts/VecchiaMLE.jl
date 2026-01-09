@@ -78,6 +78,7 @@ function validate_input(iVecchiaMLE::VecchiaMLEInput)
     @assert_in iVecchiaMLE.plevel PRINT_LEVEL
     @assert_in iVecchiaMLE.sparsitygen SPARSITY_GEN
 
+    @assert iVecchiaMLE.uplo == :L || iVecchiaMLE.uplo == :U
 end
 
 
