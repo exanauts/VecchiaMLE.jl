@@ -7,7 +7,7 @@ using Distances
 using NearestNeighbors
 using MadNLP, MadNLPGPU, MadNLPHSL
 using SparseArrays 
-using CUDA
+using CUDA, CUDA.CUSPARSE
 using BesselK, SpecialFunctions
 using Distributions, Statistics
 using KernelAbstractions
