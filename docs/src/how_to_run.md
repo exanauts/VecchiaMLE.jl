@@ -52,14 +52,7 @@ eachother when conditioned on its k nearest neighbors.
 sparse(L)
 ```  
 
-The function `VecchiaMLE_Run` returns a tuple, respectively containing the diagnostics of the solver, and the inverse cholesky factor L.
-A function to obtian the KL Divergence of this approximation, is provided via an internal function of VecchiaMLE.  
-
-```@example HowToRun
-println("Error: ", VecchiaMLE.KLDivergence(MatCov, L))
-```
-
-The diagnostics can be displayed via an internal function. 
+The function `VecchiaMLE_Run` returns a tuple, respectively containing the diagnostics of the solver, and the inverse cholesky factor `L`.
 
 ```@example HowToRun
 VecchiaMLE.print_diagnostics(d)

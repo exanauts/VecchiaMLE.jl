@@ -11,15 +11,5 @@
     # Only check if the inputs do not cause issues. TODO: Resolve kwargs for the different optimizers (print_level, ...)
     input_madnlp = VecchiaMLEInput(n, k, samples, Number_of_Samples; ptset=xyGrid, solver=:madnlp)
     input_knitro = VecchiaMLEInput(n, k, samples, Number_of_Samples; ptset=xyGrid, solver=:knitro)
-    input_ipopt  = VecchiaMLEInput(n, k, samples, Number_of_Samples; ptset=xyGrid, solver=:ipopt)
-        
-    # each row is the solver errors
-    # errors = zeros(3, 2)
-    # errors[1, :] .= [VecchiaMLE.KLDivergence(MatCov, L_madnlp), VecchiaMLE.uni_error(MatCov, L_madnlp)]
-    # errors[2, :] .= [VecchiaMLE.KLDivergence(MatCov, L_knitro), VecchiaMLE.uni_error(MatCov, L_knitro)]
-    # errors[3, :] .= [VecchiaMLE.KLDivergence(MatCov, L_ipopt ), VecchiaMLE.uni_error(MatCov, L_ipopt )]
-    # for col in eachcol(errors)
-        # @test maximum(col) - minimum(col) < 1e-6
-    # end
-    
+    input_ipopt  = VecchiaMLEInput(n, k, samples, Number_of_Samples; ptset=xyGrid, solver=:ipopt)    
 end

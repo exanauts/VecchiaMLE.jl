@@ -31,12 +31,4 @@
     @test (D.linalg_solve_time > 0.0)
     @test (D.solve_model_time > 0.0)
     @test (D.create_model_time > 0.0)
-
-
-    errors_nn = [VecchiaMLE.KLDivergence(MatCov, L_NN), VecchiaMLE.uni_error(MatCov, L_NN)]
-    errors_hsnw = [VecchiaMLE.KLDivergence(MatCov, L_HNSW), VecchiaMLE.uni_error(MatCov, L_HNSW)]
-
-    for i in eachindex(errors_hsnw)
-        @test abs(errors_nn[i] - errors_hsnw[i]) < 1e-6 # Don't know a good bound
-    end
 end

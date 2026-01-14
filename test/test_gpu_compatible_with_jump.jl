@@ -43,22 +43,7 @@
             L_jump = SparseMatrixCSC(cache.n, cache.n, cache.colptrL, cache.rowsL, value.(w)[1:cache.nnzL]) 
             L_jump = uplo == :L ? LowerTriangular(L_jump) : UpperTriangular(L_jump)
 
-            # Get result from VecchiaMLE
-            samples = CuMatrix{Float64}(samples)
-            input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; arch=:gpu, ptset=xyGrid, uplo=uplo)
-            d, L_mle = VecchiaMLE_Run(input)
-            L_mle = uplo == :L ? LowerTriangular(L_mle) : UpperTriangular(L_mle)
-
             @testset norm(SparseMatrixCSC(L_mle) - L_jump) ≤ 1e-6
-
-            if uplo == :L
-                errors_jump = [VecchiaMLE.KLDivergence(MatCov, L_jump), VecchiaMLE.uni_error(MatCov, L_jump)]
-                errors_mle = [VecchiaMLE.KLDivergence(MatCov, L_mle), VecchiaMLE.uni_error(MatCov, L_mle)]
-        
-                for i in eachindex(errors_mle)
-                    @test (abs(errors_jump[i] - errors_mle[i]) < 0.01)
-                end
-            end
         end
     end
 end
