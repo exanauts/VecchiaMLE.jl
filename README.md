@@ -20,7 +20,7 @@ function (mean zero) to best match the given samples. Other regularization terms
 
 The code is written to be flexible enough to be run on either cpu or gpu capable systems, however only CUDA capable gpu's are supported at the moment.
 
-## Installation and Dependencies
+## Installation and dependencies
 
 **VecchiaMLE.jl** requires the following packages for startup. Others may be necessary, depending on your use case. 
 
@@ -30,6 +30,7 @@ The code is written to be flexible enough to be run on either cpu or gpu capable
 - **NLPModels**: Construction of the Optimization problem.
 
 ## Configuration
+
 The struct `VecchiaMLEInput` is available for the user to specify their analysis. At the minimum, we require the following:
 
 ```
@@ -58,7 +59,8 @@ Other options may be passed as keyword arguments. Such options are:
 ## Usage
 Once the user has initialized an instance of `VecchiaMLEInput`, they may pass it to `VecchiaMLE_Run()` to recover the inverse cholesky. The ouput of `VecchiaMLE_Run()` is a tuple, with vales internal diagnostics and the inverse cholesky in sparse COO format.  
 
-## Getting Samples from a Covariance Matrix
+## Getting samples from a covariance matrix
+
 I will describe here how to properly use this package. Some functions used are not exported since there is no need for the user to realistically use them. The only major work to do is to generate the samples (if this isn't done by another means). In production, I generated the samples via first creating a Covariance Matrix via the martern covariance kernel, then feeding it into a Multivariate normal distribution to create the samples. The code to do this, using functions defined in VecchiaMLE, is as follows:
 
 ```
@@ -69,19 +71,4 @@ ptset = VecchiaMLE.generate_safe_xyGrid(n)                         # Generates 1
 MatCov = VecchiaMLE.generate_MatCov(params, ptset)                 # size n x n. 
 samples = VecchiaMLE.generate_samples(MatCov, number_of_samples)   # Generate samples. 
 ```
-
 One may skip Covariance generation, as its use is only to generate samples. The matern function generates the entries of the covariance matrix via the given prarmeters, and returns the symmetric form.
-
-## Getting the error
-
-We can get the error for the approximation (assuming you have the true covariance matrix), via the KL-Divergence formula. An error derived on individual dimensions may also be queryed. These errors are found via the two functions:
-
-```
-uni_error = VecchiaMLE.uni_error(True_Covariance, Approximate_Cholesky_Factor)
-kl_error = VecchiaMLE.KLDivergence(True_Covariance, Approximate_Cholesky_Factor)
-```
-Note the KL-Divergence error is computationally heavy, and is expensive even at `n = 900`. 
-
-## Contribution
-Although the bulk of the project has been written, there are sure to be problems that arise from errors in logic. As such, please feel free to open an issue;
-we would appreciate it!
