@@ -51,7 +51,7 @@ function VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T};
 end
 
 function create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T},
-                              lambda::T, format::Symbol, uplo::Symbol)::VecchiaCache where {T}
+                              lambda::T, format::Symbol, uplo::Symbol) where {T}
     S = Vector{T}
     Msamples, n = size(samples)
 

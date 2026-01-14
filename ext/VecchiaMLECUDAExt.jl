@@ -7,7 +7,8 @@ using CUDA.CUSPARSE
 import KernelAbstractions as KA
 
 function VecchiaMLE.VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::CuMatrix{T};
-                                 lvar_diag::Union{Nothing,CuVector{T}}=nothing, uvar_diag::Union{Nothing,CuVector{T}}=nothing, lambda::Real=0, format::Symbol=:coo, uplo::Symbol=:L) where T
+                                 lvar_diag::Union{Nothing,CuVector{T}}=nothing, uvar_diag::Union{Nothing,CuVector{T}}=nothing,
+                                 lambda::Real=0, format::Symbol=:coo, uplo::Symbol=:L) where T
     S = CuArray{T, 1, CUDA.DeviceMemory}
     cache = VecchiaMLE.create_vecchia_cache(I, J, samples, T(lambda), format, uplo)
 
@@ -59,7 +60,7 @@ end
 
 
 function VecchiaMLE.create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::CuMatrix{T},
-                                         lambda::T, format::Symbol, uplo::Symbol)::VecchiaCache where {T}
+                                         lambda::T, format::Symbol, uplo::Symbol) where {T}
     S = CuArray{T, 1, CUDA.DeviceMemory}
     Msamples, n = size(samples)
 
@@ -93,7 +94,7 @@ function VecchiaMLE.create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples
     m = CuVector{Int}(m)
 
     hess_obj_vals = S(undef, nnzh_tri_obj)
-    vecchia_build_B!(B, samples, lambda, rowsL, colptrL, hess_obj_vals, n, m)
+    VecchiaMLE.vecchia_build_B!(B, samples, lambda, rowsL, colptrL, hess_obj_vals, n, m)
 
     if uplo == :L
         diagL = colptrL[1:n]
