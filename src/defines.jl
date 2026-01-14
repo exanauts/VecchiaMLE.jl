@@ -67,8 +67,8 @@ Input to the VecchiaMLE analysis.
 * ptset::AbstractVector     # The locations of the analysis. May be passed as a matrix or vector of vectors.
 * rowsL::AbstractVector     # The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT!
 * colptrL::AbstractVector   # The column pointer of L if the user gives one. MUST BE IN CSC FORMAT!
-* sparsityGeneration        # The method by which to generate a sparsity pattern. See SPARSITY_GEN.
 * metric::Distances.metric  # The metric by which nearest neighbors are determined. Defaults to Euclidean.
+* sparsitygen::Symbol       # The method by which to generate a sparsity pattern. See SPARSITY_GEN.
 """
 mutable struct VecchiaMLEInput{M, V, VI}
     n::Int 
