@@ -14,7 +14,7 @@
     L_row = LowerTriangular(L_row)
 
     # Get result from VecchiaMLE
-    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; arch=:gpu, ptset=ptset)
+    input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset=ptset)
     rowsL, colptrL = sparsity_pattern(input)
     model = VecchiaModel(rowsL, colptrL, samples; format=:csc, uplo=:L)
     output = madnlp(model)
