@@ -1,5 +1,6 @@
 module VecchiaMLECUDAExt
 
+using LinearAlgebra
 using VecchiaMLE
 using CUDA
 using CUDA.CUSPARSE
