@@ -219,7 +219,7 @@ function recover_factor(nlp::VecchiaModel{T,Vector{T}}, solution::Vector{T}) whe
     return factor
 end
 
-function recover_factor(nlp::VecchiaModel{T,CuVector{T}}, solution::CuVector{T}) where T
+function recover_factor(nlp::VecchiaModel{T,<:CuVector{T}}, solution::CuVector{T}) where T
     n = nlp.cache.n
     colptr = nlp.cache.colptrL
     rowval = nlp.cache.rowsL
