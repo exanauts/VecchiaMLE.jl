@@ -18,7 +18,7 @@
             L_cpu = recover_factor(model, output.solution)
 
             # Get result from VecchiaMLE on GPU
-            input = VecchiaMLE.VecchiaMLEInput(n, k, CuMatrix(samples), number_of_samples; arch=:gpu, ptset=ptset)
+            input = VecchiaMLE.VecchiaMLEInput(n, k, CuMatrix(samples), number_of_samples; ptset=ptset)
             model = VecchiaModel(rowsL, colptrL, samples; lambda, format=:csc, uplo=uplo)
             output = madnlp(model)
             L_gpu = recover_factor(model, output.solution)
