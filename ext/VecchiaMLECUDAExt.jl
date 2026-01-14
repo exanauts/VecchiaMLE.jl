@@ -168,6 +168,14 @@ function VecchiaMLE.vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colp
     return nothing
 end
 
+function VecchiaMLE.generate_samples(MatCov::CuMatrix{Float64}, number_of_samples::Int, ::Val{:gpu})
+    S = copy(MatCov)
+    V = CUDA.randn(Float64, number_of_samples, size(S, 1))
+    LinearAlgebra.LAPACK.potrf!('U', S)
+    rmul!(V, UpperTriangular(S))
+    return V
+end
+
 function VecchiaMLE.generate_samples(::CuMatrix{Float64}, ::Int, ::Val{arch}) where {arch}
     error("Unsupported architecture $arch for GPU matrix input.")
 end

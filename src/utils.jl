@@ -32,14 +32,6 @@ function generate_samples(MatCov::AbstractMatrix, number_of_samples::Int, ::Val{
     return V
 end
 
-function generate_samples(MatCov::CUDA.CuMatrix{Float64}, number_of_samples::Int, ::Val{:gpu})
-    S = copy(MatCov)
-    V = CUDA.randn(Float64, number_of_samples, size(S, 1))
-    F = cholesky!(S)
-    rmul!(V, F.U)
-    return V
-end
-
 function generate_samples(::AbstractMatrix, ::Int, ::Val{arch}) where {arch}
     error("Unsupported architecture $arch for CPU matrix input.")
 end
