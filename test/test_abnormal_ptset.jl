@@ -25,5 +25,4 @@
     ptset = Matrix{Float64}(ptset')
     input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset=ptset)
     @test_nowarn VecchiaMLE_Run(input)
-
 end

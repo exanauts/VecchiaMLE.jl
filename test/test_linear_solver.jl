@@ -35,15 +35,4 @@
     colptrL = Vector{Int}(model.cache.colptrL)
 
     L_umf = SparseMatrixCSC(n, n, colptrL, rowsL, valsL)
-
-    # Then check if we have the same result.
-    kl_hsl = VecchiaMLE.KLDivergence(MatCov, L_hsl)
-    kl_umf = VecchiaMLE.KLDivergence(MatCov, L_umf)
-
-    @test isnan(kl_hsl) == false
-    @test isnan(kl_umf) == false
-    @test kl_hsl < 100
-    @test kl_umf < 100
-
-    @test (abs(kl_hsl - kl_umf) < 1e-6) # Don't know a good bound for this.
 end

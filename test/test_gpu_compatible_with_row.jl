@@ -14,15 +14,10 @@
     L_row = VecchiaMLE_models(n, k, samples, number_of_samples, Sparsity, "Row")
     L_row = LowerTriangular(L_row)
 
-
     # Get result from VecchiaMLE
     input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; arch=:gpu, ptset = ptset)
     d, L_mle = VecchiaMLE_Run(input)
+    L_mle = LowerTriangular(L_mle)
 
-    errors_row = [VecchiaMLE.KLDivergence(MatCov, L_row), VecchiaMLE.uni_error(MatCov, L_row)]
-    errors_mle = [VecchiaMLE.KLDivergence(MatCov, L_mle), VecchiaMLE.uni_error(MatCov, L_mle)]
-
-    for i in eachindex(errors_mle)
-        @test (abs(errors_row[i] ≈ errors_mle[i]) < 1.0)
-    end
+    @testset norm(SparseMatrixCSC(L_mle) - L_row) ≤ 1e-6
 end

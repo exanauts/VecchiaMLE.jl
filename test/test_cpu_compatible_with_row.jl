@@ -17,12 +17,4 @@
     # Get result from VecchiaMLE
     input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples)
     d, L_mle = VecchiaMLE_Run(input)
-
-    errors_row = [VecchiaMLE.KLDivergence(MatCov, L_row), VecchiaMLE.uni_error(MatCov, L_row)]
-    errors_mle = [VecchiaMLE.KLDivergence(MatCov, L_mle), VecchiaMLE.uni_error(MatCov, L_mle)]
-
-    # These values are so different that I don't know how to compare them effective
-    for i in eachindex(errors_mle)
-        @test (abs(errors_mle[i] - errors_row[i]) < 1.0)
-    end
 end

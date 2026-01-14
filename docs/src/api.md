@@ -50,9 +50,3 @@ VecchiaMLE.sparsitypattern
 VecchiaMLE.sparsitypattern_HNSW
 VecchiaMLE.sparsitypattern_NN
 ```
-
-## VecchiaMLE errors
-```@docs
-VecchiaMLE.uni_error
-VecchiaMLE.KLDivergence
-```
