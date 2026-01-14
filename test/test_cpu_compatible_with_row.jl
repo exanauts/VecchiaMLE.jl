@@ -18,5 +18,5 @@
     rowsL, colptrL = sparsity_pattern(input)
     model = VecchiaModel(rowsL, colptrL, samples; format=:csc, uplo=uplo)
     output = madnlp(model)
-    L_mle = recover_factor(colptrL, rowsL, output.solution)
+    L_mle = recover_factor(model, output.solution)
 end

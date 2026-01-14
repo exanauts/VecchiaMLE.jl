@@ -49,7 +49,7 @@
             rowsL, colptrL = sparsity_pattern(input)
             model = VecchiaModel(rowsL, colptrL, samples; lambda, format=:csc, uplo=uplo)
             output = madnlp(model)
-            L_mle = recover_factor(colptrL, rowsL, output.solution)
+            L_mle = recover_factor(model, output.solution)
 
             @testset norm(SparseMatrixCSC(L_mle) - L_jump) ≤ 1e-6
         end

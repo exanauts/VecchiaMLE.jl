@@ -33,7 +33,7 @@
         rowsL, colptrL = sparsity_pattern(input)
         nlp = VecchiaModel(rowsL, colptrL, samples; lambda, format=:csc, uplo=:L)
         output = madnlp(nlp)
-        L_mle = recover_factor(colptrL, rowsL, output.solution)
+        L_mle = recover_factor(nlp, output.solution)
 
         # get model from VecchiaMLE
         _, _, mle_vals = findnz(sparse(L_mle))

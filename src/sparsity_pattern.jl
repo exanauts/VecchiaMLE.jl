@@ -23,7 +23,7 @@
 function sparsity_pattern end
 
 function sparsity_pattern(iVecchiaMLE::VecchiaMLEInput)
-    return sparsity_pattern(Val(iVecchiaMLE.sparsitygen), VecchiaMLEInput)
+    return sparsity_pattern(Val(iVecchiaMLE.sparsitygen), iVecchiaMLE)
 end
 
 function sparsity_pattern(::Val{:NN}, iVecchiaMLE::VecchiaMLEInput)

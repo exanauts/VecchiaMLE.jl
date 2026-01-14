@@ -15,13 +15,13 @@
             rowsL, colptrL = sparsity_pattern(input)
             model = VecchiaModel(rowsL, colptrL, samples; lambda, format=:csc, uplo=uplo)
             output = madnlp(model)
-            L_cpu = recover_factor(colptrL, rowsL, output.solution)
+            L_cpu = recover_factor(model, output.solution)
 
             # Get result from VecchiaMLE on GPU
             input = VecchiaMLE.VecchiaMLEInput(n, k, CuMatrix(samples), number_of_samples; arch=:gpu, ptset=ptset)
             model = VecchiaModel(rowsL, colptrL, samples; lambda, format=:csc, uplo=uplo)
             output = madnlp(model)
-            L_gpu = recover_factor(colptrL, rowsL, output.solution)
+            L_gpu = recover_factor(model, output.solution)
 
             @testset norm(L_cpu - SparseMatrixCSC(L_gpu)) ≤ 1e-4
         end

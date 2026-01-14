@@ -27,7 +27,7 @@ include("models/VecchiaModel.jl")
 include("models/api.jl")
 
 # Exports
-export VecchiaModel
+export VecchiaMLEInput, VecchiaModel
 export sparsity_pattern, recover_factor
 export generate_samples, generate_MatCov, generate_xyGrid, generate_rectGrid
 

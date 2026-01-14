@@ -14,12 +14,12 @@
     rowsL, colptrL = sparsity_pattern(input_NN)
     model = VecchiaModel(rowsL, colptrL, samples; format=:csc, uplo=:L)
     output = madnlp(model)
-    L_NN = recover_factor(colptrL, rowsL, output.solution)
+    L_NN = recover_factor(model, output.solution)
 
     # Get result from VecchiaMLE HNSW
     input_HNSW = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset=ptset, sparsitygen=:HNSW)
     rowsL, colptrL = sparsity_pattern(input_HNSW)
     model = VecchiaModel(rowsL, colptrL, samples; format=:csc, uplo=:L)
     output = madnlp(model)
-    L_HNSW = recover_factor(colptrL, rowsL, output.solution)
+    L_HNSW = recover_factor(model, output.solution)
 end

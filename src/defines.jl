@@ -101,14 +101,16 @@ function VecchiaMLEInput(
     ptset_ = resolve_ptset(n, ptset)
     n_::Int = length(ptset_)
 
-    return VecchiaMLEInput{M, typeof(ptset_), VI}(
+    rowsL = resolve_rowsL(rowsL, n_, k)
+    colptrL = resolve_colptrL(colptrL, n_)
+    return VecchiaMLEInput{M, typeof(ptset_), typeof(rowsL)}(
         n_,
         k,
         samples,
         number_of_samples,
         ptset_,
-        resolve_rowsL(rowsL, n_, k),
-        resolve_colptrL(colptrL, n_),
+        rowsL,
+        colptrL,
         metric,
         sparsitygen,
     )
