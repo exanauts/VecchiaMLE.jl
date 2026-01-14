@@ -8,18 +8,18 @@ using CUDA.CUSPARSE
 function VecchiaMLE.VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::CuMatrix{T};
                                  lvar_diag::Union{Nothing,CuVector{T}}=nothing, uvar_diag::Union{Nothing,CuVector{T}}=nothing, lambda::Real=0, format::Symbol=:coo, uplo::Symbol=:L) where T
     S = CuArray{T, 1, CUDA.DeviceMemory}
-    cache::VecchiaCache = create_vecchia_cache(I, J, samples, T(lambda), format, uplo)
+    cache = create_vecchia_cache(I, J, samples, T(lambda), format, uplo)
 
-    nvar::Int = length(cache.rowsL) + length(cache.colptrL) - 1
-    ncon::Int = length(cache.colptrL) - 1
+    nvar = length(cache.rowsL) + length(cache.colptrL) - 1
+    ncon = length(cache.colptrL) - 1
 
-    # Allocating data    
-    x0::S  = fill!(S(undef, nvar), zero(T))
-    y0::S   = fill!(S(undef, ncon), zero(T))
-    lcon::S = fill!(S(undef, ncon), zero(T))
-    ucon::S = fill!(S(undef, ncon), zero(T))    
-    lvar::S = fill!(S(undef, nvar), -Inf)
-    uvar::S = fill!(S(undef, nvar),  Inf)
+    # Allocating data
+    x0 = fill!(S(undef, nvar), zero(T))
+    y0 = fill!(S(undef, ncon), zero(T))
+    lcon = fill!(S(undef, ncon), zero(T))
+    ucon = fill!(S(undef, ncon), zero(T))
+    lvar = fill!(S(undef, nvar), -Inf)
+    uvar = fill!(S(undef, nvar),  Inf)
 
     # Apply box constraints to the diagonal
     if !isnothing(lvar_diag)
@@ -104,7 +104,7 @@ function VecchiaMLE.create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples
     end
     buffer = S(undef, nnzL)
 
-    return VecchiaCache{eltype(S), S, typeof(rowsL), typeof(B[1])}(
+    return VecchiaMLE.VecchiaCache{eltype(S), S, typeof(rowsL), typeof(B[1])}(
         n, Msamples, nnzL,
         colptrL, rowsL, diagL,
         m, offsets, B, nnzh_tri_obj,

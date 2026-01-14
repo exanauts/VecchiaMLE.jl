@@ -2,18 +2,18 @@ function VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T};
                       lvar_diag::Union{Nothing,Vector{T}}=nothing, uvar_diag::Union{Nothing,Vector{T}}=nothing,
                       lambda::Real=0, format::Symbol=:coo, uplo::Symbol=:L) where T
     S = Vector{T}
-    cache::VecchiaCache = create_vecchia_cache(I, J, samples, T(lambda), format, uplo)
+    cache = create_vecchia_cache(I, J, samples, T(lambda), format, uplo)
 
-    nvar::Int = length(cache.rowsL) + length(cache.colptrL) - 1
-    ncon::Int = length(cache.colptrL) - 1
+    nvar = length(cache.rowsL) + length(cache.colptrL) - 1
+    ncon = length(cache.colptrL) - 1
 
-    # Allocating data    
-    x0::S  = fill!(S(undef, nvar), zero(T))
-    y0::S   = fill!(S(undef, ncon), zero(T))
-    lcon::S = fill!(S(undef, ncon), zero(T))
-    ucon::S = fill!(S(undef, ncon), zero(T))    
-    lvar::S = fill!(S(undef, nvar), -Inf)
-    uvar::S = fill!(S(undef, nvar),  Inf)
+    # Allocating data
+    x0 = fill!(S(undef, nvar), zero(T))
+    y0 = fill!(S(undef, ncon), zero(T))
+    lcon = fill!(S(undef, ncon), zero(T))
+    ucon = fill!(S(undef, ncon), zero(T))
+    lvar = fill!(S(undef, nvar), -Inf)
+    uvar = fill!(S(undef, nvar),  Inf)
 
     # Apply box constraints to the diagonal
     if !isnothing(lvar_diag)
