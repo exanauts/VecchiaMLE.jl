@@ -1,0 +1,5 @@
+[deps]
+MadNLP = "2621e9c9-9eb4-46b1-8089-e8c72242dfb6"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+Vecchia = "8d73829f-f4b0-474a-9580-cecc8e084068"
+VecchiaMLE = "499233a1-c46f-47cc-ab67-5a37788e9870"
