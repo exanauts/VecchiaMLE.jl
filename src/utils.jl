@@ -44,20 +44,11 @@ function generate_samples(::AbstractMatrix, ::Int, ::Val{arch}) where {arch}
     error("Unsupported architecture $arch for CPU matrix input.")
 end
 
-function generate_samples(::CUDA.CuMatrix{Float64}, ::Int, ::Val{arch}) where {arch}
-    error("Unsupported architecture $arch for GPU matrix input.")
-end
-
-function generate_samples(::CUDA.CuArray{Float64,2}, number_of_samples::Int, ::Val{:cpu})
-    error("GPU matrix with arch=:cpu. Choose arch=:gpu or convert to Matrix on CPU.")
-end
-
 function generate_samples(::AbstractMatrix, ::Int, ::Val{:gpu})
     error("CPU matrix with arch=:gpu. Choose arch=:cpu or move data to CuArray.")
 end
 
 generate_samples(MatCov::AbstractMatrix, number_of_samples::Int; arch::Symbol=:cpu) = generate_samples(MatCov, number_of_samples, Val(arch))
-generate_samples(MatCov::CUDA.CuMatrix{Float64}, number_of_samples::Int; arch::Symbol=:gpu) = generate_samples(MatCov, number_of_samples, Val(arch))
 
 """
     Covariance_Matrix = generate_MatCov(params::AbstractArray,

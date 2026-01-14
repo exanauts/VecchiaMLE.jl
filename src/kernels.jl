@@ -1,25 +1,3 @@
-#=
-    VECCHIA_MUL
-    Front-end
-    kernel
-    cpu implementation
-=#
-
-# Front-end
-function vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_obj_vals::CuVector{T},
-    x::CuVector{T}, n::Int, m::CuVector{Int}, offsets::CuVector{Int}) where T <: AbstractFloat
-    # Reset the vector y
-    fill!(y, zero(T))
-
-    # Launch the kernel
-    backend = KA.get_backend(y)
-    kernel = vecchia_mul_kernel!(backend)
-    kernel(y, hess_obj_vals, x, m, offsets, ndrange=n)
-    KA.synchronize(backend)
-    return y
-end
-
-
 # kernel
 @kernel function vecchia_mul_kernel!(y, @Const(hess_obj_vals), @Const(x), @Const(m), @Const(offsets))
     index = @index(Global)
@@ -61,25 +39,6 @@ function vecchia_mul!(y::Vector{T}, B::Vector{Matrix{T}}, hess_obj_vals::Vector{
         pos = pos + m[j]
     end
     return y
-end
-
-#= 
-    VECCHIA_BUILD_B
-    Front-end 
-    kernel
-    cpu implementation
-=#
-
-# Front-end
-function vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix{T}, lambda::T, rowsL::CuVector{Int},
-    colptrL::CuVector{Int}, hess_obj_vals::CuVector{T}, n::Int, m::CuVector{Int}) where T <: AbstractFloat
-    # Launch the kernel
-    backend = KA.get_backend(samples)
-    r = size(samples, 1)
-    kernel = vecchia_build_B_kernel!(backend)
-    kernel(hess_obj_vals, samples, lambda, rowsL, colptrL, m, r, ndrange=n)
-    KA.synchronize(backend)
-    return nothing
 end
 
 # kernel
@@ -141,39 +100,6 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, lambda::T, r
     return nothing
 end
 
-#=
-    VECCHIA_GENERATE_HESS_TRI_STRUCTURE
-    Front-end
-    kernel
-    cpu implementation
-=#
-
-# Front-end
-function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::CuVector{Int}, 
-    hrows::CuVector{Int}, hcols::CuVector{Int})
-
-    # reset hrows, hcols
-    fill!(hrows, one(Int))
-    fill!(hcols, one(Int))
-
-
-    # launch the kernel
-    backend = KA.get_backend(hrows)
-    kernel = vecchia_generate_hess_tri_structure_kernel!(backend)
-
-    f(x) = (x * (x+1)) ÷ 2
-
-    # NOTE: Might be a race condition here. Solution is to store them in the first indices of each thread. 
-    view(hrows, 2:n) .+= cumsum(f.(view(colptr_diff, 1:n-1)))
-    view(hcols, 2:n) .+= cumsum(view(colptr_diff, 1:n-1))
-
-    kernel(nnzh, n, colptr_diff, view(hrows, 1:n), view(hcols, 1:n), hrows, hcols, ndrange = n)
-
-    KA.synchronize(backend)
-
-    return nothing
-end
-
 # kernel
 @kernel function vecchia_generate_hess_tri_structure_kernel!(
     @Const(nnzh), @Const(n), @Const(colptr_diff), @Const(carry_offsets), @Const(idx_offsets),
@@ -197,31 +123,25 @@ end
     @inbounds hcols[nnzh-n + thread_idx] = hrows[nnzh-n] + thread_idx
 end
 
-
-
 # cpu implementation
-for INT in (:Int32, :Int64)
-    @eval begin
-        function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::Vector{Int},
-                                                      hrows::Vector{$INT}, hcols::Vector{$INT})
-            carry = 1
-            idx = 1
-            for i in 1:n
-                m = colptr_diff[i]
-                    for j in 1:m
-                        view(hrows, (0:(m-j)).+carry) .= (j:m).+(idx-1)
-                        fill!(view(hcols, carry:carry+m-j), idx + j - 1)
-                        carry += m - j + 1
-                    end
-                idx += m
+function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::Vector{Int},
+                                              hrows::Vector{Int}, hcols::Vector{Int})
+    carry = 1
+    idx = 1
+    for i in 1:n
+        m = colptr_diff[i]
+            for j in 1:m
+                view(hrows, (0:(m-j)).+carry) .= (j:m).+(idx-1)
+                fill!(view(hcols, carry:carry+m-j), idx + j - 1)
+                carry += m - j + 1
             end
-
-            #Then need the diagonal tail
-            idx_to = idx + nnzh - carry
-            view(hrows, carry:nnzh) .= idx:idx_to
-            view(hcols, carry:nnzh) .= idx:idx_to
-
-            return hrows, hcols
-        end
+        idx += m
     end
+
+    #Then need the diagonal tail
+    idx_to = idx + nnzh - carry
+    view(hrows, carry:nnzh) .= idx:idx_to
+    view(hcols, carry:nnzh) .= idx:idx_to
+
+    return hrows, hcols
 end
