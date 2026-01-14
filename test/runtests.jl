@@ -13,8 +13,6 @@ using LinearAlgebra
 using CUDA
 using NLPModels
 using NLPModelsTest
-using HSL
-using MadNLPHSL
 
 # Includes
 include("models/Jump_models.jl")
@@ -35,6 +33,9 @@ end
 
 include("test_abnormal_ptset.jl")
 include("test_model_solver.jl")
+
+using HSL
+using MadNLPHSL
 
 if LIBHSL_isfunctional()
     include("test_linear_solver.jl")
