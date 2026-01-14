@@ -7,7 +7,7 @@ n = 400
 number_of_samples = 100
 
 params = [5.0, 0.2, 2.25, 0.25]
-ptset = generate_safe_xyGrid(n)
+ptset = VecchiaMLE.generate_safe_xyGrid(n)
 MatCov = generate_MatCov(params, ptset)
 samples = generate_samples(MatCov, number_of_samples)
 
@@ -25,7 +25,7 @@ n = 400
 number_of_samples = 100
 
 params = [5.0, 0.2, 2.25, 0.25]
-ptset = generate_safe_xyGrid(n)
+ptset = VecchiaMLE.generate_safe_xyGrid(n)
 MatCov = generate_MatCov(params, ptset)
 samples = generate_samples(MatCov, number_of_samples)
 

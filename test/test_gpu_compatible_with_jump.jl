@@ -45,7 +45,7 @@
 
             # Get result from VecchiaMLE
             samples = CuMatrix{Float64}(samples)
-            input = VecchiaMLEInput(n, k, samples, number_of_samples; arch=:gpu, ptset=xyGrid)
+            input = VecchiaMLEInput(n, k, samples, number_of_samples; ptset=xyGrid)
             rowsL, colptrL = sparsity_pattern(input)
             model = VecchiaModel(rowsL, colptrL, samples; lambda, format=:csc, uplo=uplo)
             output = madnlp(model)
