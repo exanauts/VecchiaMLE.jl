@@ -225,6 +225,6 @@ function recover_factor(nlp::VecchiaModel{T,<:CuVector{T}}, solution::CuVector{T
     rowval = nlp.cache.rowsL
     nnz_factor = length(rowval)
     nzval = solution[1:nnz_factor]
-    factor = CuSparseMatrixCSC(n, n, colptr, rowval, nzval)
+    factor = CuSparseMatrixCSC(colptr, rowval, nzval, (n, n))
     return factor
 end

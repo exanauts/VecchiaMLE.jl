@@ -17,8 +17,8 @@ P = tril(P)
 P = sparse(P)
 I, J, V = findnz(P)
 nlp_L = VecchiaModel(I, J, samples; format=:coo, uplo=:L)
-output = ipopt(model)
-L = recover_factor(model, output.solution)
+output = ipopt(nlp_L)
+L = recover_factor(nlp_L, output.solution)
 ```
 
 ```@example VecchiaModel
@@ -35,6 +35,6 @@ P = triu(P)
 P = sparse(P)
 I, J, V = findnz(P)
 nlp_U = VecchiaModel(I, J, samples; format=:coo, uplo=:U)
-output = ipopt(model)
-U = recover_factor(model, output.solution)
+output = ipopt(nlp_U)
+U = recover_factor(nlp_U, output.solution)
 ```
