@@ -1,4 +1,4 @@
-```@example VecchiaModel
+```@example VecchiaModel_L
 using VecchiaMLE
 using LinearAlgebra
 using SparseArrays
@@ -21,7 +21,12 @@ output = ipopt(nlp_L)
 L = recover_factor(nlp_L, output.solution)
 ```
 
-```@example VecchiaModel
+```@example VecchiaModel_U
+using VecchiaMLE
+using LinearAlgebra
+using SparseArrays
+using NLPModelsIpopt
+
 n = 400
 number_of_samples = 100
 
