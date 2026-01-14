@@ -5,7 +5,6 @@
 
 =#
 
-
 function VecchiaMLE_models(n, k, samples, number_of_samples, Sparsity, estimationString)
     if estimationString == "Row"
         return VecchiaMLE_Row(n, k, samples, number_of_samples, Sparsity)
@@ -54,7 +53,7 @@ kill it.
 =#
 function VecchiaMLE_Matrix_Sparse(n, k, samples, number_of_samples, xyGrid)
 
-    Sparsity_pattern = sparsitypattern(xyGrid, k)
+    Sparsity_pattern = sparsity_pattern(xyGrid, k)
     model = VecchiaMLE_Matrix_JuMP_Model(n, k, samples, number_of_samples, Sparsity_pattern)
     
     exa_model = ExaModel(model; backend = nothing #= CUDABackend() =#) # model_sum not CUDABackend friendly

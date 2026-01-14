@@ -9,7 +9,7 @@
 
         MatCov = VecchiaMLE.generate_MatCov(params, xyGrid)
         samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; arch=:cpu)
-        Sparsity = VecchiaMLE.sparsitypattern(xyGrid, k)
+        Sparsity = VecchiaMLE.sparsity_pattern(xyGrid, k)
 
         @testset "uplo = $uplo" for uplo in (:L, :U)
             if uplo == :U
@@ -22,7 +22,7 @@
             end
 
             # Model itself
-            model = Model(()->MadNLP.Optimizer(max_iter=200, print_level=MadNLP.ERROR))
+            model = Model(MadNLP.Optimizer)
             cache = create_vecchia_cache_jump(samples, Sparsity, lambda, uplo)
             @variable(model, w[1:(cache.nnzL + cache.n)])
             # Initial L is identity
@@ -44,9 +44,11 @@
             L_jump = uplo == :L ? LowerTriangular(L_jump) : UpperTriangular(L_jump)
 
             # Get result from VecchiaMLE
-            input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; lambda=lambda, ptset=xyGrid, uplo=uplo)
-            d, L_mle = VecchiaMLE_Run(input)
-            L_mle = uplo == :L ? LowerTriangular(L_mle) : UpperTriangular(L_mle)
+            input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset=xyGrid)
+            rowsL, colptrL = sparsity_pattern(input)
+            model = VecchiaModel(rowsL, colptrL, samples; lambda=lambda, format=:csc, uplo=uplo)
+            output = madnlp(model)
+            L_mle = recover_factor(model, output.solution)
 
             @testset norm(L_mle - L_jump) ≤ 1e-6
         end

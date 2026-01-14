@@ -9,16 +9,9 @@
 
 ## Overview
 
-**VecchiaMLE.jl** is a Julia package that approximates the inverse cholesky factor of a Gaussian process covariance  matrix via a nonparametric optimization process.
+**VecchiaMLE.jl** is a Julia package that approximates the inverse cholesky factor of a Gaussian process covariance matrix via a nonparametric optimization process.
 The nonzero entries of the inverse cholesky, `L`, are determined via the Vecchia Approximation.
-The values of `L` are recovered via optimizing the joint probability distribtution function (mean zero) to best match the given samples.
-
-**VecchiaMLE.jl** requires the user to provide at the least the samples matrix and the accuracy of the Vecchia Approximation (number of conditioning points, which manifests as the number of nonzeros per row of L).
-Other parameters are available, including (but no limited to) the option for GPU utilization, print level, and providing an initial point x0 to coax the optimizer to a solution.   
-
-**Note:** All samples (generated or provided) are assumed to have a zero-mean distribution.
-
-The code is written to be flexible enough to be run on either cpu or gpu capable systems, however only CUDA capable gpu's are supported at the moment.
+The values of `L` are recovered via optimizing the joint probability distribution function (mean zero) to best match the given samples.
 
 ## Installation
 
@@ -41,28 +34,18 @@ The struct `VecchiaMLEInput` is available for the user to specify their analysis
 Other options may be passed as keyword arguments. Such options are:
 
 ```
-* plevel::Symbol            # Print level for the optimizer. See PRINT_LEVEL. Defaults to `ERROR`.
-* arch::Symbol              # Architecture for the analysis. See ARCHITECTURES. Defaults to `:cpu`.
 * ptset::AbstractVector     # The locations of the analysis. May be passed as a matrix or vector of vectors.
-* lvar_diag::AbstractVector # Lower bounds on the diagonal of the sparse Vecchia approximation.
-* uvar_diag::AbstractVector # Upper bounds on the diagonal of the sparse Vecchia approximation.
 * rowsL::AbstractVector     # The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT! 
 * colptrL::AbstractVector   # The column pointer of L if the user gives one. MUST BE IN CSC FORMAT!
-* solver::Symbol            # Optimization solver (:madnlp, :ipopt, :knitro). Defaults to `:madnlp`.
-* solver_tol::Float64       # Tolerance for the optimization solver. Defaults to `1e-8`.
-* skip_check::Bool          # Whether or not to skip the `validate_input` function.
 * sparsityGeneration        # The method by which to generate a sparsity pattern. See SPARSITY_GEN.
 * metric::Distances.metric  # The metric by which nearest neighbors are determined. Defaults to Euclidean.
-* lambda::Real              # The regularization scalar for the ridge `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
-* x0::AbstractVector        # The user may give an initial condition, but it is limiting if you do not have the sparsity pattern. 
 ```
 
 ## Usage
-Once the user has initialized an instance of `VecchiaMLEInput`, they may pass it to `VecchiaMLE_Run()` to recover the inverse cholesky. The ouput of `VecchiaMLE_Run()` is a tuple, with vales internal diagnostics and the inverse cholesky in sparse COO format.  
+
+Once the user has initialized an instance of `VecchiaMLEInput`, they may pass it to `sparsity_pattern` to recover the inverse cholesky.
 
 ## Getting samples from a covariance matrix
-
-I will describe here how to properly use this package. Some functions used are not exported since there is no need for the user to realistically use them. The only major work to do is to generate the samples (if this isn't done by another means). In production, I generated the samples via first creating a Covariance Matrix via the martern covariance kernel, then feeding it into a Multivariate normal distribution to create the samples. The code to do this, using functions defined in VecchiaMLE, is as follows:
 
 ```
 n = 100                                                            # Dimension of Covariance matrix
@@ -72,4 +55,3 @@ ptset = VecchiaMLE.generate_safe_xyGrid(n)                         # Generates 1
 MatCov = VecchiaMLE.generate_MatCov(params, ptset)                 # size n x n. 
 samples = VecchiaMLE.generate_samples(MatCov, number_of_samples)   # Generate samples. 
 ```
-One may skip Covariance generation, as its use is only to generate samples. The matern function generates the entries of the covariance matrix via the given prarmeters, and returns the symmetric form.

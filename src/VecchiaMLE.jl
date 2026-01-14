@@ -1,34 +1,35 @@
 module VecchiaMLE
 
-# External Packages
-using Random
-using NLPModels, LinearAlgebra
-using Distances
-using NearestNeighbors
-using MadNLP, MadNLPGPU, MadNLPHSL
-using SparseArrays 
+using BesselK
 using CUDA
-using BesselK, SpecialFunctions
-using Distributions, Statistics
-using KernelAbstractions
+using CUDA.CUSPARSE
+using Distances
+using Distributions
 using HNSW
+using KernelAbstractions
+using LinearAlgebra
+using NearestNeighbors
+using NLPModels
+using Random
+using SparseArrays
+using SpecialFunctions
+using Statistics
+
 const KA = KernelAbstractions
 
 # Includes
 include("defines.jl")
-include("macros.jl")
 include("internals.jl")
 include("utils.jl")
-include("sparsitypattern.jl")
+include("sparsity_pattern.jl")
 include("permutations.jl")
-include("input.jl")
 include("kernels.jl")
 include("models/VecchiaModel.jl")
-include("models/legacy.jl")
 include("models/api.jl")
 
 # Exports
-export VecchiaMLE_Run, VecchiaMLEInput, VecchiaModel
-export recover_factor
+export VecchiaMLEInput, VecchiaModel
+export sparsity_pattern, recover_factor
+export generate_samples, generate_MatCov, generate_xyGrid, generate_rectGrid
 
 end

@@ -1,7 +1,8 @@
 function VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T};
-                      lvar_diag::Union{Nothing,Vector{T}}=nothing, uvar_diag::Union{Nothing,Vector{T}}=nothing, lambda::Real=0, uplo::Symbol=:L) where T
+                      lvar_diag::Union{Nothing,Vector{T}}=nothing, uvar_diag::Union{Nothing,Vector{T}}=nothing,
+                      lambda::Real=0, format::Symbol=:coo, uplo::Symbol=:L) where T
     S = Vector{T}
-    cache::VecchiaCache = create_vecchia_cache(I, J, samples, T(lambda), uplo)
+    cache::VecchiaCache = create_vecchia_cache(I, J, samples, T(lambda), format, uplo)
 
     nvar::Int = length(cache.rowsL) + length(cache.colptrL) - 1
     ncon::Int = length(cache.colptrL) - 1
@@ -50,9 +51,9 @@ function VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T};
 end
 
 function VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::CuMatrix{T};
-                      lvar_diag::Union{Nothing,CuVector{T}}=nothing, uvar_diag::Union{Nothing,CuVector{T}}=nothing, lambda::Real=0, uplo::Symbol=:L) where T
+                      lvar_diag::Union{Nothing,CuVector{T}}=nothing, uvar_diag::Union{Nothing,CuVector{T}}=nothing, lambda::Real=0, format::Symbol=:coo, uplo::Symbol=:L) where T
     S = CuArray{T, 1, CUDA.DeviceMemory}
-    cache::VecchiaCache = create_vecchia_cache(I, J, samples, T(lambda), uplo)
+    cache::VecchiaCache = create_vecchia_cache(I, J, samples, T(lambda), format, uplo)
 
     nvar::Int = length(cache.rowsL) + length(cache.colptrL) - 1
     ncon::Int = length(cache.colptrL) - 1
@@ -101,16 +102,24 @@ function VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::CuMatrix{T};
 end
 
 function create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T},
-                              lambda::T, uplo::Symbol)::VecchiaCache where {T}
+                              lambda::T, format::Symbol, uplo::Symbol)::VecchiaCache where {T}
     S = Vector{T}
     Msamples, n = size(samples)
-    nnz_coo = length(I)
-    V = ones(Int, nnz_coo)
-    P = sparse(I, J, V, n, n)
 
-    # SPARSITY PATTERN OF L IN CSC FORMAT.
-    rowsL = P.rowval
-    colptrL = P.colptr
+    if format == :coo
+        nnz_coo = length(I)
+        V = ones(Int, nnz_coo)
+        P = sparse(I, J, V, n, n)
+
+        # SPARSITY PATTERN OF L IN CSC FORMAT.
+        rowsL = P.rowval
+        colptrL = P.colptr
+    elseif format == :csc
+        rowsL = I
+        colptrL = J
+    else
+        error("Unsupported format = $format for the sparsity pattern.")
+    end
 
     nnzL = length(rowsL)
     m = [colptrL[j+1] - colptrL[j] for j in 1:n]
@@ -145,16 +154,24 @@ function create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T}
 end
 
 function create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::CuMatrix{T},
-                              lambda::T, uplo::Symbol)::VecchiaCache where {T}
+                              lambda::T, format::Symbol, uplo::Symbol)::VecchiaCache where {T}
     S = CuArray{T, 1, CUDA.DeviceMemory}
     Msamples, n = size(samples)
-    nnz_coo = length(I)
-    V = ones(Int, nnz_coo)
-    P = sparse(I, J, V, n, n)
 
-    # SPARSITY PATTERN OF L IN CSC FORMAT.
-    rowsL = P.rowval
-    colptrL = P.colptr
+    if format == :coo
+        nnz_coo = length(I)
+        V = ones(Int, nnz_coo)
+        P = sparse(I, J, V, n, n)
+
+        # SPARSITY PATTERN OF L IN CSC FORMAT.
+        rowsL = P.rowval
+        colptrL = P.colptr
+    elseif format == :csc
+        rowsL = I
+        colptrL = J
+    else
+        error("Unsupported format = $format for the sparsity pattern.")
+    end
 
     nnzL = length(rowsL)
     m = [colptrL[j+1] - colptrL[j] for j in 1:n]
@@ -202,12 +219,12 @@ function recover_factor(nlp::VecchiaModel{T,Vector{T}}, solution::Vector{T}) whe
     return factor
 end
 
-function recover_factor(nlp::VecchiaModel{T,CuVector{T}}, solution::CuVector{T}) where T
+function recover_factor(nlp::VecchiaModel{T,<:CuVector{T}}, solution::CuVector{T}) where T
     n = nlp.cache.n
     colptr = nlp.cache.colptrL
     rowval = nlp.cache.rowsL
     nnz_factor = length(rowval)
     nzval = solution[1:nnz_factor]
-    factor = CuSparseMatrixCSC(n, n, colptr, rowval, nzval)
+    factor = CuSparseMatrixCSC(colptr, rowval, nzval, (n, n))
     return factor
 end

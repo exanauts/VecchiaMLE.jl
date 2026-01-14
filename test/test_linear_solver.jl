@@ -1,38 +1,22 @@
 @testset "Linear_Solvers -- $solver" for solver in (:ma27, :ma57)
-
-    # Things for model
     n = 100
     k = 10
     number_of_samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
     ptset = VecchiaMLE.generate_safe_xyGrid(n)
-    MatCov = VecchiaMLE.generate_MatCov(params, ptset)
-    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples)
+    MatCov = generate_MatCov(params, ptset)
+    samples = generate_samples(MatCov, number_of_samples)
 
-    input = VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset)
+    input = VecchiaMLEInput(n, k, samples, number_of_samples; ptset=ptset)
+    rowsL, colptrL = sparsity_pattern(input)
+    model = VecchiaModel(rowsL, colptrL, samples; format=:csc, uplo=:L)
+
+    # hsl
     linear_solver = solver == :ma27 ? MadNLPHSL.Ma27Solver : MadNLPHSL.Ma57Solver
-
-    model = VecchiaMLE.get_vecchia_model(input)
-    output = madnlp(model,
-        linear_solver=linear_solver,
-        print_level=VecchiaMLE.resolve_plevel(Val(input.solver), Val(input.plevel))
-    )
-
-    valsL = Vector{Float64}(output.solution[1:model.cache.nnzL])
-    rowsL = Vector{Int}(model.cache.rowsL)
-    colptrL = Vector{Int}(model.cache.colptrL)
-    L_hsl = SparseMatrixCSC(n, n, colptrL, rowsL, valsL)
+    output = madnlp(model, linear_solver=linear_solver)
+    L_hsl = recover_factor(model, output.solution)
 
     # Umfpack
-    model = VecchiaMLE.get_vecchia_model(input)
-    output = madnlp(model,
-        linear_solver=MadNLP.UmfpackSolver,
-        print_level=VecchiaMLE.resolve_plevel(Val(input.solver), Val(input.plevel))
-    )
-
-    valsL = Vector{Float64}(output.solution[1:model.cache.nnzL])
-    rowsL = Vector{Int}(model.cache.rowsL)
-    colptrL = Vector{Int}(model.cache.colptrL)
-
-    L_umf = SparseMatrixCSC(n, n, colptrL, rowsL, valsL)
+    output = madnlp(model, linear_solver=MadNLP.UmfpackSolver)
+    L_umf = recover_factor(model, output.solution)
 end

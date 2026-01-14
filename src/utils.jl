@@ -1,5 +1,3 @@
-export generate_samples, generate_MatCov, generate_xyGrid, generate_rectGrid
-
 function covariance2D(ptset::AbstractVector, params::AbstractVector)::AbstractMatrix
     return Symmetric([BesselK.matern(x, y, params) for x in ptset, y in ptset])
 end
@@ -173,31 +171,10 @@ A helper function to generate a point grid which partitions the positive square 
 """
 function generate_rectGrid(dims::Tuple{Int, Int})::AbstractVector
     nx, ny = dims
-    @assert_cond nx > 0 nx "be positive"
-    @assert_cond ny > 0 ny "be positive"
+    @assert nx > 0 nx
+    @assert ny > 0 ny
 
     grid_x = range(0.0, 1.0, length=nx)
     grid_y = range(0.0, 1.0, length=ny)
     return vec([[x, y] for x in grid_x, y in grid_y])
-end
-
-"""
-    print_diagnostics(d::Diagnostics)
-
-    Pretty prints the diagnostics of the VecchiaMLE Algorithm. 
-    
-## Input arguments
-* `d`: The Diagnostics returned by the VecchiaMLE_Run function, assuming skip_check wasn't set to true.
-
-"""
-function print_diagnostics(d::Diagnostics)
-    println("========== Diagnostics ==========")
-    println(rpad("Model Creation Time:",  25), d.create_model_time)
-    println(rpad("LinAlg Solve Time:",    25), d.linalg_solve_time)
-    println(rpad("Solve Model Time:",     25), d.solve_model_time)
-    println(rpad("Objective Value:",      25), d.objective_value)
-    println(rpad("Normed Constraint:",    25), d.normed_constraint_value)
-    println(rpad("Normed Gradient:",      25), d.normed_grad_value)
-    println(rpad("Optimization Iter:",    25), d.iterations)
-    println("=================================")
 end

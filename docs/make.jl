@@ -10,6 +10,7 @@ makedocs(
   sitename = "VecchiaMLE.jl",
   pages = ["Home" => "index.md",
     "API" => "api.md",
+    "Vecchia model" => "vecchia_model.md",
     "Tutorials" => "how_to_run.md"]
 )
 

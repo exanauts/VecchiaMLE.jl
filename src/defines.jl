@@ -1,39 +1,3 @@
-
-"""
-Computer architecture on which the analysis will be run. Currently
-only defined as cpu or gpu, but in the future could encompass
-different gpu architectures. 
-
-## Supported Architectures
-- `cpu` (`:cpu`) : CPU mode. 
-- `gpu` (`:gpu`) : GPU mode. Currently only CUDA is supported. 
-"""
-const ARCHITECTURES = (:cpu, :gpu)
-
-"""
-Print level of the program. Describes the verbosity of the package. Currently
-only implemented at the solver level.
-
-## Supported Print Levels
-- `TRACE` (`:VTRACE`) : Most Verbose.
-- `DEBUG` (`:VDEBUG`) : Only useful for debugging.
-- `INFO`  (`:VINFO`)  : Reports minor discrepancies in the code.
-- `WARN`  (`:VWARN`)  : Reports major discrepancies in the code.
-- `ERROR` (`:VERROR`) : Reports errors that prevent normal execution.
-- `FATAL` (`:VFATAL`) : Catastrophic failure. 
-"""
-const PRINT_LEVEL = (:VTRACE, :VDEBUG, :VINFO, :VWARN, :VERROR, :VFATAL)
-
-"""
-Supported solvers for the optimization problem.
-    
-## Supported solvers
-- `MadNLP` (`:madnlp`) : https://github.com/MadNLP/MadNLP.jl
-- `Ipopt`  (`:ipopt`)  : https://github.com/jump-dev/Ipopt.jl 
-- `KNITRO` (`:knitro`) : https://github.com/jump-dev/KNITRO.jl
-"""
-const SUPPORTED_SOLVERS = (:madnlp, :ipopt, :knitro)
-
 """
 Specification for the Sparsity Pattern generation algorithm. 
 
@@ -81,30 +45,6 @@ struct VecchiaCache{T, S, VI, M}
 end
 
 """
-The Diagnostics struct that records some internals of the program that would be otherwise difficult to
-recover. The fields to the struct are as follows:\n
-
-* `create_model_time`: Time taken to create Vecchia Cache and solver init.              
-* `linalg_solve_time`: Time in LinearAlgebra routines in solver.
-* `solve_model_time`: Time taken to solve model in solver.
-* `objective_value`: Optimal Objective value. 
-* `normed_constraint_value`: Optimal norm of constraint vector.
-* `normed_grad_value`: Optimal norm of gradient vector.
-* `iterations`: Iterations for solver to reach optimal.
-* `arch`: Architecture. See ARCHITECTURES. 
-"""
-mutable struct Diagnostics
-    create_model_time::Float64          # Time taken to create Vecchia Cache and MadNLP init.              
-    linalg_solve_time::Float64          # Time in LinearAlgebra routines in MadNLP
-    solve_model_time::Float64           # Time taken to solve model in MadNLP
-    objective_value::Float64            # Optimal Objective value. 
-    normed_constraint_value::Float64    # Optimal norm of constraint vector.
-    normed_grad_value::Float64          # Optimal norm of gradient vector.
-    iterations::Int                     # Iterations for MadNLP to reach optimal.
-    arch::Symbol                        # Architecture: :cpu or :gpu
-end
-
-"""
 Struct needed for NLPModels. 
 There is no need for the user to mess with this!
 """
@@ -116,132 +56,64 @@ end
 
 """
 Input to the VecchiaMLE analysis.
+
 ## Fields
 
 - `k::Int`: Number of neighbors, representing the number of conditioning points in the Vecchia Approximation.
 - `samples::M`: Samples to generate the output. Each sample should match the length of the `observed_pts` vector.
-- `plevel::Symbol`: Print level for the optimizer. See PRINT_LEVEL. Defaults to `:VERROR`.
-- `arch::Symbol`: Architecture for the analysis. See ARCHITECTURES. Defaults to `:cpu`.
 
 ## Keyword Arguments
 
-* plevel::Symbol            # Print level for the optimizer. See PRINT_LEVEL. Defaults to `ERROR`.
-* arch::Symbol              # Architecture for the analysis. See ARCHITECTURES. Defaults to `:cpu`.
 * ptset::AbstractVector     # The locations of the analysis. May be passed as a matrix or vector of vectors.
-* lvar_diag::AbstractVector # Lower bounds on the diagonal of the sparse Vecchia approximation.
-* uvar_diag::AbstractVector # Upper bounds on the diagonal of the sparse Vecchia approximation.
 * rowsL::AbstractVector     # The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT!
 * colptrL::AbstractVector   # The column pointer of L if the user gives one. MUST BE IN CSC FORMAT!
-* solver::Symbol            # Optimization solver (:madnlp, :ipopt, :knitro). Defaults to `:madnlp`.
-* solver_tol::Float64       # Tolerance for the optimization solver. Defaults to `1e-8`.
-* skip_check::Bool          # Whether or not to skip the `validate_input` function.
-* sparsityGeneration        # The method by which to generate a sparsity pattern. See SPARSITY_GEN.
 * metric::Distances.metric  # The metric by which nearest neighbors are determined. Defaults to Euclidean.
-* lambda::Real              # The regularization scalar for the ridge `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
-* x0::AbstractVector        # The user may give an initial condition, but it is limiting if you do not have the sparsity pattern. 
+* sparsitygen::Symbol       # The method by which to generate a sparsity pattern. See SPARSITY_GEN.
 """
-mutable struct VecchiaMLEInput{M, V, V1, Vl, Vu, Vx0}
+mutable struct VecchiaMLEInput{M, V, VI}
     n::Int 
     k::Int 
     samples::M
     number_of_samples::Int
-    plevel::Symbol
-    arch::Symbol
     ptset::V
-    lvar_diag::Vl
-    uvar_diag::Vu
-    diagnostics::Bool
-    rowsL::V1
-    colptrL::V1
-    solver::Symbol
-    solver_tol::Float64
-    skip_check::Bool
+    rowsL::VI
+    colptrL::VI
     metric::Distances.Metric
     sparsitygen::Symbol
-    lambda::Float64
-    x0::Vx0
-    uplo::Symbol
 end
 
 function VecchiaMLEInput(
-    n::Int, k::Int, 
-    samples::M, number_of_samples::Int; 
-    plevel::VPL=:VERROR, 
-    arch::VAR=:cpu,
+    n::Int,
+    k::Int, 
+    samples::M,
+    number_of_samples::Int; 
     ptset::V=generate_safe_xyGrid(n),
-    lvar_diag::Vl=nothing,
-    uvar_diag::Vu=nothing,
-    diagnostics::Bool=false,
-    rowsL::V1=nothing,
-    colptrL::V1=nothing,
-    solver::Symbol=:madnlp,
-    solver_tol::Real=1e-8,
-    skip_check::Bool=false,
+    rowsL::VI=nothing,
+    colptrL::VI=nothing,
     metric::Distances.Metric=Distances.Euclidean(),
     sparsitygen::Symbol=:NN,
-    lambda::Real=0.0,
-    x0::Vx0=nothing,
-    uplo::Symbol=:L
 ) where
     {
-        M   <: AbstractMatrix, 
-        V   <: Union{AbstractVector, AbstractMatrix},
-        V1  <: Union{Nothing, AbstractVector},
-        Vl  <: Union{Nothing, AbstractVector},
-        Vu  <: Union{Nothing, AbstractVector},
-        Vx0 <: Union{Nothing, AbstractVector},
-        VPL <: Union{Symbol, Int},
-        VAR <: Union{Symbol, Int}
+        M  <: AbstractMatrix, 
+        V  <: Union{AbstractVector, AbstractMatrix},
+        VI <: Union{Nothing, AbstractVector},
     }
     ptset_ = resolve_ptset(n, ptset)
     n_::Int = length(ptset_)
 
-    return VecchiaMLEInput{M, typeof(ptset_), Vector{Int}, Vl, Vu, Vx0}(
+    rowsL = resolve_rowsL(rowsL, n_, k)
+    colptrL = resolve_colptrL(colptrL, n_)
+    return VecchiaMLEInput{M, typeof(ptset_), typeof(rowsL)}(
         n_,
         k,
         samples,
         number_of_samples,
-        convert_plevel(Val(plevel)),
-        convert_computemode(Val(arch)),
         ptset_,
-        lvar_diag,
-        uvar_diag,
-        diagnostics,
-        resolve_rowsL(rowsL, n_, k),
-        resolve_colptrL(colptrL, n_),
-        solver,
-        Float64(solver_tol),
-        skip_check,
+        rowsL,
+        colptrL,
         metric,
         sparsitygen,
-        Float64(lambda),
-        x0,
-        uplo
     )
 end
 
-"""
-Input to the VecchiaMLE analysis. Samples are expected as row vectors. 
-## Fields
-
-* `k::Int`: Number of neighbors, representing the number of conditioning points in the Vecchia Approximation.
-* `samples::M`: Samples to generate the output. Each sample should match the length of the `observed_pts` vector.
-
-## Keyword Arguments
-* plevel::Symbol            # Print level for the optimizer. See PRINT_LEVEL. Defaults to `ERROR`.
-* arch::Symbol              # Architecture for the analysis. See ARCHITECTURES. Defaults to `:cpu`.
-* ptset::AbstractVector     # The locations of the analysis. May be passed as a matrix or vector of vectors.
-* lvar_diag::AbstractVector # Lower bounds on the diagonal of the sparse Vecchia approximation.
-* uvar_diag::AbstractVector # Upper bounds on the diagonal of the sparse Vecchia approximation.
-* rowsL::AbstractVector     # The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT!
-* colptrL::AbstractVector   # The column pointer of L if the user gives one. MUST BE IN CSC FORMAT!
-* solver::Symbol            # Optimization solver (:madnlp, :ipopt, :knitro). Defaults to `:madnlp`.
-* solver_tol::Float64       # Tolerance for the optimization solver. Defaults to `1e-8`.
-* skip_check::Bool          # Whether or not to skip the `validate_input` function.
-* sparsityGeneration        # The method by which to generate a sparsity pattern. See SPARSITY_GEN.
-* metric::Distances.metric  # The metric by which nearest neighbors are determined. Defaults to Euclidean.
-* lambda::Real              # The regularization scalar for the ridge `0.5 * λ‖L - diag(L)‖²` in the objective. Defaults to 0.
-* x0::AbstractVector        # The user may give an initial condition, but it is limiting if you do not have the sparsity pattern.
-* uplo::Symbol              # Specify if the sparsity pattern is for a lower triangular matrix L (default) or an upper triangular matrix U.
-"""
 VecchiaMLEInput(k::Int, samples; kwargs...) = VecchiaMLEInput(size(samples, 2), k, samples, size(samples, 1); kwargs...)
