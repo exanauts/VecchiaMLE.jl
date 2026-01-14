@@ -41,9 +41,9 @@ a ptset is not given, we fall back on a default locations set defined by the fun
 All that's left is to run the analysis. This is done in one line:
 
 ```@example HowToRun
-rowsL, colptrL = sparsity_pattern(iVecchiaMLE)
-model = VecchiaModel(rowsL, colptrL, input.samples; format=:csc, uplo=:L)
+rowsL, colptrL = sparsity_pattern(input)
+model = VecchiaModel(rowsL, colptrL, samples; format=:csc, uplo=:L)
 
-output = madnlp(model)
+output = ipopt(model)
 L = recover_factor(model, output.solution)
 ```
