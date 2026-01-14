@@ -41,19 +41,9 @@ a ptset is not given, we fall back on a default locations set defined by the fun
 All that's left is to run the analysis. This is done in one line:
 
 ```@example HowToRun
-d, L = VecchiaMLE_Run(input)
-```
+rowsL, colptrL = sparsity_pattern(iVecchiaMLE)
+model = VecchiaModel(rowsL, colptrL, input.samples; format=:csc, uplo=:L)
 
-We can see the structure of the output of the program has an approximately banded structure. 
-This is due to the underlying assumption of the Vecchia Approximation where locaitons are independent of 
-eachother when conditioned on its k nearest neighbors. 
-
-```@example HowToRun
-sparse(L)
-```  
-
-The function `VecchiaMLE_Run` returns a tuple, respectively containing the diagnostics of the solver, and the inverse cholesky factor `L`.
-
-```@example HowToRun
-VecchiaMLE.print_diagnostics(d)
+output = madnlp(model)
+L = recover_factor(colptrL, rowsL, output.solution)
 ```

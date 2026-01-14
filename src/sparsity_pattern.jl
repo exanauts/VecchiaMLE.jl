@@ -1,6 +1,5 @@
-
 """
-    rows, colptr = sparsitypattern(
+    rows, colptr = sparsity_pattern(
         ::Val{<:Symbol}, 
         data::AbstractVector,
         k::Int,
@@ -20,38 +19,43 @@
 ## Output arguments
 * `rows`: A vector of row indices of the sparsity pattern for L, in CSC format.
 * `colptr`: A vector of incides which determine where new columns start. 
-
 """
-function sparsitypattern(::Val{:NN}, iVecchiaMLE::VecchiaMLEInput)
-    return sparsitypattern_NN(iVecchiaMLE.ptset, iVecchiaMLE.k, iVecchiaMLE.metric)
+function sparsity_pattern end
+
+function sparsity_pattern(iVecchiaMLE::VecchiaMLEInput)
+    return sparsity_pattern(Val(iVecchiaMLE.sparsitygen), VecchiaMLEInput)
 end
 
-function sparsitypattern(::Val{:HNSW}, iVecchiaMLE::VecchiaMLEInput)
-    return sparsitypattern_HNSW(iVecchiaMLE.ptset, iVecchiaMLE.k, iVecchiaMLE.metric)
+function sparsity_pattern(::Val{:NN}, iVecchiaMLE::VecchiaMLEInput)
+    return sparsity_pattern_NN(iVecchiaMLE.ptset, iVecchiaMLE.k, iVecchiaMLE.metric)
 end
 
-function sparsitypattern(::Val{:USERGIVEN}, iVecchiaMLE::VecchiaMLEInput)
+function sparsity_pattern(::Val{:HNSW}, iVecchiaMLE::VecchiaMLEInput)
+    return sparsity_pattern_HNSW(iVecchiaMLE.ptset, iVecchiaMLE.k, iVecchiaMLE.metric)
+end
+
+function sparsity_pattern(::Val{:USERGIVEN}, iVecchiaMLE::VecchiaMLEInput)
     return iVecchiaMLE.rowsL, iVecchiaMLE.colptrL
 end
 
-function sparsitypattern(::Val{M}, iVecchiaMLE::VecchiaMLEInput) where {M}
-    error("sparsitypattern: Bad method. Gave $M")
+function sparsity_pattern(::Val{M}, iVecchiaMLE::VecchiaMLEInput) where {M}
+    error("sparsity_pattern: Bad method. Gave $M")
 end
 
-function sparsitypattern(::Val{:NN}, ptset::AbstractVector, k::Int, metric::Distances.Metric=Distances.Euclidean())
-    return sparsitypattern_NN(ptset, k, metric)
+function sparsity_pattern(::Val{:NN}, ptset::AbstractVector, k::Int, metric::Distances.Metric=Distances.Euclidean())
+    return sparsity_pattern_NN(ptset, k, metric)
 end
 
-function sparsitypattern(::Val{:HNSW}, ptset::AbstractVector, k::Int, metric::Distances.Metric=Distances.Euclidean())
-    return sparsitypattern_HNSW(ptset, k, metric)
+function sparsity_pattern(::Val{:HNSW}, ptset::AbstractVector, k::Int, metric::Distances.Metric=Distances.Euclidean())
+    return sparsity_pattern_HNSW(ptset, k, metric)
 end
 
-sparsitypattern(ptset::AbstractVector, k::Int) = sparsitypattern(Val(:NN), ptset, k)
+sparsity_pattern(ptset::AbstractVector, k::Int) = sparsity_pattern(Val(:NN), ptset, k)
 
 """
-See sparsitypattern(). Uses NearestNeighbors library. In case of tie, opt for larger index. 
+See sparsity_pattern(). Uses NearestNeighbors library. In case of tie, opt for larger index. 
 """
-function sparsitypattern_NN(data, k, metric::Distances.Metric=Distances.Euclidean())::Tuple{Vector{Int}, Vector{Int}}
+function sparsity_pattern_NN(data, k, metric::Distances.Metric=Distances.Euclidean())::Tuple{Vector{Int}, Vector{Int}}
     n = size(data, 1)
     sparsity = Matrix{Int}(undef, n, k)
     fill!(sparsity, -1)
@@ -76,9 +80,9 @@ function sparsitypattern_NN(data, k, metric::Distances.Metric=Distances.Euclidea
 end
 
 """
-See sparsitypattern(). In place for HNSW.jl
+See sparsity_pattern(). In place for HNSW.jl
 """
-function sparsitypattern_HNSW(data, k, metric::Distances.Metric=Distances.Euclidean())::Tuple{Vector{Int}, Vector{Int}}
+function sparsity_pattern_HNSW(data, k, metric::Distances.Metric=Distances.Euclidean())::Tuple{Vector{Int}, Vector{Int}}
     n = size(data, 1)
     sparsity = Matrix{Int}(undef, n, k)
     fill!(sparsity, -1)

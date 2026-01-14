@@ -7,9 +7,18 @@
     xyGrid = VecchiaMLE.generate_xyGrid(n)
     MatCov = VecchiaMLE.generate_MatCov(params, xyGrid)
     samples = VecchiaMLE.generate_samples(MatCov, Number_of_Samples; arch=:cpu)
+    rowsL, colptrL = sparsity_pattern(input)
+    model = VecchiaModel(rowsL, colptrL, samples; format=:csc, uplo=:L)
 
-    # Only check if the inputs do not cause issues. TODO: Resolve kwargs for the different optimizers (print_level, ...)
-    input_madnlp = VecchiaMLEInput(n, k, samples, Number_of_Samples; ptset=xyGrid, solver=:madnlp)
-    input_knitro = VecchiaMLEInput(n, k, samples, Number_of_Samples; ptset=xyGrid, solver=:knitro)
-    input_ipopt  = VecchiaMLEInput(n, k, samples, Number_of_Samples; ptset=xyGrid, solver=:ipopt)    
+    @testset "MadNLP" begin
+        madnlp(model)
+    end
+
+    @testset "Ipopt" begin
+        ipopt(model)
+    end
+
+    @testset "Uno" begin
+        uno(model)
+    end
 end

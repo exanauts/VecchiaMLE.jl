@@ -3,12 +3,13 @@
     k = 10
     number_of_samples = 100
     params = [5.0, 0.2, 2.25, 0.25]
-    xyGrid = VecchiaMLE.generate_xyGrid(n)
-    MatCov = VecchiaMLE.generate_MatCov(params, xyGrid)
-    samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; arch=:cpu)
+    xyGrid = generate_xyGrid(n)
+    MatCov = generate_MatCov(params, xyGrid)
+    samples = generate_samples(MatCov, number_of_samples; arch=:cpu)
 
-    iVecchiaMLE = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset=xyGrid)
-    model = VecchiaMLE.VecchiaModelCPU(samples, iVecchiaMLE)
+    iVecchiaMLE = VecchiaMLEInput(n, k, samples, number_of_samples; ptset=xyGrid)
+    rowsL, colptrL = sparsity_pattern(iVecchiaMLE)
+    model = VecchiaModel(rowsL, colptrL, samples; format=:csc, uplo=:L)
     mems = NLPModelsTest.test_allocs_nlpmodels(model)
 
     @test mems[:obj] == 0.0

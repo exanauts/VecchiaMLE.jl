@@ -1,4 +1,4 @@
-@testset "sparsitypattern_HNSW" begin
+@testset "sparsity_pattern_HNSW" begin
     # Things for model
     n = 100
     k = 10
@@ -9,26 +9,17 @@
     MatCov = VecchiaMLE.generate_MatCov(params, ptset)
     samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; arch=:cpu)
 
-    
     # Get result from VecchiaMLE NearestNeighbors
-    inputNN = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset, sparsitygen=:NN)
-    D, L_NN = VecchiaMLE_Run(inputNN)
-
-    @test (D.iterations ≥ 0)
-    @test (D.normed_constraint_value < 1e-3)
-    @test (D.normed_grad_value < 1e-5)
-    @test (D.linalg_solve_time > 0.0)
-    @test (D.solve_model_time > 0.0)
-    @test (D.create_model_time > 0.0)
+    input_NN = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset=ptset, sparsitygen=:NN)
+    rowsL, colptrL = sparsity_pattern(input_NN)
+    model = VecchiaModel(rowsL, colptrL, samples; format=:csc, uplo=:L)
+    output = madnlp(model)
+    L_NN = recover_factor(colptrL, rowsL, output.solution)
 
     # Get result from VecchiaMLE HNSW
-    inputHNSW = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset = ptset, sparsitygen=:HNSW)
-    D, L_HNSW = VecchiaMLE_Run(inputNN)
-
-    @test (D.iterations ≥ 0)
-    @test (D.normed_constraint_value < 1e-3)
-    @test (D.normed_grad_value < 1e-5)
-    @test (D.linalg_solve_time > 0.0)
-    @test (D.solve_model_time > 0.0)
-    @test (D.create_model_time > 0.0)
+    input_HNSW = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset=ptset, sparsitygen=:HNSW)
+    rowsL, colptrL = sparsity_pattern(input_HNSW)
+    model = VecchiaModel(rowsL, colptrL, samples; format=:csc, uplo=:L)
+    output = madnlp(model)
+    L_HNSW = recover_factor(colptrL, rowsL, output.solution)
 end

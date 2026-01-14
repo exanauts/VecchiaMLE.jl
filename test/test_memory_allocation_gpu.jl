@@ -194,7 +194,8 @@ end
     samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; arch=:gpu)
 
     input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset=xyGrid)
-    model = VecchiaMLE.VecchiaModelGPU(samples, input)
+    rowsL, colptrL = sparsity_pattern(input)
+    model = VecchiaModel(rowsL, colptrL, samples; format=:csc, uplo=:L)
     mems = test_allocs_nlpmodels_gpu(model)
 
     @test mems[:obj] == 16.0  # these allocations are related to allocations in "sum" and "dot"

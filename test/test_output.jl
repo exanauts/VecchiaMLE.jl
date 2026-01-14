@@ -8,13 +8,12 @@
         params = [5.0, 0.2, 2.25, 0.25]
         xyGrid = VecchiaMLE.generate_safe_xyGrid(n)
 
-        MatCov = VecchiaMLE.generate_MatCov(params, xyGrid)
-        samples = VecchiaMLE.generate_samples(MatCov, Number_of_Samples; arch=:cpu)
-
-        Sparsity = VecchiaMLE.sparsitypattern(xyGrid, k)
+        MatCov = generate_MatCov(params, xyGrid)
+        samples = generate_samples(MatCov, Number_of_Samples; arch=:cpu)
+        Sparsity = sparsity_pattern(xyGrid, k)
 
         # Model itself
-        model = Model(()->MadNLP.Optimizer(max_iter=100, print_level=MadNLP.ERROR))
+        model = Model(MadNLP.Optimizer)
         cache = create_vecchia_cache_jump(samples, Sparsity, lambda, :L)
         @variable(model, w[1:(cache.nnzL + cache.n)])
         # Initial L is identity
@@ -30,32 +29,34 @@
         L_jump = LowerTriangular(L_jump)
         
         # Get result from VecchiaMLE
-        input = VecchiaMLE.VecchiaMLEInput(n, k, samples, Number_of_Samples; lambda=lambda, ptset=xyGrid, uplo=:L)
-        d, L_mle = VecchiaMLE_Run(input)
-        L_mle = LowerTriangular(L_mle)
+        input = VecchiaMLEInput(n, k, samples, Number_of_Samples; ptset=xyGrid)
+        rowsL, colptrL = sparsity_pattern(input)
+        nlp = VecchiaModel(rowsL, colptrL, samples; lambda, format=:csc, uplo=:L)
+        output = madnlp(nlp)
+        L_mle = recover_factor(colptrL, rowsL, output.solution)
+
         # get model from VecchiaMLE
-        nlp = VecchiaMLE.get_vecchia_model(input)
         _, _, mle_vals = findnz(sparse(L_mle))
         _, _, jump_vals = findnz(sparse(L_jump))
         append!(mle_vals, [log(x) for x in mle_vals[nlp.cache.diagL]])
         append!(jump_vals, [log(x) for x in jump_vals[nlp.cache.diagL]])
 
         # obj
-        @test norm(VecchiaMLE.NLPModels.obj(nlp, mle_vals) - VecchiaMLE.NLPModels.obj(nlp, jump_vals)) <= 1e-6 
+        @test norm(NLPModels.obj(nlp, mle_vals) - NLPModels.obj(nlp, jump_vals)) <= 1e-6 
 
         # grad
         gx1 = zeros(length(mle_vals))
         gx2 = zeros(length(gx1))
-        VecchiaMLE.NLPModels.grad!(nlp, mle_vals, gx1)
-        VecchiaMLE.NLPModels.grad!(nlp, jump_vals, gx2)
+        NLPModels.grad!(nlp, mle_vals, gx1)
+        NLPModels.grad!(nlp, jump_vals, gx2)
 
         @test norm(gx1 .- gx2) <= 1e-6
 
         #cons
         c1 = zeros(nlp.cache.n)
         c2 = zeros(length(c1))
-        VecchiaMLE.NLPModels.cons!(nlp, mle_vals, c1)
-        VecchiaMLE.NLPModels.cons!(nlp, jump_vals, c2)
+        NLPModels.cons!(nlp, mle_vals, c1)
+        NLPModels.cons!(nlp, jump_vals, c2)
 
         @test norm(c1 .- c2) <= 1e-6
 
@@ -64,8 +65,8 @@
         Jv2 = zeros(length(Jv1))
         v1 = ones(nlp.cache.n+nlp.cache.nnzL)
         v2 = ones(nlp.cache.n+nlp.cache.nnzL)
-        VecchiaMLE.NLPModels.jprod!(nlp, mle_vals, v1, Jv1)
-        VecchiaMLE.NLPModels.jprod!(nlp, jump_vals, v2, Jv2)
+        NLPModels.jprod!(nlp, mle_vals, v1, Jv1)
+        NLPModels.jprod!(nlp, jump_vals, v2, Jv2)
 
         @test norm(Jv1 .- Jv2) <= 1e-6 
 
@@ -74,8 +75,8 @@
         Jtv2 = zeros(nlp.cache.n+nlp.cache.nnzL)
         v1 = ones(nlp.cache.n)
         v2 = ones(nlp.cache.n)
-        VecchiaMLE.NLPModels.jtprod!(nlp, mle_vals, v1, Jtv1)
-        VecchiaMLE.NLPModels.jtprod!(nlp, jump_vals, v2, Jtv2)
+        NLPModels.jtprod!(nlp, mle_vals, v1, Jtv1)
+        NLPModels.jtprod!(nlp, jump_vals, v2, Jtv2)
         
         @test norm(Jtv1 .- Jtv2) <= 1e-6 
 
@@ -85,8 +86,8 @@
         Hv2 = zeros(nlp.meta.nvar)
         v1 = zeros(nlp.meta.nvar)
         v2 = zeros(nlp.meta.nvar)
-        VecchiaMLE.NLPModels.hprod!(nlp, mle_vals, y, v1, Hv1)
-        VecchiaMLE.NLPModels.hprod!(nlp, jump_vals, y, v2, Hv2)
+        NLPModels.hprod!(nlp, mle_vals, y, v1, Hv1)
+        NLPModels.hprod!(nlp, jump_vals, y, v2, Hv2)
         
         @test norm(Hv1 .- Hv2) <= 1e-6
     end

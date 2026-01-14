@@ -11,12 +11,17 @@
 
         @testset "uplo = $uplo" for uplo in (:L, :U)
             # Get result from VecchiaMLE on CPU
-            input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; lambda=lambda, ptset=ptset, uplo=uplo)
-            _, L_cpu = VecchiaMLE_Run(input)
+            input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset=ptset)
+            rowsL, colptrL = sparsity_pattern(input)
+            model = VecchiaModel(rowsL, colptrL, samples; lambda, format=:csc, uplo=uplo)
+            output = madnlp(model)
+            L_cpu = recover_factor(colptrL, rowsL, output.solution)
 
             # Get result from VecchiaMLE on GPU
-            input = VecchiaMLE.VecchiaMLEInput(n, k, CuMatrix(samples), number_of_samples; arch=:gpu, lambda=lambda, ptset=ptset, uplo=uplo)
-            _, L_gpu = VecchiaMLE_Run(input)
+            input = VecchiaMLE.VecchiaMLEInput(n, k, CuMatrix(samples), number_of_samples; arch=:gpu, ptset=ptset)
+            model = VecchiaModel(rowsL, colptrL, samples; lambda, format=:csc, uplo=uplo)
+            output = madnlp(model)
+            L_gpu = recover_factor(colptrL, rowsL, output.solution)
 
             @testset norm(L_cpu - SparseMatrixCSC(L_gpu)) ≤ 1e-4
         end

@@ -1,157 +1,16 @@
-# These functions are only for internal use, and are not intended for the user to call them!
-
-
 ####################################################
-#               validate_input                
+#               resolve_rowsL              
 ####################################################
 
-"""
-    validate_input(iVecchiaMLE::VecchiaMLEInput)
-
-A helper function to catch any inconsistencies in the input given by the user.
-
-## Input arguments
-* `iVecchiaMLE`: The filled-out VecchiaMLEInput struct. See VecchiaMLEInput struct for more details. 
-"""
-function validate_input(iVecchiaMLE::VecchiaMLEInput) 
-
-    @assert_cond iVecchiaMLE.n > 0 iVecchiaMLE.n "be strictly positive"
-    @assert_cond_compare iVecchiaMLE.k <= iVecchiaMLE.n  
-    @assert_cond size(iVecchiaMLE.samples, 1) > 0 iVecchiaMLE.samples "have at least one sample"
-    @assert_eq size(iVecchiaMLE.samples, 2) iVecchiaMLE.n
-    @assert_eq size(iVecchiaMLE.samples, 1) iVecchiaMLE.number_of_samples 
-    @assert mapreduce(isfinite, &, iVecchiaMLE.samples) "Invalid value found in samples matrix"
-    
-
-    if typeof(iVecchiaMLE.samples) <: Matrix && iVecchiaMLE.arch == :gpu
-        @warn "architecture given is gpu, but samples are on cpu. Transferring samples to gpu."
-        iVecchiaMLE.samples = CuMatrix{Float64}(iVecchiaMLE.samples)
-    end
-
-    @assert_eq length(iVecchiaMLE.ptset) iVecchiaMLE.n
-    
-    dimension = length(iVecchiaMLE.ptset[1])
-    for pt in iVecchiaMLE.ptset
-        @assert_eq length(pt) dimension 
-    end
-
-    if !isnothing(iVecchiaMLE.lvar_diag)
-        # Check that lower bounds are positive
-        @assert mapreduce(x -> x > 0.0, &, iVecchiaMLE.lvar_diag) "User given lvar_diag must have all positive entries"
-        @assert mapreduce(isfinite, &, iVecchiaMLE.lvar_diag) "User given lvar_diag must have finite entries!"
-        @assert_eq length(iVecchiaMLE.lvar_diag) iVecchiaMLE.n
-    end
-    
-    if !isnothing(iVecchiaMLE.uvar_diag)
-        @assert mapreduce(x -> x > 0.0, &, iVecchiaMLE.uvar_diag) "User given uvar_diag must have all positive entries"
-        @assert mapreduce(isfinite, &, iVecchiaMLE.uvar_diag) "User given uvar_diag must have finite entries!"
-        @assert_eq length(iVecchiaMLE.uvar_diag) iVecchiaMLE.n 
-    end
-    
-    # Check if lvar_diag .< iVecchiaMLE.uvar_diag
-    if !isnothing(iVecchiaMLE.lvar_diag) && !isnothing(iVecchiaMLE.uvar_diag)
-        @assert mapreduce(<, &, iVecchiaMLE.lvar_diag, iVecchiaMLE.uvar_diag) "lvar_diag must be .< uvar_diag"
-    end
-
-    @assert_cond iVecchiaMLE.lambda >= 0 iVecchiaMLE.lambda "be positive"
-
-    nvar = Int(0.5 * iVecchiaMLE.k * ( 2*iVecchiaMLE.n - iVecchiaMLE.k + 1))
-    if !isnothing(iVecchiaMLE.x0)
-        @assert_eq length(iVecchiaMLE.x0) nvar 
-    end
-
-    if !isnothing(iVecchiaMLE.rowsL) && !isnothing(iVecchiaMLE.colptrL)
-        @assert_eq length(iVecchiaMLE.rowsL) nvar
-        @assert_eq length(iVecchiaMLE.colptrL) iVecchiaMLE.n+1
-    end
-
-
-    if !isnothing(iVecchiaMLE.rowsL) && !isnothing(iVecchiaMLE.colptrL)        
-        @assert is_csc_format(iVecchiaMLE) "rowsL and colptrL are not in CSC format"
-    end
-
-
-    @assert_cond iVecchiaMLE.solver_tol > 0.0 iVecchiaMLE.solver_tol "be positive"
-
-    @assert_in iVecchiaMLE.solver SUPPORTED_SOLVERS
-    @assert_in iVecchiaMLE.arch ARCHITECTURES
-    @assert_in iVecchiaMLE.plevel PRINT_LEVEL
-    @assert_in iVecchiaMLE.sparsitygen SPARSITY_GEN
-
-    @assert iVecchiaMLE.uplo == :L || iVecchiaMLE.uplo == :U
-end
-
-
-####################################################
-#               Resolve vecchia_solver                
-####################################################
-function vecchia_solver(::Val{s}, args...; kwargs...) where {s}
-    error("The solver $s is not available.")
-end
-
-function vecchia_solver(::Val{:madnlp}, args...; kwargs...)
-    madnlp(args...; kwargs...)
-end
-
-
-####################################################
-#               Resolve vecchia_solver                
-####################################################
 resolve_rowsL(rowsL::Nothing, n::Int, k::Int) = zeros(Int, Int(0.5 * k * ( 2*n - k + 1)))
 resolve_rowsL(rowsL::AbstractVector, n::Int, k::Int) = rowsL
 
 ####################################################
-#               Resolve vecchia_solver                
+#               resolve_colptrL             
 ####################################################
+
 resolve_colptrL(colptrL::Nothing, n::Int) = zeros(Int, n+1)
 resolve_colptrL(colptrL::AbstractVector, n::Int) = colptrL
-        
-
-
-####################################################
-#                resolve_plevel
-####################################################
-
-resolve_plevel(::Val{:madnlp}, plevel::Val{T}) where {T} = error("Unsupported print level $(T) for solver :madnlp.")
-resolve_plevel(solver::Val{<:Symbol}, ::Val{T}) where {T} = error("The solver $(solver) does not have defined print level $(T).")
-
-
-resolve_plevel(::Val{:madnlp}, ::Val{:VTRACE}) = MadNLP.TRACE
-resolve_plevel(::Val{:madnlp}, ::Val{:VDEBUG}) = MadNLP.DEBUG
-resolve_plevel(::Val{:madnlp}, ::Val{:VINFO})  = MadNLP.INFO
-resolve_plevel(::Val{:madnlp}, ::Val{:VWARN})  = MadNLP.WARN
-resolve_plevel(::Val{:madnlp}, ::Val{:VERROR}) = MadNLP.ERROR
-resolve_plevel(::Val{:madnlp}, ::Val{:VFATAL}) = MadNLP.ERROR
-
-####################################################
-#                convert_plevel
-####################################################
-
-convert_plevel(::Val{T}) where {T} = error("Unsupported print level $T")
-
-convert_plevel(::Val{:VTRACE}) = :VTRACE
-convert_plevel(::Val{1})       = :VTRACE
-convert_plevel(::Val{:VDEBUG}) = :VDEBUG
-convert_plevel(::Val{2})       = :VDEBUG
-convert_plevel(::Val{:VINFO})  = :VINFO
-convert_plevel(::Val{3})       = :VINFO
-convert_plevel(::Val{:VWARN})  = :VWARN
-convert_plevel(::Val{4})       = :VWARN
-convert_plevel(::Val{:VERROR}) = :VERROR
-convert_plevel(::Val{5})       = :VERROR
-
-####################################################
-#              convert_computemode
-####################################################
-
-convert_computemode(::Val{arch}) where {arch} = error("Unsupported architecture: $arch")
-
-convert_computemode(::Val{:cpu}) = :cpu
-convert_computemode(::Val{1})    = :cpu
-
-convert_computemode(::Val{:gpu}) = :gpu
-convert_computemode(::Val{2})    = :gpu
-
 
 ####################################################
 # tovector. 
@@ -163,66 +22,6 @@ function tovector(A::AbstractMatrix)::AbstractVector
                                      [col for col in eachcol(A)]
 end
 
-
-####################################################
-# apply_x0!, check_lvar!, check_uvar!
-# Functions to check user given arrays. 
-####################################################
-function apply_x0!(x0_::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::VecchiaCache)
-    if isnothing(iVecchiaMLE.x0) 
-        return
-    end
-
-    v = view(x0_, cache.diagL)
-    
-    # copy iVecchiaMLE.x0 to x0_ (they are different sizes!)
-    if !isnothing(iVecchiaMLE.lvar_diag) && !isnothing(iVecchiaMLE.uvar_diag)
-        if mapreduce(<, &, iVecchiaMLE.x0, iVecchiaMLE.lvar_diag) || mapreduce(>, &, iVecchiaMLE.x0, iVecchiaMLE.uvar_diag)       
-            @warn "User given x0 is not feasible. Setting x0 to have diagonal as average of uvar_diag and lvar_diag."
-            v .= 0.5 .* (iVecchiaMLE.uvar_diag .+ iVecchiaMLE.lvar_diag)
-        end
-    else
-        # if the user only gives x0, not lvar_diag or uvar_diag, check if we can take its log
-        if !mapreduce(x -> x > 0, &, iVecchiaMLE.x0) 
-            @warn "User given x0 is not feasible. Setting x0 to have diagonal as ones"
-            v .= 1.0
-        end
-        
-         
-        view(x0_, 1:cache.nnzL) .= iVecchiaMLE.x0        
-    end
-
-    # Clamp x0_
-    if !isnothing(iVecchiaMLE.lvar_diag) && !isnothing(iVecchiaMLE.uvar_diag)
-        v .= max.(iVecchiaMLE.lvar_diag, min.(iVecchiaMLE.uvar_diag, v))
-    else
-        clamp!(v, 1e-10, 1e10)
-    end
-    
-    # Add z values to x0_
-    view(x0_, (1:cache.n).+cache.nnzL) .= log.(v) 
-end
-
-# Function not used!
-function check_lvar!(lvar::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::VecchiaCache)
-    if !isnothing(iVecchiaMLE.lvar_diag)
-        view(lvar, cache.diagL) .= iVecchiaMLE.lvar_diag
-    else
-        # Always ensure that the diagonal coefficient Lᵢᵢ of the Vecchia approximation are strictly positive
-        view(lvar, cache.diagL) .= 1e-10
-    end
-end
-
-# Function not used!
-function check_uvar!(uvar::AbstractVector, iVecchiaMLE::VecchiaMLEInput, cache::VecchiaCache)    
-    if !isnothing(iVecchiaMLE.uvar_diag)
-        view(uvar, cache.diagL) .= iVecchiaMLE.uvar_diag
-    else
-        view(uvar, cache.diagL) .= 1e10
-    end
-end
-
-
 ####################################################
 # resolve_ptset
 # MD for resolving user given (or not) pset .   
@@ -232,24 +31,21 @@ resolve_ptset(n::Int, ::Nothing) = generate_safe_xyGrid(n)
 resolve_ptset(::Int, ptset::AbstractMatrix) = tovector(ptset)
 resolve_ptset(::Int, ptset::AbstractVector{<:AbstractVector}) = ptset
 
-
 ####################################################
-# resolve_sparistygen
+# resolve_sparsity_generator
 # MD for resolving user given (or not) 
 # sparsity pattern.   
 ####################################################
 
 # Cases where user gives a sparsity pattern (doesn't matter its contents, just as long as its of type AbstractVector{<:Unsigned} )
-resolve_sparistygen(::AbstractVector{<:Unsigned}, ::Val{:NN}) = :USERGIVEN
-resolve_sparistygen(::AbstractVector{<:Unsigned}, ::Val{:HNSW}) = :USERGIVEN
-resolve_sparistygen(::AbstractVector{<:Unsigned}, ::Val{:USERGIVEN}) = :USERGIVEN
-resolve_sparistygen(::Nothing, ::Val{:NN}) = :NN
-resolve_sparistygen(::Nothing, ::Val{:HNSW}) = :HNSW
+resolve_sparsity_generator(::AbstractVector{<:Unsigned}, ::Val{:NN}) = :USERGIVEN
+resolve_sparsity_generator(::AbstractVector{<:Unsigned}, ::Val{:HNSW}) = :USERGIVEN
+resolve_sparsity_generator(::AbstractVector{<:Unsigned}, ::Val{:USERGIVEN}) = :USERGIVEN
+resolve_sparsity_generator(::Nothing, ::Val{:NN}) = :NN
+resolve_sparsity_generator(::Nothing, ::Val{:HNSW}) = :HNSW
 
-# WARN: This should not happen, since this would be detected by validate_input. Just a fallback.
-resolve_sparistygen(::Nothing, ::Val{:USERGIVEN}) = :NN
-resolve_sparistygen(::AbstractVector, sym::Val{<:Symbol}) = error("Unsupported Sparsity pattern type: $(sym.val)")
-
+resolve_sparsity_generator(::Nothing, ::Val{:USERGIVEN}) = :NN
+resolve_sparsity_generator(::AbstractVector, sym::Val{<:Symbol}) = error("Unsupported Sparsity pattern type: $(sym.val)")
 
 ####################################################
 # is_csc_format   
@@ -284,7 +80,6 @@ end
 ####################################################
 # nn_to_csc   
 ####################################################
-
 
 """
     rows, colptr = nn_to_csc(sparmat::Matrix{Float64})
@@ -342,23 +137,3 @@ function nn_to_csc(sparmat::Matrix{Int})::Tuple{Vector{Int}, Vector{Int}}
 
     return rows, colptr
 end
-
-####################################################
-# get_vecchia_model   
-####################################################
-
-"""
-    model = get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)
-
-    Creates and returns a vecchia model based on the VecchiaMLEInput and point grid. 
-## Input arguments
-
-* `iVecchiaMLE`: The filled out VecchiaMLEInput struct
-## Output arguments
-
-* `model`: The Vecchia model based on the VecchiaMLEInput  
-"""
-get_vecchia_model(iVecchiaMLE::VecchiaMLEInput)::VecchiaModel =  get_vecchia_model(iVecchiaMLE, Val(iVecchiaMLE.arch))
-
-get_vecchia_model(iVecchiaMLE::VecchiaMLEInput, ::Val{:cpu}) = VecchiaModelCPU(iVecchiaMLE.samples, iVecchiaMLE)
-get_vecchia_model(iVecchiaMLE::VecchiaMLEInput, ::Val{:gpu}) = VecchiaModelGPU(iVecchiaMLE.samples, iVecchiaMLE)
