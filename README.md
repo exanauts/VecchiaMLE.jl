@@ -9,25 +9,26 @@
 
 ## Overview
 
-**VecchiaMLE.jl** is a Gaussian Process (GP) Machine Learning library written in Julia, which approximates the inverse cholesky factor of a GPs Covariance 
-matrix via a nonparametric optimization process. The nonzero entries of the inverse cholesky, L, are determined via the Vecchia Approximation - that is, 
-conditional depenencies are determined by local proximity to any given point. The values of L are recovered via optimizing the joint probability distribtuion 
-function (mean zero) to best match the given samples. Other regularization terms are implemented for stability and biasing purposes.
+**VecchiaMLE.jl** is a Julia package that approximates the inverse cholesky factor of a Gaussian process covariance  matrix via a nonparametric optimization process.
+The nonzero entries of the inverse cholesky, `L`, are determined via the Vecchia Approximation.
+The values of `L` are recovered via optimizing the joint probability distribtution function (mean zero) to best match the given samples.
 
-**VecchiaMLE.jl** requires the user to provide at the least the samples matrix and the accuracy of the Vecchia Approximation (number of conditioning points, which manifests as the number of nonzeros per row of L). Other parameters are available, including (but no limited to) the option for GPU utilization, print level, and providing an initial point x0 to coax the optimizer to a solution.   
+**VecchiaMLE.jl** requires the user to provide at the least the samples matrix and the accuracy of the Vecchia Approximation (number of conditioning points, which manifests as the number of nonzeros per row of L).
+Other parameters are available, including (but no limited to) the option for GPU utilization, print level, and providing an initial point x0 to coax the optimizer to a solution.   
 
-> **Note:** All samples (generated or provided) are assumed to have a zero-mean distribution.
+**Note:** All samples (generated or provided) are assumed to have a zero-mean distribution.
 
 The code is written to be flexible enough to be run on either cpu or gpu capable systems, however only CUDA capable gpu's are supported at the moment.
 
-## Installation and dependencies
+## Installation
 
-**VecchiaMLE.jl** requires the following packages for startup. Others may be necessary, depending on your use case. 
+This package is not registered but can be installed and tested through the Julia package manager:
 
-- **CUDA**: Required for gpu mode (if you plan on using it).
-- **MadNLP, MadNLPGPU**: We utilize the **MadNLP** optimizer as a default sovler. Other solvers available are **KNITRO** and **Ipopt**.
-- **NearestNeighbors, HNSW**: Either package can be specified for computation of the sparsity pattern of the inverse Cholesky.
-- **NLPModels**: Construction of the Optimization problem.
+```julia
+julia> ]
+pkg> add https://github.com/exanauts/VecchiaMLE.jl.git
+pkg> test VecchiaMLE
+```
 
 ## Configuration
 
