@@ -4,11 +4,12 @@ using LinearAlgebra
 using VecchiaMLE
 using CUDA
 using CUDA.CUSPARSE
+import KernelAbstractions as KA
 
 function VecchiaMLE.VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::CuMatrix{T};
                                  lvar_diag::Union{Nothing,CuVector{T}}=nothing, uvar_diag::Union{Nothing,CuVector{T}}=nothing, lambda::Real=0, format::Symbol=:coo, uplo::Symbol=:L) where T
     S = CuArray{T, 1, CUDA.DeviceMemory}
-    cache = create_vecchia_cache(I, J, samples, T(lambda), format, uplo)
+    cache = VecchiaMLE.create_vecchia_cache(I, J, samples, T(lambda), format, uplo)
 
     nvar = length(cache.rowsL) + length(cache.colptrL) - 1
     ncon = length(cache.colptrL) - 1
@@ -130,7 +131,7 @@ function VecchiaMLE.vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_
 
     # Launch the kernel
     backend = KA.get_backend(y)
-    kernel = vecchia_mul_kernel!(backend)
+    kernel = VecchiaMLE.vecchia_mul_kernel!(backend)
     kernel(y, hess_obj_vals, x, m, offsets, ndrange=n)
     KA.synchronize(backend)
     return y
@@ -142,7 +143,7 @@ function VecchiaMLE.vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix
     # Launch the kernel
     backend = KA.get_backend(samples)
     r = size(samples, 1)
-    kernel = vecchia_build_B_kernel!(backend)
+    kernel = VecchiaMLE.vecchia_build_B_kernel!(backend)
     kernel(hess_obj_vals, samples, lambda, rowsL, colptrL, m, r, ndrange=n)
     KA.synchronize(backend)
     return nothing
@@ -156,7 +157,7 @@ function VecchiaMLE.vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colp
 
     # launch the kernel
     backend = KA.get_backend(hrows)
-    kernel = vecchia_generate_hess_tri_structure_kernel!(backend)
+    kernel = VecchiaMLE.vecchia_generate_hess_tri_structure_kernel!(backend)
 
     f(x) = (x * (x+1)) ÷ 2
 
