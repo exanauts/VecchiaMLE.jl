@@ -2,6 +2,7 @@
 using VecchiaMLE
 using LinearAlgebra
 using SparseArrays
+using NLPModelsIpopt
 
 n = 400
 number_of_samples = 100

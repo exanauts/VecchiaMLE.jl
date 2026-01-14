@@ -2,6 +2,7 @@ module VecchiaMLE
 
 using BesselK
 using CUDA
+using CUDA.CUSPARSE
 using Distances
 using Distributions
 using HNSW
