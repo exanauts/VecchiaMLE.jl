@@ -1,3 +1,4 @@
+
 using VecchiaMLE
 using Test
 using JuMP
@@ -40,3 +41,9 @@ using MadNLPHSL
 if LIBHSL_isfunctional()
     include("test_linear_solver.jl")
 end
+
+using Vecchia
+using StaticArrays
+
+include("vecchiajl_ext.jl")
+

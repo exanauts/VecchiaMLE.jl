@@ -1,7 +1,7 @@
 name = "VecchiaMLE"
 uuid = "499233a1-c46f-47cc-ab67-5a37788e9870"
-authors = ["Caleb Derrickson (@CalebDerrickson), Alexis Montoison (@amontoison)"]
 version = "0.1.0"
+authors = ["Caleb Derrickson (@CalebDerrickson), Alexis Montoison (@amontoison)"]
 
 [deps]
 BesselK = "432ab697-7a72-484f-bc4a-bc531f5c819b"
@@ -10,8 +10,8 @@ Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 HNSW = "540f64fa-c57e-11e8-081c-41422cda4629"
 KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-NearestNeighbors = "b8a86587-4115-5ab1-83bc-aa920d37bbce"
 NLPModels = "a4795742-8479-5a88-8948-cc11e1c8c1a6"
+NearestNeighbors = "b8a86587-4115-5ab1-83bc-aa920d37bbce"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
@@ -19,9 +19,12 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [weakdeps]
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+Vecchia = "8d73829f-f4b0-474a-9580-cecc8e084068"
 
 [extensions]
 VecchiaMLECUDAExt = "CUDA"
+VecchiaMLEVecchiaExt = ["StaticArrays", "Vecchia"]
 
 [compat]
 BesselK = "0.5.7"
@@ -51,17 +54,18 @@ UnoSolver = "0.1.9"
 julia = "1.10"
 
 [extras]
+HSL = "34c5aeac-e683-54a6-a0e9-6e0fdc586c50"
+Ipopt = "b6b21f68-93f8-5de0-b562-5493be1d77c9"
+JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 MadNLP = "2621e9c9-9eb4-46b1-8089-e8c72242dfb6"
 MadNLPGPU = "d72a61cc-809d-412f-99be-fd81f4b8a598"
 MadNLPHSL = "7fb6135f-58fe-4112-84ca-653cf5be0c77"
 NLPModelsIpopt = "f4238b75-b362-5c4c-b852-0801c9a21d71"
-UnoSolver = "1baa60ac-02f7-4b39-a7a8-2f4f58486b05"
-HSL = "34c5aeac-e683-54a6-a0e9-6e0fdc586c50"
-Ipopt = "b6b21f68-93f8-5de0-b562-5493be1d77c9"
-JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 NLPModelsJuMP = "792afdf1-32c1-5681-94e0-d7bf7a5df49e"
 NLPModelsTest = "7998695d-6960-4d3a-85c4-e1bceb8cd856"
+StableRNGs = "860ef19b-820b-49d6-a774-d7a799459cd3"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+UnoSolver = "1baa60ac-02f7-4b39-a7a8-2f4f58486b05"
 
 [targets]
-test = ["CUDA", "Test", "JuMP", "Ipopt", "NLPModelsIpopt", "NLPModelsJuMP", "UnoSolver", "MadNLP", "MadNLPGPU", "MadNLPHSL", "NLPModelsTest", "HSL"]
+test = ["CUDA", "Test", "JuMP", "Ipopt", "NLPModelsIpopt", "NLPModelsJuMP", "UnoSolver", "MadNLP", "MadNLPGPU", "MadNLPHSL", "NLPModelsTest", "HSL", "Vecchia", "StaticArrays", "StableRNGs"]
