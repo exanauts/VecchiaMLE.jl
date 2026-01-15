@@ -1,6 +1,7 @@
 module VecchiaMLECUDAExt
 
 using LinearAlgebra
+using NLPModels
 using VecchiaMLE
 using CUDA
 using CUDA.CUSPARSE
