@@ -41,6 +41,8 @@ a ptset is not given, we fall back on a default locations set defined by the fun
 All that's left is to run the analysis. This is done in one line:
 
 ```@example HowToRun
+using NLPModelsIpopt
+
 rowsL, colptrL = sparsity_pattern(input)
 model = VecchiaModel(rowsL, colptrL, samples; format=:csc, uplo=:L)
 
