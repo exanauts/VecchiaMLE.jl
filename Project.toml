@@ -1,7 +1,7 @@
 name = "VecchiaMLE"
 uuid = "499233a1-c46f-47cc-ab67-5a37788e9870"
 version = "0.1.0"
-authors = ["Caleb Derrickson (@CalebDerrickson), Alexis Montoison (@amontoison)"]
+authors = ["Caleb Derrickson (@CalebDerrickson), Alexis Montoison (@amontoison)", "Chris Geoga (@cgeoga)"]
 
 [deps]
 KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"

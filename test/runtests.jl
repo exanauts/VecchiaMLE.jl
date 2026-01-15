@@ -32,32 +32,29 @@ function banded_U(n, k)
 end
 banded_L(n, k) = banded_U(n, k)'
 
-#=
 # Includes
 include("models/Jump_models.jl")
-include("models/VecchiaMLE_models.jl")
+#include("models/VecchiaMLE_models.jl")
 
 # Tests
-include("test_output.jl")
-include("test_cpu_compatible_with_jump.jl")
+#include("test_output.jl")
+#include("test_cpu_compatible_with_jump.jl")
 include("test_memory_allocation_cpu.jl")
-include("test_different_metrics.jl")
 
 if CUDA.has_cuda()
-    include("test_sparsity_pattern_hnsw.jl")
-    include("test_gpu_compatible_with_jump.jl")
+    #include("test_gpu_compatible_with_jump.jl")
     include("test_cpu_compatible_with_gpu.jl")
     include("test_memory_allocation_gpu.jl")
 end
 
-include("test_abnormal_ptset.jl")
-=#
 include("test_model_solver.jl")
+include("test_coo_vs_csc.jl")
 
+#using HSL
+#using MadNLPHSL
+
+# CG: getting MadNLP.SymbolicException() here.
 #=
-using HSL
-using MadNLPHSL
-
 if LIBHSL_isfunctional()
     include("test_linear_solver.jl")
 end

@@ -53,14 +53,18 @@ end
 
 function VecchiaModel(L::LowerTriangular{G, SparseMatrixCSC{G,Int64}}, samples; 
                       lvar_diag=nothing, uvar_diag=nothing, lambda=0.0) where {G}
-  (I, J, _) = findnz(L.data)
-  VecchiaModel(I, J, samples; lvar_diag, uvar_diag, lambda, uplo=:L, format=:coo)
+  parent = L.data
+  istril(parent) || throw(error("Your backing array in the LowerTriangular isn't actually lower triangular. Please call with, e.g., LowerTriangular(tril(L))."))
+  VecchiaModel(parent.rowval, parent.colptr, samples; lvar_diag, 
+               uvar_diag, lambda, uplo=:L, format=:csc)
 end
 
 function VecchiaModel(U::UpperTriangular{G, SparseMatrixCSC{G,Int64}}, samples; 
                       lvar_diag=nothing, uvar_diag=nothing, lambda=0.0) where {G}
-  (I, J, _) = findnz(U.data)
-  VecchiaModel(I, J, samples; lvar_diag, uvar_diag, lambda, uplo=:U, format=:coo)
+  parent = U.data
+  istriu(parent) || throw(error("Your backing array in the UpperTriangular isn't actually upper triangular. Please call with, e.g., UpperTriangular(triu(U))."))
+  VecchiaModel(parent.rowval, parent.colptr, samples; lvar_diag, 
+               uvar_diag, lambda, uplo=:U, format=:csc)
 end
 
 function create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T},
