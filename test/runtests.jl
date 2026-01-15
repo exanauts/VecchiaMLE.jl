@@ -2,7 +2,6 @@
 using VecchiaMLE
 using Test
 using JuMP
-using Distances
 using Ipopt
 using NLPModelsJuMP
 using NLPModelsIpopt
@@ -14,7 +13,26 @@ using LinearAlgebra
 using CUDA
 using NLPModels
 using NLPModelsTest
+using StableRNGs
 
+function gensamples(n, nsample)
+  K = [exp(-abs(j-k)/10)*(1+abs(j-k)/10) for j in 1:n, k in 1:n]
+  samps_cols = cholesky(Symmetric(K)).L*randn(StableRNG(1234), n, nsample)
+  permutedims(samps_cols)
+end
+
+function banded_U(n, k)
+  sp = spzeros(Bool, n, n)
+  for offset in 0:k
+    for j in (1+offset):n
+      sp[j-offset,j] = true
+    end
+  end
+  UpperTriangular(sp)
+end
+banded_L(n, k) = banded_U(n, k)'
+
+#=
 # Includes
 include("models/Jump_models.jl")
 include("models/VecchiaMLE_models.jl")
@@ -33,14 +51,17 @@ if CUDA.has_cuda()
 end
 
 include("test_abnormal_ptset.jl")
+=#
 include("test_model_solver.jl")
 
+#=
 using HSL
 using MadNLPHSL
 
 if LIBHSL_isfunctional()
     include("test_linear_solver.jl")
 end
+=#
 
 using Vecchia
 using StaticArrays

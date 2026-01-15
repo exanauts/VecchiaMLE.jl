@@ -4,18 +4,11 @@ version = "0.1.0"
 authors = ["Caleb Derrickson (@CalebDerrickson), Alexis Montoison (@amontoison)"]
 
 [deps]
-BesselK = "432ab697-7a72-484f-bc4a-bc531f5c819b"
-Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
-Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
-HNSW = "540f64fa-c57e-11e8-081c-41422cda4629"
 KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 NLPModels = "a4795742-8479-5a88-8948-cc11e1c8c1a6"
-NearestNeighbors = "b8a86587-4115-5ab1-83bc-aa920d37bbce"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
-SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
-Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [weakdeps]
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
@@ -27,11 +20,7 @@ VecchiaMLECUDAExt = "CUDA"
 VecchiaMLEVecchiaExt = ["StaticArrays", "Vecchia"]
 
 [compat]
-BesselK = "0.5.7"
 CUDA = "5.8.2"
-Distances = "0.10.12"
-Distributions = "0.25.120"
-HNSW = "0.1.5"
 HSL = "0.5.1"
 Ipopt = "1.10.6"
 JuMP = "1.27.0"
@@ -44,11 +33,8 @@ NLPModels = "0.21.5"
 NLPModelsIpopt = "0.10.4, 0.11"
 NLPModelsJuMP = "0.13.2"
 NLPModelsTest = "0.10.2"
-NearestNeighbors = "0.4.22"
 Random = "1.10"
 SparseArrays = "1.10"
-SpecialFunctions = "2.5.1"
-Statistics = "1.10"
 Test = "1.10"
 UnoSolver = "0.1.9"
 julia = "1.10"
@@ -68,4 +54,4 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 UnoSolver = "1baa60ac-02f7-4b39-a7a8-2f4f58486b05"
 
 [targets]
-test = ["CUDA", "Test", "JuMP", "Ipopt", "NLPModelsIpopt", "NLPModelsJuMP", "UnoSolver", "MadNLP", "MadNLPGPU", "MadNLPHSL", "NLPModelsTest", "HSL", "Vecchia", "StaticArrays", "StableRNGs"]
+test = ["Test", "JuMP", "Ipopt", "NLPModelsIpopt", "NLPModelsJuMP", "UnoSolver", "MadNLP", "MadNLPGPU", "MadNLPHSL", "NLPModelsTest", "HSL", "StableRNGs", "CUDA", "Vecchia", "StaticArrays"]

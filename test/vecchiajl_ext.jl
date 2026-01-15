@@ -5,8 +5,8 @@
   # Note that each _column_ of sim is an iid replicate, in keeping with formatting
   # standards of the many R packages for GPs. In this demonstration, n is small
   # and the number of replicates is large to demonstrate asymptotic correctness.
-  pts = rand(SVector{2,Float64}, 100)
-  z   = randn(length(pts), 1000)
+  pts = rand(StableRNG(12345), SVector{2,Float64}, 100)
+  z   = randn(StableRNG(123), length(pts), 1000)
   K   = Symmetric([exp(-norm(x-y)) for x in pts, y in pts])
   sim = cholesky(K).L*z
 
@@ -16,7 +16,7 @@
   # the permutation for you to use with subsequent data operations. See the docs
   # and myriad extensions of Vecchia.jl for more information on ordering and
   # conditioning set design options.
-  (perm, nlp) = VecchiaModel(pts, sim, RandomOrdering(), KNNConditioning(10);
+  (perm, nlp) = VecchiaModel(pts, sim, RandomOrdering(StableRNG(1234)), KNNConditioning(10);
                              lvar_diag=fill(inv(sqrt(1.0)),  length(pts)),
                              uvar_diag=fill(inv(sqrt(1e-2)), length(pts)),
                              lambda=1e-3)

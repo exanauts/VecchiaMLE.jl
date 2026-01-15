@@ -1,14 +1,4 @@
 """
-Specification for the Sparsity Pattern generation algorithm. 
-
-## Supported Sparsity Patterns
-- `NearestNeighbors` (`:NN`) : Based on https://github.com/KristofferC/NearestNeighbors.jl
-- `HNSW` (`:HNSW`) : Based on https://github.com/JuliaNeighbors/HNSW.jl
-- `Custom` (`:USERGIVEN`) : Given by user. You don't need to fill this field out, but the given sparsity pattern must be in CSC format. 
-"""
-const SPARSITY_GEN = (:NN, :HNSW, :USERGIVEN)
-
-"""
 Internal struct from which to fetch persisting objects in the optimization function.
 There is no need for a user to mess with this!
 
@@ -53,67 +43,3 @@ mutable struct VecchiaModel{T, S, VI, M} <: AbstractNLPModel{T, S}
     counters::Counters
     cache::VecchiaCache{T, S, VI, M}
 end
-
-"""
-Input to the VecchiaMLE analysis.
-
-## Fields
-
-- `k::Int`: Number of neighbors, representing the number of conditioning points in the Vecchia Approximation.
-- `samples::M`: Samples to generate the output. Each sample should match the length of the `observed_pts` vector.
-
-## Keyword Arguments
-
-* ptset::AbstractVector     # The locations of the analysis. May be passed as a matrix or vector of vectors.
-* rowsL::AbstractVector     # The sparsity pattern rows of L if the user gives one. MUST BE IN CSC FORMAT!
-* colptrL::AbstractVector   # The column pointer of L if the user gives one. MUST BE IN CSC FORMAT!
-* metric::Distances.metric  # The metric by which nearest neighbors are determined. Defaults to Euclidean.
-* sparsitygen::Symbol       # The method by which to generate a sparsity pattern. See SPARSITY_GEN.
-"""
-mutable struct VecchiaMLEInput{M, V, VI}
-    n::Int 
-    k::Int 
-    samples::M
-    number_of_samples::Int
-    ptset::V
-    rowsL::VI
-    colptrL::VI
-    metric::Distances.Metric
-    sparsitygen::Symbol
-end
-
-function VecchiaMLEInput(
-    n::Int,
-    k::Int, 
-    samples::M,
-    number_of_samples::Int; 
-    ptset::V=generate_safe_xyGrid(n),
-    rowsL::VI=nothing,
-    colptrL::VI=nothing,
-    metric::Distances.Metric=Distances.Euclidean(),
-    sparsitygen::Symbol=:NN,
-) where
-    {
-        M  <: AbstractMatrix, 
-        V  <: Union{AbstractVector, AbstractMatrix},
-        VI <: Union{Nothing, AbstractVector},
-    }
-    ptset_ = resolve_ptset(n, ptset)
-    n_::Int = length(ptset_)
-
-    rowsL = resolve_rowsL(rowsL, n_, k)
-    colptrL = resolve_colptrL(colptrL, n_)
-    return VecchiaMLEInput{M, typeof(ptset_), typeof(rowsL)}(
-        n_,
-        k,
-        samples,
-        number_of_samples,
-        ptset_,
-        rowsL,
-        colptrL,
-        metric,
-        sparsitygen,
-    )
-end
-
-VecchiaMLEInput(k::Int, samples; kwargs...) = VecchiaMLEInput(size(samples, 2), k, samples, size(samples, 1); kwargs...)

@@ -1,5 +1,6 @@
 function VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T};
-                      lvar_diag::Union{Nothing,Vector{T}}=nothing, uvar_diag::Union{Nothing,Vector{T}}=nothing,
+                      lvar_diag::Union{Nothing,Vector{T}}=nothing, 
+                      uvar_diag::Union{Nothing,Vector{T}}=nothing,
                       lambda::Real=0, format::Symbol=:coo, uplo::Symbol=:L) where T
     S = Vector{T}
     cache = create_vecchia_cache(I, J, samples, T(lambda), format, uplo)
@@ -48,6 +49,18 @@ function VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T};
     )
     
     return VecchiaModel(meta, Counters(), cache)
+end
+
+function VecchiaModel(L::LowerTriangular{G, SparseMatrixCSC{G,Int64}}, samples; 
+                      lvar_diag=nothing, uvar_diag=nothing, lambda=0.0) where {G}
+  (I, J, _) = findnz(L.data)
+  VecchiaModel(I, J, samples; lvar_diag, uvar_diag, lambda, uplo=:L, format=:coo)
+end
+
+function VecchiaModel(U::UpperTriangular{G, SparseMatrixCSC{G,Int64}}, samples; 
+                      lvar_diag=nothing, uvar_diag=nothing, lambda=0.0) where {G}
+  (I, J, _) = findnz(U.data)
+  VecchiaModel(I, J, samples; lvar_diag, uvar_diag, lambda, uplo=:U, format=:coo)
 end
 
 function create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T},
