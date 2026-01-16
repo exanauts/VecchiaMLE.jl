@@ -1,4 +1,3 @@
-
 @testset begin "Vecchia.jl extension"
 
   samples = gensamples(100, 75)
@@ -12,6 +11,4 @@
                              lambda=1e-3)
 
   madnlp(nlp; tol=1e-10)
-
 end
-

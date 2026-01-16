@@ -1,7 +1,10 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+MadNLP = "2621e9c9-9eb4-46b1-8089-e8c72242dfb6"
 NLPModelsIpopt = "f4238b75-b362-5c4c-b852-0801c9a21d71"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 VecchiaMLE = "499233a1-c46f-47cc-ab67-5a37788e9870"
+Vecchia = "8d73829f-f4b0-474a-9580-cecc8e084068"
 
 [compat]
 Documenter = "1.0"
