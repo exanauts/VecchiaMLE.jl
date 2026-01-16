@@ -1,0 +1,17 @@
+
+@testset begin "Vecchia.jl extension"
+
+  samples = gensamples(100, 75)
+  pts     = [SVector{1,Float64}(j) for j in 1:100]
+
+  (perm, nlp) = VecchiaModel(pts, permutedims(samples), 
+                             RandomOrdering(StableRNG(1234)), 
+                             KNNConditioning(10);
+                             lvar_diag=fill(inv(sqrt(1.0)),  length(pts)),
+                             uvar_diag=fill(inv(sqrt(1e-2)), length(pts)),
+                             lambda=1e-3)
+
+  madnlp(nlp; tol=1e-10)
+
+end
+

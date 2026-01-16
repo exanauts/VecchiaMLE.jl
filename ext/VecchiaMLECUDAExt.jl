@@ -172,6 +172,7 @@ function VecchiaMLE.vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colp
     return nothing
 end
 
+#=
 function VecchiaMLE.generate_samples(MatCov::CuMatrix{Float64}, number_of_samples::Int, ::Val{:gpu})
     S = copy(MatCov)
     V = CUDA.randn(Float64, number_of_samples, size(S, 1))
@@ -189,5 +190,6 @@ function VecchiaMLE.generate_samples(::CuMatrix{Float64}, ::Int, ::Val{:cpu})
 end
 
 VecchiaMLE.generate_samples(MatCov::CuMatrix{Float64}, number_of_samples::Int; arch::Symbol=:gpu) = generate_samples(MatCov, number_of_samples, Val(arch))
+=#
 
 end

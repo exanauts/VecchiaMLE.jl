@@ -1,5 +1,6 @@
+
+#=
 struct VecchiaCacheJump
-    samples_outerprod::Matrix{Float64}
     samples::Matrix{Float64}
     n::Int
     M::Int
@@ -25,18 +26,18 @@ function create_vecchia_cache_jump(samples::AbstractMatrix, Sparsity, lambda, up
     end
     # Swap the two around for a second
     nnz_L = length(rows)
-    samples_outerprod = sum(samples[k, :] * samples[k, :]' for k in 1:M)
 
-    return VecchiaCacheJump(samples_outerprod, samples, n, M, colptr, nnz_L, rows, diag, lambda, uplo)
+    return VecchiaCacheJump(samples, n, M, colptr, nnz_L, rows, diag, lambda, uplo)
 end
+=#
 
-function obj_vecchia(w::AbstractVector, cache::VecchiaCacheJump)
+function obj_vecchia(w::AbstractVector, samples, lambda, cache::VecchiaCache)
     t1 = -cache.M * sum(w[(cache.nnzL+1):end])
     # This looks stupid, but its better than putting it on one line
     t2 = sum(
             sum(
                 sum(
-                    w[r] * cache.samples[k, cache.rowsL[r]]
+                    w[r] * samples[k, cache.rowsL[r]]
                     for r in cache.colptrL[j]:(cache.colptrL[j+1] - 1)
                 )^2
                 for j in 1:cache.n
@@ -46,9 +47,9 @@ function obj_vecchia(w::AbstractVector, cache::VecchiaCacheJump)
 
     t3 = sum(w[i]^2 for i in 1:cache.nnzL if !(i in cache.diagL))
 
-    return t1 + 0.5 * t2 + 0.5 * cache.lambda * t3
+    return t1 + 0.5 * t2 + 0.5 * lambda * t3
 end
 
-function cons_vecchia(w::AbstractVector, cache::VecchiaCacheJump)
+function cons_vecchia(w::AbstractVector, cache::VecchiaCache)
     return [exp(w[i]) - w[j] for (i, j) in zip((1:cache.n).+cache.nnzL, cache.diagL)]
 end
