@@ -4,19 +4,18 @@ version = "0.1.0"
 authors = ["Caleb Derrickson (@CalebDerrickson), Alexis Montoison (@amontoison)", "Chris Geoga (@cgeoga)"]
 
 [deps]
-KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 NLPModels = "a4795742-8479-5a88-8948-cc11e1c8c1a6"
-Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [weakdeps]
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Vecchia = "8d73829f-f4b0-474a-9580-cecc8e084068"
 
 [extensions]
-VecchiaMLECUDAExt = "CUDA"
+VecchiaMLECUDAExt = ["CUDA", "KernelAbstractions"]
 VecchiaMLEVecchiaExt = ["StaticArrays", "Vecchia"]
 
 [compat]
@@ -33,7 +32,6 @@ NLPModels = "0.21.5"
 NLPModelsIpopt = "0.10.4, 0.11"
 NLPModelsJuMP = "0.13.2"
 NLPModelsTest = "0.10.2"
-Random = "1.10"
 SparseArrays = "1.10"
 Test = "1.10"
 UnoSolver = "0.1.9"

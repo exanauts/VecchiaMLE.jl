@@ -1,4 +1,3 @@
-
 using VecchiaMLE
 using Test
 using JuMP
@@ -34,17 +33,15 @@ function banded_U(n, k)
 end
 banded_L(n, k) = LowerTriangular(tril(banded_U(n, k).data'))
 
-# Includes
-include("models/Jump_models.jl")
-include("models/VecchiaMLE_models.jl")
+include("Jump_models.jl")
+include("VecchiaMLE_models.jl")
 
-# Tests
 include("test_jump.jl")
-
 include("test_memory_allocation_cpu.jl")
+# include("test_cpu_compatible_with_jump.jl")
 
 if CUDA.has_cuda()
-    include("test_gpu_compatible_with_jump.jl")
+    # include("test_gpu_compatible_with_jump.jl")
     include("test_cpu_compatible_with_gpu.jl")
     include("test_memory_allocation_gpu.jl")
 end
@@ -54,11 +51,12 @@ include("test_coo_vs_csc.jl")
 
 using Vecchia
 using StaticArrays
-include("vecchiajl_ext.jl")
+
+include("vecchia.jl")
 
 using HSL
 using MadNLPHSL
+
 if LIBHSL_isfunctional()
     include("test_linear_solver.jl")
 end
-

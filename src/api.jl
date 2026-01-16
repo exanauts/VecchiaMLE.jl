@@ -1,3 +1,73 @@
+function vecchia_mul!(y::Vector{T}, B::Vector{Matrix{T}}, hess_obj_vals::Vector{T},
+                      x::Vector{T}, n::Int, m::Vector{Int}, offsets::Vector{Int}) where T <: AbstractFloat
+    pos = 0
+    for j = 1:n
+        Bj = B[j]
+        yj = view(y, pos+1:pos+m[j])
+        xj = view(x, pos+1:pos+m[j])
+        mul!(yj, Bj, xj)
+        pos = pos + m[j]
+    end
+    return y
+end
+
+function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, lambda::T, rowsL::Vector{Int},
+                          colptrL::Vector{Int}, hess_obj_vals::Vector{T}, n::Int, m::Vector{Int}) where T <: AbstractFloat
+    pos = 0
+    for j in 1:n
+        for s in 1:m[j]
+            for t in 1:m[j]
+                vt = view(samples, :, rowsL[colptrL[j] + t - 1])
+                vs = view(samples, :, rowsL[colptrL[j] + s - 1])
+                B[j][t, s] = dot(vt, vs)
+                # Ridge regularization
+                if (lambda != 0) && (s == t) && (s != 1)
+                    # s == 1 means that we treat the variable related to the diagonal coefficient of column j
+                    # of the sparse Cholesky factor.
+                    #
+                    # Only update diagonal coefficient of the Hessian that are
+                    # related to the variables that represent the off-diagonal terms
+                    # of the sparse Cholesky factor.
+                    B[j][t, s] += lambda
+                end
+                # Lower triangular part of the block Bⱼ
+                if s ≤ t
+                    pos = pos + 1
+                    hess_obj_vals[pos] = B[j][t, s]
+                end
+            end
+        end
+    end
+
+    return nothing
+end
+
+for INT in (:Int32, :Int64)
+    @eval begin
+        function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::Vector{Int},
+                                                      hrows::Vector{$INT}, hcols::Vector{$INT})
+            carry = 1
+            idx = 1
+            for i in 1:n
+                m = colptr_diff[i]
+                    for j in 1:m
+                        view(hrows, (0:(m-j)).+carry) .= (j:m).+(idx-1)
+                        fill!(view(hcols, carry:carry+m-j), idx + j - 1)
+                        carry += m - j + 1
+                    end
+                idx += m
+            end
+
+            #Then need the diagonal tail
+            idx_to = idx + nnzh - carry
+            view(hrows, carry:nnzh) .= idx:idx_to
+            view(hcols, carry:nnzh) .= idx:idx_to
+
+            return hrows, hcols
+        end
+    end
+end
+
 # The objective of the optimization problem.
 function NLPModels.obj(nlp::VecchiaModel, x::AbstractVector)
     @lencheck nlp.meta.nvar x

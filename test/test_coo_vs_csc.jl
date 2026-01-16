@@ -1,5 +1,4 @@
 @testset "COO vs CSC constructor" begin
-
     samples = gensamples(100, 75)    
 
     U_pattern   = banded_U(100,5)
@@ -11,5 +10,4 @@
     res_csc = madnlp(model_U_csc; tol=1e-10).solution
     res_coo = madnlp(model_U_coo; tol=1e-10).solution
     @test res_csc ≈ res_coo
-
 end

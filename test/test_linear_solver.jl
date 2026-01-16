@@ -1,5 +1,4 @@
 @testset "Linear_Solvers -- $solver" for solver in (:ma27, :ma57)
-
     samples = gensamples(100,75)
     U       = banded_U(100, 5)
     model   = VecchiaModel(U, samples)
