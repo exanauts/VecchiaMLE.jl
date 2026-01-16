@@ -9,9 +9,8 @@ makedocs(
                            collapselevel = 1),
   sitename = "VecchiaMLE.jl",
   pages = ["Home" => "index.md",
-    "API" => "api.md",
-    "Vecchia model" => "vecchia_model.md",
-    "Tutorials" => "how_to_run.md"]
+            # "Tutorials" => "vecchia_model.md",
+          ]
 )
 
 deploydocs(

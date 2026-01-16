@@ -6,11 +6,7 @@ using NLPModelsIpopt
 
 n = 400
 number_of_samples = 100
-
-params = [5.0, 0.2, 2.25, 0.25]
-ptset = VecchiaMLE.generate_safe_xyGrid(n)
-MatCov = generate_MatCov(params, ptset)
-samples = generate_samples(MatCov, number_of_samples)
+samples = ...
 
 P = ones(n, n)
 P = tril(P)
@@ -29,34 +25,7 @@ using NLPModelsIpopt
 
 n = 400
 number_of_samples = 100
-
-params = [5.0, 0.2, 2.25, 0.25]
-ptset = VecchiaMLE.generate_safe_xyGrid(n)
-MatCov = generate_MatCov(params, ptset)
-samples = generate_samples(MatCov, number_of_samples)
-
-P = ones(n, n)
-P = triu(P)
-P = sparse(P)
-I, J, V = findnz(P)
-nlp_U = VecchiaModel(I, J, samples; format=:coo, uplo=:U)
-output = ipopt(nlp_U)
-U = recover_factor(nlp_U, output.solution)
-```
-
-```@example VecchiaModel_U
-using VecchiaMLE
-using LinearAlgebra
-using SparseArrays
-using NLPModelsIpopt
-
-n = 400
-number_of_samples = 100
-
-params = [5.0, 0.2, 2.25, 0.25]
-ptset = VecchiaMLE.generate_safe_xyGrid(n)
-MatCov = generate_MatCov(params, ptset)
-samples = generate_samples(MatCov, number_of_samples)
+samples = ...
 
 P = ones(n, n)
 P = triu(P)
@@ -71,6 +40,7 @@ U = recover_factor(nlp_U, output.solution)
 using VecchiaMLE
 using Vecchia
 using StaticArrays
+using LinearAlgebra
 
 # Generate some fake data with an exponential covariance function.
 # Note that each _column_ of sim is an iid replicate, in keeping with formatting
@@ -79,7 +49,7 @@ using StaticArrays
 pts = rand(SVector{2,Float64}, 100)
 z   = randn(length(pts), 1000)
 K   = Symmetric([exp(-norm(x-y)) for x in pts, y in pts])
-sim = cholesky(K).L*z
+sim = cholesky(K).L * z
 
 # Create a VecchiaModel using the options specified by Vecchia.jl, in
 # particular choosing an ordering (in this case RandomOrdering()) and a
