@@ -133,7 +133,7 @@ function VecchiaMLE.vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_
 
     # Launch the kernel
     backend = KernelAbstractions.get_backend(y)
-    kernel = VecchiaMLE.vecchia_mul_kernel!(backend)
+    kernel = vecchia_mul_kernel!(backend)
     kernel(y, hess_obj_vals, x, m, offsets, ndrange=n)
     KernelAbstractions.synchronize(backend)
     return y
@@ -145,7 +145,7 @@ function VecchiaMLE.vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix
     # Launch the kernel
     backend = KernelAbstractions.get_backend(samples)
     r = size(samples, 1)
-    kernel = VecchiaMLE.vecchia_build_B_kernel!(backend)
+    kernel = vecchia_build_B_kernel!(backend)
     kernel(hess_obj_vals, samples, lambda, rowsL, colptrL, m, r, ndrange=n)
     KernelAbstractions.synchronize(backend)
     return nothing
@@ -159,7 +159,7 @@ function VecchiaMLE.vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colp
 
     # launch the kernel
     backend = KernelAbstractions.get_backend(hrows)
-    kernel = VecchiaMLE.vecchia_generate_hess_tri_structure_kernel!(backend)
+    kernel = vecchia_generate_hess_tri_structure_kernel!(backend)
 
     f(x) = (x * (x+1)) ÷ 2
 
