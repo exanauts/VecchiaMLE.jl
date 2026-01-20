@@ -1,18 +1,18 @@
-using Documenter, VecchiaMLE
+using Documenter, NonparametricVecchia
 
 makedocs(
-  modules = [VecchiaMLE],
+  modules = [NonparametricVecchia],
   doctest = true,
   linkcheck = true,
   format = Documenter.HTML(ansicolor = true,
                            prettyurls = get(ENV, "CI", nothing) == "true",
                            collapselevel = 1),
-  sitename = "VecchiaMLE.jl",
+  sitename = "NonparametricVecchia.jl",
   pages = ["Home" => "index.md"],  # "Tutorials" => "vecchia_model.md"
 )
 
 deploydocs(
-  repo = "github.com/exanauts/VecchiaMLE.jl.git",
+  repo = "github.com/exanauts/NonparametricVecchia.jl.git",
   push_preview = true,
   devbranch = "master",
 )

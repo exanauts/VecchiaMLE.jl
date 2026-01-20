@@ -1,17 +1,18 @@
-module VecchiaMLECUDAExt
+module NonparametricVecchiaCUDAExt
 
 using LinearAlgebra
 using NLPModels
-using VecchiaMLE
+using NonparametricVecchia
 using CUDA
 using CUDA.CUSPARSE
 using KernelAbstractions
 
-function VecchiaMLE.VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::CuMatrix{T};
-                                 lvar_diag::Union{Nothing,CuVector{T}}=nothing, uvar_diag::Union{Nothing,CuVector{T}}=nothing,
-                                 lambda::Real=0, format::Symbol=:coo, uplo::Symbol=:L) where T
+function NonparametricVecchia.VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::CuMatrix{T};
+                                           lvar_diag::Union{Nothing,CuVector{T}}=nothing, 
+                                           uvar_diag::Union{Nothing,CuVector{T}}=nothing,
+                                           lambda::Real=0, format::Symbol=:coo, uplo::Symbol=:L) where T
     S = CuArray{T, 1, CUDA.DeviceMemory}
-    cache = VecchiaMLE.create_vecchia_cache(I, J, samples, T(lambda), format, uplo)
+    cache = NonparametricVecchia.create_vecchia_cache(I, J, samples, T(lambda), format, uplo)
 
     nvar = length(cache.rowsL) + length(cache.colptrL) - 1
     ncon = length(cache.colptrL) - 1
@@ -60,8 +61,8 @@ function VecchiaMLE.VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::CuMatr
 end
 
 
-function VecchiaMLE.create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::CuMatrix{T},
-                                         lambda::T, format::Symbol, uplo::Symbol) where {T}
+function NonparametricVecchia.create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples::CuMatrix{T},
+                                                   lambda::T, format::Symbol, uplo::Symbol) where {T}
     S = CuArray{T, 1, CUDA.DeviceMemory}
     Msamples, n = size(samples)
 
@@ -95,7 +96,7 @@ function VecchiaMLE.create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples
     m = CuVector{Int}(m)
 
     hess_obj_vals = S(undef, nnzh_tri_obj)
-    VecchiaMLE.vecchia_build_B!(B, samples, lambda, rowsL, colptrL, hess_obj_vals, n, m)
+    NonparametricVecchia.vecchia_build_B!(B, samples, lambda, rowsL, colptrL, hess_obj_vals, n, m)
 
     if uplo == :L
         diagL = colptrL[1:n]
@@ -107,7 +108,7 @@ function VecchiaMLE.create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples
     end
     buffer = S(undef, nnzL)
 
-    return VecchiaMLE.VecchiaCache{eltype(S), S, typeof(rowsL), typeof(B[1])}(
+    return NonparametricVecchia.VecchiaCache{eltype(S), S, typeof(rowsL), typeof(B[1])}(
         n, Msamples, nnzL,
         colptrL, rowsL, diagL,
         m, offsets, B, nnzh_tri_obj,
@@ -116,7 +117,7 @@ function VecchiaMLE.create_vecchia_cache(I::Vector{Int}, J::Vector{Int}, samples
     )
 end
 
-function VecchiaMLE.recover_factor(nlp::VecchiaModel{T,<:CuVector{T}}, solution::CuVector{T}) where T
+function NonparametricVecchia.recover_factor(nlp::VecchiaModel{T,<:CuVector{T}}, solution::CuVector{T}) where T
     n = nlp.cache.n
     colptr = nlp.cache.colptrL
     rowval = nlp.cache.rowsL
@@ -126,8 +127,8 @@ function VecchiaMLE.recover_factor(nlp::VecchiaModel{T,<:CuVector{T}}, solution:
     return factor
 end
 
-function VecchiaMLE.vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_obj_vals::CuVector{T},
-                                 x::CuVector{T}, n::Int, m::CuVector{Int}, offsets::CuVector{Int}) where T <: AbstractFloat
+function NonparametricVecchia.vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_obj_vals::CuVector{T},
+                                           x::CuVector{T}, n::Int, m::CuVector{Int}, offsets::CuVector{Int}) where T <: AbstractFloat
     # Reset the vector y
     fill!(y, zero(T))
 
@@ -139,9 +140,9 @@ function VecchiaMLE.vecchia_mul!(y::CuVector{T}, B::Vector{<:CuMatrix{T}}, hess_
     return y
 end
 
-function VecchiaMLE.vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix{T}, lambda::T,
-	                                 rowsL::CuVector{Int}, colptrL::CuVector{Int}, hess_obj_vals::CuVector{T},
-	                                 n::Int, m::CuVector{Int}) where T <: AbstractFloat
+function NonparametricVecchia.vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix{T}, lambda::T,
+                                               rowsL::CuVector{Int}, colptrL::CuVector{Int}, hess_obj_vals::CuVector{T},
+                                               n::Int, m::CuVector{Int}) where T <: AbstractFloat
     # Launch the kernel
     backend = KernelAbstractions.get_backend(samples)
     r = size(samples, 1)
@@ -151,8 +152,8 @@ function VecchiaMLE.vecchia_build_B!(B::Vector{<:CuMatrix{T}}, samples::CuMatrix
     return nothing
 end
 
-function VecchiaMLE.vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::CuVector{Int}, 
-                                                         hrows::CuVector{Int}, hcols::CuVector{Int})
+function NonparametricVecchia.vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::CuVector{Int}, 
+                                                                   hrows::CuVector{Int}, hcols::CuVector{Int})
     # reset hrows, hcols
     fill!(hrows, one(Int))
     fill!(hcols, one(Int))

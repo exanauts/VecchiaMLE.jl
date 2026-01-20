@@ -1,4 +1,4 @@
-# [VecchiaMLE.jl documentation](@id Home)
+# [NonparametricVecchia.jl documentation](@id Home)
 
 ## Overview
 
@@ -9,6 +9,6 @@ The Cholesky factor is computed via the Vecchia approximation, which is sparse a
 
 ```julia
 julia> ]
-pkg> add https://github.com/exanauts/VecchiaMLE.jl.git
-pkg> test VecchiaMLE
+pkg> add https://github.com/exanauts/NonparametricVecchia.jl.git
+pkg> test NonparametricVecchia
 ```

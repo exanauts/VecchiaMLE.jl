@@ -1,4 +1,4 @@
-name = "VecchiaMLE"
+name = "NonparametricVecchia"
 uuid = "499233a1-c46f-47cc-ab67-5a37788e9870"
 version = "0.1.0"
 authors = ["Caleb Derrickson (@CalebDerrickson), Alexis Montoison (@amontoison)", "Chris Geoga (@cgeoga)"]
@@ -15,8 +15,8 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Vecchia = "8d73829f-f4b0-474a-9580-cecc8e084068"
 
 [extensions]
-VecchiaMLECUDAExt = ["CUDA", "KernelAbstractions"]
-VecchiaMLEVecchiaExt = ["StaticArrays", "Vecchia"]
+NonparametricVecchiaCUDAExt = ["CUDA", "KernelAbstractions"]
+NonparametricVecchiaVecchiaExt = ["StaticArrays", "Vecchia"]
 
 [compat]
 CUDA = "5.8.2"
