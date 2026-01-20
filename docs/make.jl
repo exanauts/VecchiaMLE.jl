@@ -14,5 +14,5 @@ makedocs(
 deploydocs(
   repo = "github.com/exanauts/NonparametricVecchia.jl.git",
   push_preview = true,
-  devbranch = "master",
+  devbranch = "main",
 )
