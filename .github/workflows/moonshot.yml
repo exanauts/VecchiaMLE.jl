@@ -36,12 +36,12 @@ jobs:
           Pkg.activate(".")
           path_HSL_jll = "/scratch/github-actions/actions_runner_hsl/HSL_jll.jl.v" * ENV["HSL_VERSION"]
           Pkg.develop(path=path_HSL_jll)
-      - name: Test VecchiaMLE.jl
+      - name: Test NonparametricVecchia.jl
         shell: julia --color=yes {0}
         run: |
           using Pkg
           Pkg.develop(path=".")
-          Pkg.test("VecchiaMLE")
+          Pkg.test("NonparametricVecchia")
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v5
         with:
