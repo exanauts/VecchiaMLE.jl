@@ -5,11 +5,11 @@
         k = 3
         number_of_samples = 100
         params = [5.0, 0.2, 2.25, 0.25]
-        xyGrid = VecchiaMLE.generate_xyGrid(n)
+        xyGrid = NonparametricVecchia.generate_xyGrid(n)
 
-        MatCov = VecchiaMLE.generate_MatCov(params, xyGrid)
-        samples = VecchiaMLE.generate_samples(MatCov, number_of_samples; arch=:cpu)
-        Sparsity = VecchiaMLE.sparsity_pattern(xyGrid, k)
+        MatCov = NonparametricVecchia.generate_MatCov(params, xyGrid)
+        samples = NonparametricVecchia.generate_samples(MatCov, number_of_samples; arch=:cpu)
+        Sparsity = NonparametricVecchia.sparsity_pattern(xyGrid, k)
 
         @testset "uplo = $uplo" for uplo in (:L, :U)
             if uplo == :U
@@ -43,8 +43,8 @@
             L_jump = SparseMatrixCSC(cache.n, cache.n, cache.colptrL, cache.rowsL, value.(w)[1:cache.nnzL])
             L_jump = uplo == :L ? LowerTriangular(L_jump) : UpperTriangular(L_jump)
 
-            # Get result from VecchiaMLE
-            input = VecchiaMLE.VecchiaMLEInput(n, k, samples, number_of_samples; ptset=xyGrid)
+            # Get result from NonparametricVecchia
+            input = NonparametricVecchia.NonparametricVecchiaInput(n, k, samples, number_of_samples; ptset=xyGrid)
             rowsL, colptrL = sparsity_pattern(input)
             model = VecchiaModel(rowsL, colptrL, samples; lambda=lambda, format=:csc, uplo=uplo)
             output = madnlp(model)

@@ -7,12 +7,12 @@
 
         @testset "uplo = $uplo" for (uplo, pattern) in ((:U, U), (:L, L))
 
-            # Get result from VecchiaMLE on CPU
+            # Get result from NonparametricVecchia on CPU
             model  = VecchiaModel(pattern, samples)
             output = madnlp(model)
             W_cpu  = recover_factor(model, output.solution)
 
-            # Get result from VecchiaMLE on GPU
+            # Get result from NonparametricVecchia on GPU
             model  = VecchiaModel(pattern, CuMatrix(samples))
             output = madnlp(model)
             W_gpu  = recover_factor(model, output.solution)

@@ -5,13 +5,13 @@
 
 =#
 
-function VecchiaMLE_models(n, k, samples, number_of_samples, Sparsity, estimationString)
+function NonparametricVecchia_models(n, k, samples, number_of_samples, Sparsity, estimationString)
     if estimationString == "Row"
-        return VecchiaMLE_Row(n, k, samples, number_of_samples, Sparsity)
+        return NonparametricVecchia_Row(n, k, samples, number_of_samples, Sparsity)
     elseif estimationString == "Matrix_Sparse" 
-        return VecchiaMLE_Matrix_Sparse(n, k, samples, number_of_samples, Sparsity)
+        return NonparametricVecchia_Matrix_Sparse(n, k, samples, number_of_samples, Sparsity)
     elseif estimationString == "MadNLPGPU"
-        return VecchiaMLE_Row_Right_MadNLPGPU(n, k, samples, number_of_samples, Sparsity)
+        return NonparametricVecchia_Row_Right_MadNLPGPU(n, k, samples, number_of_samples, Sparsity)
     else
         println("estimationString incorrect. called ", estimationString)
         return nothing
@@ -22,7 +22,7 @@ end
     These functions perform the best in their category (by row or matrix). 
 =#
 
-function VecchiaMLE_Row(n, k, samples, number_of_samples, Sparsity)
+function NonparametricVecchia_Row(n, k, samples, number_of_samples, Sparsity)
 
     L = spzeros(n, n)
     model_sum = Vector{AffExpr}(undef, number_of_samples)
@@ -51,10 +51,10 @@ end
 Big issue with this is transferring to ExaModel and gpu compilation speeds
 kill it.  
 =#
-function VecchiaMLE_Matrix_Sparse(n, k, samples, number_of_samples, xyGrid)
+function NonparametricVecchia_Matrix_Sparse(n, k, samples, number_of_samples, xyGrid)
 
     Sparsity_pattern = sparsity_pattern(xyGrid, k)
-    model = VecchiaMLE_Matrix_JuMP_Model(n, k, samples, number_of_samples, Sparsity_pattern)
+    model = NonparametricVecchia_Matrix_JuMP_Model(n, k, samples, number_of_samples, Sparsity_pattern)
     
     exa_model = ExaModel(model; backend = nothing #= CUDABackend() =#) # model_sum not CUDABackend friendly
     sol = madnlp(exa_model, print_level=MadNLP.ERROR).solution
@@ -104,7 +104,7 @@ end
     Making a JuMP model to be ported to ExaModels -> gpu.
     Hence no Optimizer.
 =#
-function VecchiaMLE_Matrix_JuMP_Model(n, k, samples, number_of_samples, Sparsity_pattern)
+function NonparametricVecchia_Matrix_JuMP_Model(n, k, samples, number_of_samples, Sparsity_pattern)
     model = JuMP.Model()
     # one vector variable input, just a big vector. 
     @variable(model, ys[1:Int(0.5 * (k+1) * (2*n - k))])

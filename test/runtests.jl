@@ -1,4 +1,4 @@
-using VecchiaMLE
+using NonparametricVecchia
 using Test
 using JuMP
 using Ipopt
@@ -14,7 +14,7 @@ using NLPModels
 using NLPModelsTest
 using StableRNGs
 
-import VecchiaMLE: VecchiaCache
+import NonparametricVecchia: VecchiaCache
 
 function gensamples(n, nsample)
   K = [exp(-abs(j-k)/10)*(1+abs(j-k)/10) for j in 1:n, k in 1:n]
@@ -34,7 +34,7 @@ end
 banded_L(n, k) = LowerTriangular(tril(banded_U(n, k).data'))
 
 include("Jump_models.jl")
-include("VecchiaMLE_models.jl")
+include("models.jl")
 
 include("test_jump.jl")
 include("test_memory_allocation_cpu.jl")

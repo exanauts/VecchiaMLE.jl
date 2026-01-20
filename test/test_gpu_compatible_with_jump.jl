@@ -32,7 +32,7 @@
             result_jump = value.(w)
             L_jump = recover_factor(nlp, result_jump)
 
-            # compute estimator with VecchiaMLE and GPU:
+            # compute estimator with NonparametricVecchia and GPU:
             model_gpu = VecchiaModel(pattern, CuMatrix{Float64}(samples); lambda=lambda)
             output = madnlp(model_gpu)
             L_mle = recover_factor(model, output.solution)

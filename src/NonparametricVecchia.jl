@@ -1,4 +1,4 @@
-module VecchiaMLE
+module NonparametricVecchia
 
 using LinearAlgebra
 using NLPModels

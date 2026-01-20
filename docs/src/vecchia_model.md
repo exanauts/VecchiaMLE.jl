@@ -1,5 +1,5 @@
 ```@example VecchiaModel_L
-using VecchiaMLE
+using NonparametricVecchia
 using LinearAlgebra
 using SparseArrays
 using NLPModelsIpopt
@@ -18,7 +18,7 @@ L = recover_factor(nlp_L, output.solution)
 ```
 
 ```@example VecchiaModel_U
-using VecchiaMLE
+using NonparametricVecchia
 using LinearAlgebra
 using SparseArrays
 using NLPModelsIpopt
@@ -37,7 +37,7 @@ U = recover_factor(nlp_U, output.solution)
 ```
 
 ```@example Vecchia
-using VecchiaMLE
+using NonparametricVecchia
 using Vecchia
 using StaticArrays
 using LinearAlgebra

@@ -15,4 +15,4 @@ jobs:
           version: 'lts'
       - name: Aqua.jl
         run: julia --color=yes -e 'using Pkg; Pkg.add("Aqua"); Pkg.develop(path=".");
-                                   using Aqua, VecchiaMLE; Aqua.test_all(VecchiaMLE)'
+                                   using Aqua, NonparametricVecchia; Aqua.test_all(NonparametricVecchia)'
