@@ -8,7 +8,8 @@ makedocs(
                            prettyurls = get(ENV, "CI", nothing) == "true",
                            collapselevel = 1),
   sitename = "NonparametricVecchia.jl",
-  pages = ["Home" => "index.md"],  # "Tutorials" => "vecchia_model.md"
+  pages = ["Home" => "index.md",
+           "Tutorials" => "vecchia_model.md"],
 )
 
 deploydocs(
