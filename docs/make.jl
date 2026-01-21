@@ -9,7 +9,8 @@ makedocs(
                            collapselevel = 1),
   sitename = "NonparametricVecchia.jl",
   pages = ["Home" => "index.md",
-           "Tutorials" => "vecchia_model.md"],
+           "Tutorials" => "vecchia_model.md",
+           "Reference" => "reference.md"],
 )
 
 deploydocs(
