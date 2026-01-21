@@ -4,9 +4,9 @@ using LinearAlgebra
 using SparseArrays
 using NLPModelsIpopt
 
-n = 400
+n = 40
 number_of_samples = 100
-# samples = ...
+samples = randn(number_of_samples, n)
 
 P = ones(n, n)
 P = tril(P)
@@ -23,9 +23,9 @@ using LinearAlgebra
 using SparseArrays
 using NLPModelsIpopt
 
-n = 400
+n = 40
 number_of_samples = 100
-# samples = ...
+samples = randn(number_of_samples, n)
 
 P = ones(n, n)
 P = triu(P)
