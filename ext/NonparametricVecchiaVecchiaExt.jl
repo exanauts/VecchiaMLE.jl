@@ -14,8 +14,8 @@ module NonparametricVecchiaVecchiaExt
   end
 
   function NonparametricVecchia.VecchiaModel(va::VecchiaApproximation;
-                                             lvar_diag=fill(1e-10, length(pts)),
-                                             uvar_diag=fill(1e10, length(pts)),
+                                             lvar_diag=fill(1e-10, length(va.condix)),
+                                             uvar_diag=fill(1e10, length(va.condix)),
                                              lambda=0.0)
     (condsets, perm) = (va.condix, va.perm)
     n   = length(condsets)
