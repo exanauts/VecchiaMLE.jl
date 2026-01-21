@@ -21,13 +21,8 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, lambda::T, r
                 vs = view(samples, :, rowsL[colptrL[j] + s - 1])
                 B[j][t, s] = dot(vt, vs)
                 # Ridge regularization
-                if (lambda != 0) && (s == t) && (s != 1)
-                    # s == 1 means that we treat the variable related to the diagonal coefficient of column j
-                    # of the sparse Cholesky factor.
-                    #
-                    # Only update diagonal coefficient of the Hessian that are
-                    # related to the variables that represent the off-diagonal terms
-                    # of the sparse Cholesky factor.
+                if (lambda != 0) && (s == t)
+                    # Only update diagonal coefficient of the Hessian
                     B[j][t, s] += lambda
                 end
                 # Lower triangular part of the block Bⱼ
@@ -42,30 +37,31 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, lambda::T, r
     return nothing
 end
 
-for INT in (:Int32, :Int64)
-    @eval begin
-        function vecchia_generate_hess_tri_structure!(nnzh::Int, n::Int, colptr_diff::Vector{Int},
-                                                      hrows::Vector{$INT}, hcols::Vector{$INT})
-            carry = 1
-            idx = 1
-            for i in 1:n
-                m = colptr_diff[i]
-                    for j in 1:m
-                        view(hrows, (0:(m-j)).+carry) .= (j:m).+(idx-1)
-                        fill!(view(hcols, carry:carry+m-j), idx + j - 1)
-                        carry += m - j + 1
-                    end
-                idx += m
+function vecchia_generate_hess_tri_structure!(n::Int, m::Vector{Int}, nnzL::Int, nnzh_tri_obj::Int, hrows::Vector{T}, hcols::Vector{T}) where T <: Integer
+    pos = 0
+    offset = 0
+    for j in 1:n
+        for s in 1:m[j]
+            for t in 1:m[j]
+                if s ≤ t
+                    pos = pos + 1
+                    hrows[pos] = offset + t
+                    hcols[pos] = offset + s
+                end
             end
-
-            #Then need the diagonal tail
-            idx_to = idx + nnzh - carry
-            view(hrows, carry:nnzh) .= idx:idx_to
-            view(hcols, carry:nnzh) .= idx:idx_to
-
-            return hrows, hcols
         end
+        offset += m[j]
     end
+
+    @assert pos == nnzh_tri_obj
+    @assert offset == nnzL
+
+    for k = 1:n
+        hrows[nnzh_tri_obj+k] = nnzL + k
+        hcols[nnzh_tri_obj+k] = nnzL + k
+    end
+
+    return hrows, hcols
 end
 
 # The objective of the optimization problem.
@@ -105,7 +101,7 @@ function NLPModels.hess_structure!(nlp::VecchiaModel, hrows::AbstractVector, hco
     @lencheck nlp.meta.nnzh hcols
 
     # stored as lower triangular!
-    vecchia_generate_hess_tri_structure!(nlp.meta.nnzh, nlp.cache.n, nlp.cache.m, hrows, hcols)
+    vecchia_generate_hess_tri_structure!(nlp.cache.n, nlp.cache.m, nlp.cache.nnzL, nlp.cache.nnzh_tri_obj, hrows, hcols)
     return hrows, hcols
 end
 
@@ -176,9 +172,9 @@ function NLPModels.jac_structure!(nlp::VecchiaModel, jrows::AbstractVector, jcol
     @lencheck 2*nlp.cache.n jcols
 
     copyto!(view(jcols, 1:nlp.cache.n), nlp.cache.diagL)
-    view(jcols, (1:nlp.cache.n).+nlp.cache.n) .= (1:nlp.cache.n).+nlp.cache.nnzL
+    view(jcols, nlp.cache.n+1:2*nlp.cache.n) .= (nlp.cache.nnzL+1:nlp.meta.nvar)
     view(jrows, 1:nlp.cache.n) .= 1:nlp.cache.n
-    view(jrows, (1:nlp.cache.n).+nlp.cache.n) .= 1:nlp.cache.n
+    view(jrows, nlp.cache.n+1:2*nlp.cache.n) .= 1:nlp.cache.n
     return jrows, jcols
 end
 
@@ -207,7 +203,7 @@ function NLPModels.jprod!(nlp::VecchiaModel, x::AbstractVector, v::AbstractVecto
         Jv, 1,
         -view(v, nlp.cache.diagL) 
             .+ exp.(view(x, nlp.cache.nnzL+1:nlp.meta.nvar)) 
-            .* view(v, (1:nlp.cache.n).+nlp.cache.nnzL),
+            .* view(v, (nlp.cache.nnzL+1:nlp.meta.nvar)),
         1, nlp.cache.n
     )
     return Jv

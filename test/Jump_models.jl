@@ -11,7 +11,7 @@ function obj_vecchia(w::AbstractVector, samples, lambda, cache::VecchiaCache)
             for k in 1:cache.M
         )
 
-    t3 = sum(w[i]^2 for i in 1:cache.nnzL if !(i in cache.diagL))
+    t3 = sum(w[i]^2 for i in 1:cache.nnzL)
 
     return t1 + 0.5 * t2 + 0.5 * lambda * t3
 end
