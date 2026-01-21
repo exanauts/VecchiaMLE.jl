@@ -6,6 +6,7 @@ using NonparametricVecchia
 using CUDA
 using CUDA.CUSPARSE
 using KernelAbstractions
+using SparseArrays
 
 function NonparametricVecchia.VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::CuMatrix{T};
                                            lvar_diag::Union{Nothing,CuVector{T}}=nothing, 
@@ -208,18 +209,20 @@ end
     nothing
 end
 
-function NonparametricVecchia.vecchia_generate_hess_tri_structure!(n::Int, m::CuVector{Int}, nnzL::Int, nnzh_tri_obj::Int, hrows::CuVector{Int}, hcols::CuVector{Int})
+function NonparametricVecchia.vecchia_generate_hess_tri_structure!(n::Int, m::CuVector{Int}, nnzL::Int, nnzh_tri_obj::Int,
+                                                                   offsets::CuVector{Int}, hrows::CuVector{Int}, hcols::CuVector{Int})
     # launch the kernel
     backend = KernelAbstractions.get_backend(hrows)
     kernel = vecchia_generate_hess_tri_structure_kernel!(backend)
-    kernel(n, m, nnzL, nnzh_tri_obj, hrows, hcols, ndrange=n)
+    kernel(n, m, nnzL, nnzh_tri_obj, offsets, hrows, hcols, ndrange=n)
     KernelAbstractions.synchronize(backend)
     return nothing
 end
 
-@kernel function vecchia_generate_hess_tri_structure_kernel!(@Const(n), @Const(m), @Const(nnzL), @Const(nnzh_tri_obj), hrows, hcols)
+@kernel function vecchia_generate_hess_tri_structure_kernel!(@Const(n), @Const(m), @Const(nnzL), @Const(nnzh_tri_obj), @Const(offsets), hrows, hcols)
     index = @index(Global)
     mj = m[index]
+    offset = offsets[index]
 
     pos = 0
     for i = 1:index-1

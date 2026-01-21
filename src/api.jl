@@ -37,7 +37,7 @@ function vecchia_build_B!(B::Vector{Matrix{T}}, samples::Matrix{T}, lambda::T, r
     return nothing
 end
 
-function vecchia_generate_hess_tri_structure!(n::Int, m::Vector{Int}, nnzL::Int, nnzh_tri_obj::Int, hrows::Vector{T}, hcols::Vector{T}) where T <: Integer
+function vecchia_generate_hess_tri_structure!(n::Int, m::Vector{Int}, nnzL::Int, nnzh_tri_obj::Int, offsets::Vector{Int}, hrows::Vector{T}, hcols::Vector{T}) where T <: Integer
     pos = 0
     offset = 0
     for j in 1:n
@@ -101,7 +101,7 @@ function NLPModels.hess_structure!(nlp::VecchiaModel, hrows::AbstractVector, hco
     @lencheck nlp.meta.nnzh hcols
 
     # stored as lower triangular!
-    vecchia_generate_hess_tri_structure!(nlp.cache.n, nlp.cache.m, nlp.cache.nnzL, nlp.cache.nnzh_tri_obj, hrows, hcols)
+    vecchia_generate_hess_tri_structure!(nlp.cache.n, nlp.cache.m, nlp.cache.nnzL, nlp.cache.nnzh_tri_obj, nlp.cache.offsets, hrows, hcols)
     return hrows, hcols
 end
 
