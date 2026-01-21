@@ -77,7 +77,7 @@ function VecchiaModel(I::Vector{Int}, J::Vector{Int}, samples::Matrix{T};
         nvar,
         ncon = ncon,
         x0 = x0,
-        name = "Vecchia_manual",
+        name = "nonparametric_vecchia_cpu",
         nnzj = 2*cache.n,
         nnzh = cache.nnzh_tri_lag,
         y0 = y0,
