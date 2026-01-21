@@ -6,7 +6,7 @@ using NLPModelsIpopt
 
 n = 400
 number_of_samples = 100
-samples = ...
+# samples = ...
 
 P = ones(n, n)
 P = tril(P)
@@ -25,7 +25,7 @@ using NLPModelsIpopt
 
 n = 400
 number_of_samples = 100
-samples = ...
+# samples = ...
 
 P = ones(n, n)
 P = triu(P)
